@@ -45,6 +45,7 @@ class GameData:
         self.npcs = {n["id"]: n for n in _load("npcs.json")}
         self.schedules = {k: v for k, v in _load("schedules.json").items() if not k.startswith("_")}
         self.shops = {k: v for k, v in _load("shops.json").items() if not k.startswith("_")}
+        self.recipe_list = _load("recipes.json")["recipes"]
         te = _load("travel_events.json")
         self.travel_events = te["events"]
         self.loot_tables = te["loot_tables"]
@@ -79,8 +80,49 @@ class GameData:
                     "speed": round(w["speed"] * eq["speed_mult"], 2),
                     "desc": f"{w['special']} ({ore['name']}: tier {ore['tier']}.)",
                 }
+        # metal armor: a helm and a mail coat per ore
+        for oid, ore in self.ores.items():
+            eq = ore["equipment"]
+            short = ore["name"].split()[0]
+            for slot, (key, label, base, bars, extra) in {"head": ("helm", "Helm", 2.0, 2, {}),
+                                                            "body": ("mail", "Mail", 5.0, 4, {"leather": 2})}.items():
+                self.items[f"{key}_{oid}"] = {
+                    "name": f"{short} {label}", "type": "armor", "slot": slot, "ore": oid,
+                    "armor": round(base * eq["armor_mult"], 1),
+                    "value": int(bars * ore["bar_value"] * 1.3 + 12 * sum(extra.values()) + 5),
+                    "weight": round((3.0 if slot == "head" else 8.0) * eq["weight_mult"], 1), "bars": bars, "extra": extra,
+                    "desc": f"{ore['name']} {label.lower()}. Armor {round(base * eq['armor_mult'], 1)}.",
+                }
+        self._generate_recipes()
         self.items.setdefault("old_book", {"name": "Weathered Book", "type": "book", "value": 10, "weight": 0.5,
                                             "desc": "A water-stained book. Scholars love these."})
+
+    def _generate_recipes(self):
+        tier_skill = {1: 0, 2: 10, 3: 25, 4: 45}
+        self.recipes = {}
+        for oid, ore in self.ores.items():
+            t = ore["tier"]
+            self.recipes[f"smelt_{oid}"] = {"id": f"smelt_{oid}", "out": f"{oid}_bar", "qty": 1, "station": "furnace",
+                                            "inputs": {f"{oid}_ore": 2}, "minutes": 20 + 10 * t, "skill": tier_skill[t]}
+            need = "voidglass" if oid == "voidglass" else None
+            for wid, w in self.weapons.items():
+                if w.get("bars", 0) <= 0:
+                    continue
+                station = "workbench" if wid in ("bow", "crossbow", "throwing") else "anvil"
+                inputs = {f"{oid}_bar": w["bars"]}
+                inputs.update(w["extra"])
+                self.recipes[f"{wid}_{oid}"] = {"id": f"{wid}_{oid}", "out": f"{wid}_{oid}", "qty": 3 if wid == "throwing" else 1,
+                                                "station": station, "inputs": inputs, "minutes": 40 + 20 * w["bars"],
+                                                "skill": tier_skill[t], "requires": need}
+            for key in ("helm", "mail"):
+                it = self.items[f"{key}_{oid}"]
+                inputs = {f"{oid}_bar": it["bars"]}
+                inputs.update(it["extra"])
+                self.recipes[f"{key}_{oid}"] = {"id": f"{key}_{oid}", "out": f"{key}_{oid}", "qty": 1, "station": "anvil",
+                                                "inputs": inputs, "minutes": 50 + 25 * it["bars"], "skill": tier_skill[t] + 5,
+                                                "requires": need}
+        for r in self.recipe_list:
+            self.recipes[r["id"]] = r
 
     # ------------------------------------------------------------------ helpers
     def item(self, item_id):
@@ -138,6 +180,10 @@ class GameData:
         for sid, shop in self.shops.items():
             for it in shop["stock"]:
                 need(it in self.items, f"shop {sid} stocks unknown item {it}")
+        for rid, r in self.recipes.items():
+            need(r["out"] in self.items, f"recipe {rid} makes unknown item {r['out']}")
+            for it in r["inputs"]:
+                need(it in self.items, f"recipe {rid} needs unknown item {it}")
         for tname, table in self.loot_tables.items():
             for row in table:
                 need(row[0] == "marks" or row[0] in self.items, f"loot {tname} unknown item {row[0]}")

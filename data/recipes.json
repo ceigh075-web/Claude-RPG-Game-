@@ -1,0 +1,309 @@
+{
+ "_comment": "Hand-authored recipes. Smelting, metal weapons and metal armor are generated from ores/weapons by the loader. station: furnace, anvil, workbench, stove, alchemy, campfire. skill = Crafting needed.",
+ "recipes": [
+  {
+   "id": "scrap_smelt",
+   "out": "rustite_bar",
+   "qty": 1,
+   "station": "furnace",
+   "inputs": {
+    "scrap": 3
+   },
+   "minutes": 30,
+   "skill": 0
+  },
+  {
+   "id": "leather_cap",
+   "out": "leather_cap",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "leather": 2
+   },
+   "minutes": 40,
+   "skill": 0
+  },
+  {
+   "id": "leather_jerkin",
+   "out": "leather_jerkin",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "leather": 4,
+    "fiber": 2
+   },
+   "minutes": 90,
+   "skill": 5
+  },
+  {
+   "id": "pickaxe",
+   "out": "pickaxe",
+   "qty": 1,
+   "station": "anvil",
+   "inputs": {
+    "rustite_bar": 2,
+    "wood": 1
+   },
+   "minutes": 45,
+   "skill": 0
+  },
+  {
+   "id": "hatchet",
+   "out": "hatchet",
+   "qty": 1,
+   "station": "anvil",
+   "inputs": {
+    "rustite_bar": 1,
+    "wood": 1
+   },
+   "minutes": 30,
+   "skill": 0
+  },
+  {
+   "id": "bedroll",
+   "out": "bedroll",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "cloth": 2,
+    "fiber": 2
+   },
+   "minutes": 40,
+   "skill": 0
+  },
+  {
+   "id": "arrows",
+   "out": "arrow",
+   "qty": 10,
+   "station": "workbench",
+   "inputs": {
+    "wood": 1,
+    "fiber": 1,
+    "scrap": 1
+   },
+   "minutes": 30,
+   "skill": 0
+  },
+  {
+   "id": "bolts",
+   "out": "bolt",
+   "qty": 8,
+   "station": "workbench",
+   "inputs": {
+    "wood": 1,
+    "rustite_bar": 1
+   },
+   "minutes": 30,
+   "skill": 5
+  },
+  {
+   "id": "powder",
+   "out": "powder_shot",
+   "qty": 4,
+   "station": "alchemy",
+   "inputs": {
+    "salt": 2,
+    "scrap": 1,
+    "herbs": 1
+   },
+   "minutes": 40,
+   "skill": 10
+  },
+  {
+   "id": "tan_hide",
+   "out": "leather",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "hide": 1,
+    "salt": 1
+   },
+   "minutes": 60,
+   "skill": 0
+  },
+  {
+   "id": "weave_cloth",
+   "out": "cloth",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "fiber": 3
+   },
+   "minutes": 30,
+   "skill": 0
+  },
+  {
+   "id": "bandages",
+   "out": "bandage",
+   "qty": 2,
+   "station": "workbench",
+   "inputs": {
+    "cloth": 1
+   },
+   "minutes": 15,
+   "skill": 0
+  },
+  {
+   "id": "herbal_salve",
+   "out": "herbal_salve",
+   "qty": 1,
+   "station": "alchemy",
+   "inputs": {
+    "herbs": 3
+   },
+   "minutes": 30,
+   "skill": 5
+  },
+  {
+   "id": "mana_draught",
+   "out": "mana_draught",
+   "qty": 1,
+   "station": "alchemy",
+   "inputs": {
+    "mirelight_herb": 2,
+    "water": 1
+   },
+   "minutes": 40,
+   "skill": 10
+  },
+  {
+   "id": "arcane_dust",
+   "out": "arcane_dust",
+   "qty": 2,
+   "station": "alchemy",
+   "inputs": {
+    "mana_crystal": 1
+   },
+   "minutes": 30,
+   "skill": 10
+  },
+  {
+   "id": "relic_dust",
+   "out": "arcane_dust",
+   "qty": 1,
+   "station": "alchemy",
+   "inputs": {
+    "relic_shard": 1
+   },
+   "minutes": 45,
+   "skill": 20
+  },
+  {
+   "id": "enchanted_ink",
+   "out": "enchanted_ink",
+   "qty": 1,
+   "station": "alchemy",
+   "inputs": {
+    "arcane_dust": 1,
+    "mirelight_herb": 1
+   },
+   "minutes": 45,
+   "skill": 15
+  },
+  {
+   "id": "cook_meat",
+   "out": "cooked_meat",
+   "qty": 1,
+   "station": "stove",
+   "alt_station": "campfire",
+   "inputs": {
+    "meat": 1
+   },
+   "minutes": 20,
+   "skill": 0
+  },
+  {
+   "id": "cook_fish",
+   "out": "cooked_meat",
+   "qty": 1,
+   "station": "stove",
+   "alt_station": "campfire",
+   "inputs": {
+    "fish": 1
+   },
+   "minutes": 20,
+   "skill": 0
+  },
+  {
+   "id": "bake_bread",
+   "out": "bread",
+   "qty": 2,
+   "station": "stove",
+   "inputs": {
+    "grain": 1,
+    "water": 1
+   },
+   "minutes": 40,
+   "skill": 0
+  },
+  {
+   "id": "pack_rations",
+   "out": "ration",
+   "qty": 2,
+   "station": "stove",
+   "alt_station": "campfire",
+   "inputs": {
+    "bread": 1,
+    "cooked_meat": 1,
+    "salt": 1
+   },
+   "minutes": 20,
+   "skill": 0
+  },
+  {
+   "id": "planks",
+   "out": "plank",
+   "qty": 2,
+   "station": "workbench",
+   "inputs": {
+    "wood": 1
+   },
+   "minutes": 20,
+   "skill": 0
+  },
+  {
+   "id": "nails",
+   "out": "nails",
+   "qty": 10,
+   "station": "anvil",
+   "inputs": {
+    "rustite_bar": 1
+   },
+   "minutes": 20,
+   "skill": 0
+  },
+  {
+   "id": "stone_block",
+   "out": "stone_block",
+   "qty": 1,
+   "station": "workbench",
+   "inputs": {
+    "stone": 2
+   },
+   "minutes": 30,
+   "skill": 0
+  },
+  {
+   "id": "seed_grain",
+   "out": "seed_grain",
+   "qty": 3,
+   "station": "workbench",
+   "inputs": {
+    "grain": 1
+   },
+   "minutes": 10,
+   "skill": 0
+  },
+  {
+   "id": "seed_herb",
+   "out": "seed_herb",
+   "qty": 2,
+   "station": "workbench",
+   "inputs": {
+    "herbs": 2
+   },
+   "minutes": 10,
+   "skill": 0
+  }
+ ]
+}

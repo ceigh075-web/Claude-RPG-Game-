@@ -436,12 +436,35 @@ def generate_interior(data, loc_id, building):
     if btype in ("mage_tower", "enchanter", "temple", "chapel"):
         m.add("bookshelf", 2, 2, solid=True)
         m.add("bookshelf", 3, 2, solid=True)
+    stations = STATIONS_BY_BUILDING.get(btype, ())
+    for kind in stations:
+        _place_free(m, kind)
     for _ in range(3):
         x, y = rng.randint(1, w - 2), rng.randint(2, h - 3)
         if m.free_for_object(x, y, margin_path=False) and (x, y) != m.entry and y != 5:
             m.add(rng.choice(("barrel", "crate")), x, y)
     m.npc_spots += [(2 + rng.randint(0, w - 5), 6 + rng.randint(0, max(0, h - 9))) for _ in range(3)]
     return m
+
+
+STATIONS_BY_BUILDING = {
+    "workshop": ("workbench",), "tannery": ("workbench",), "inn": ("stove",), "house": ("stove",),
+    "farmhouse": ("stove",), "longhouse": ("stove", "workbench"), "barracks": ("training_dummy", "stove"),
+    "apothecary": ("alchemy_table",), "mage_tower": ("alchemy_table", "scribing_table"),
+    "enchanter": ("alchemy_table", "scribing_table"), "shaman_hut": ("alchemy_table",),
+    "temple": ("scribing_table",), "chapel": ("scribing_table",), "guild_hall": ("anvil", "furnace", "workbench"),
+    "arena": ("training_dummy", "training_dummy"), "forge": ("workbench",),
+}
+
+
+def _place_free(m, kind):
+    """Put a station against the back wall (row 2) or the first free interior tile."""
+    candidates = [(x, 2) for x in range(2, m.w - 2)] + [(x, y) for y in range(6, m.h - 2) for x in (1, m.w - 2)]
+    for x, y in candidates:
+        if m.free_for_object(x, y, margin_path=False) and (x, y) != m.entry and abs(x - m.w // 2) > 0:
+            m.add(kind, x, y, solid=True)
+            return True
+    return False
 
 
 def _generate_mine(data, loc_id, building, rng):

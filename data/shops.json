@@ -1,27 +1,472 @@
 {
-  "_comment": "Shop types. stock = item -> [base quantity, restock per week]. buys = item types this shop will purchase. cash = marks the merchant has (restocks weekly). markup applies to buy price, sell price = value * sell_rate.",
-  "provisioner":    {"name": "Provisions",        "cash": 200, "markup": 1.2, "sell_rate": 0.5, "buys": ["food", "drink", "material", "medicine"],
-                     "stock": {"ration": [12, 12], "bread": [10, 10], "water": [20, 20], "bandage": [6, 6], "ale": [8, 8], "pickaxe": [1, 1], "hatchet": [1, 1], "bedroll": [1, 1]}},
-  "inn":            {"name": "Inn",               "cash": 150, "markup": 1.25,"sell_rate": 0.45, "buys": ["food", "drink"], "room_price": 8,
-                     "stock": {"ale": [12, 12], "bread": [6, 6], "cooked_meat": [6, 6], "water": [10, 10]}},
-  "general_store":  {"name": "General Store",     "cash": 600, "markup": 1.1, "sell_rate": 0.6, "buys": ["food", "drink", "material", "medicine", "valuable", "ore", "bar", "tool", "ammo", "magic", "weapon"],
-                     "stock": {"ration": [20, 20], "water": [20, 20], "bandage": [10, 10], "herbal_salve": [4, 4], "salt": [10, 10], "cloth": [10, 10], "arrow": [60, 60], "bolt": [30, 30], "pickaxe": [2, 2], "hatchet": [2, 2], "bedroll": [2, 2], "leather": [6, 6]}},
-  "market":         {"name": "Market Stalls",     "cash": 800, "markup": 1.05,"sell_rate": 0.62, "buys": ["valuable", "ore", "bar", "material", "magic"],
-                     "stock": {"fish": [10, 10], "salt": [20, 20], "cloth": [10, 10], "trinket": [3, 1], "powder_shot": [10, 6]}},
-  "assayer":        {"name": "Assayer",           "cash": 900, "markup": 1.15,"sell_rate": 0.7, "buys": ["ore", "bar", "valuable"],
-                     "stock": {"rustite_bar": [6, 4], "greyvein_bar": [3, 2], "pickaxe": [3, 3]}},
-  "smithy":         {"name": "Smithy",            "cash": 700, "markup": 1.2, "sell_rate": 0.5, "buys": ["ore", "bar", "weapon", "tool"],
-                     "stock": {"dagger_rustite": [2, 1], "shortsword_rustite": [2, 1], "axe_rustite": [2, 1], "spear_rustite": [1, 1], "mace_greyvein": [1, 1], "longsword_greyvein": [1, 1], "pickaxe": [2, 2]}},
-  "armorer":        {"name": "Armorer",           "cash": 500, "markup": 1.2, "sell_rate": 0.5, "buys": ["weapon", "bar", "material"],
-                     "stock": {"shortsword_rustite": [2, 1], "spear_rustite": [2, 1], "crossbow_rustite": [1, 1], "bolt": [30, 30], "leather": [6, 4]}},
-  "workshop":       {"name": "Workshop",          "cash": 400, "markup": 1.2, "sell_rate": 0.5, "buys": ["material", "tool"],
-                     "stock": {"leather": [10, 6], "cloth": [10, 6], "bow_rustite": [1, 1], "arrow": [60, 40], "hatchet": [2, 2]}},
-  "enchanter":      {"name": "Enchanter",         "cash": 600, "markup": 1.3, "sell_rate": 0.55, "buys": ["magic", "valuable", "material"],
-                     "stock": {"mana_draught": [6, 4], "mana_crystal": [3, 2]}},
-  "apothecary":     {"name": "Apothecary",        "cash": 300, "markup": 1.2, "sell_rate": 0.55, "buys": ["material", "medicine", "food"],
-                     "stock": {"bandage": [10, 10], "herbal_salve": [8, 6], "mana_draught": [2, 2]}},
-  "tannery":        {"name": "Tannery",           "cash": 300, "markup": 1.15,"sell_rate": 0.55, "buys": ["material", "food"],
-                     "stock": {"leather": [10, 8], "hide": [6, 4], "cooked_meat": [8, 8], "thornwood": [4, 3], "throwing_rustite": [2, 1]}},
-  "scavenger_shop": {"name": "Scavenger's Den",   "cash": 500, "markup": 1.4, "sell_rate": 0.4, "buys": ["valuable", "material", "weapon", "ore", "bar", "magic"],
-                     "stock": {"scrap": [10, 6], "trinket": [3, 2], "relic_shard": [1, 1], "powder_shot": [6, 4], "firelock_rustite": [1, 1], "herbal_salve": [3, 2]}}
+ "_comment": "Shop types. stock = item -> [base quantity, restock per week]. buys = item types this shop will purchase. cash = marks the merchant has (restocks weekly). markup applies to buy price, sell price = value * sell_rate.",
+ "provisioner": {
+  "name": "Provisions",
+  "cash": 200,
+  "markup": 1.2,
+  "sell_rate": 0.5,
+  "buys": [
+   "food",
+   "drink",
+   "material",
+   "medicine"
+  ],
+  "stock": {
+   "ration": [
+    12,
+    12
+   ],
+   "bread": [
+    10,
+    10
+   ],
+   "water": [
+    20,
+    20
+   ],
+   "bandage": [
+    6,
+    6
+   ],
+   "ale": [
+    8,
+    8
+   ],
+   "pickaxe": [
+    1,
+    1
+   ],
+   "hatchet": [
+    1,
+    1
+   ],
+   "bedroll": [
+    1,
+    1
+   ],
+   "seed_grain": [
+    6,
+    6
+   ]
+  }
+ },
+ "inn": {
+  "name": "Inn",
+  "cash": 150,
+  "markup": 1.25,
+  "sell_rate": 0.45,
+  "buys": [
+   "food",
+   "drink"
+  ],
+  "room_price": 8,
+  "stock": {
+   "ale": [
+    12,
+    12
+   ],
+   "bread": [
+    6,
+    6
+   ],
+   "cooked_meat": [
+    6,
+    6
+   ],
+   "water": [
+    10,
+    10
+   ]
+  }
+ },
+ "general_store": {
+  "name": "General Store",
+  "cash": 600,
+  "markup": 1.1,
+  "sell_rate": 0.6,
+  "buys": [
+   "food",
+   "drink",
+   "material",
+   "medicine",
+   "valuable",
+   "ore",
+   "bar",
+   "tool",
+   "ammo",
+   "magic",
+   "weapon",
+   "armor"
+  ],
+  "stock": {
+   "ration": [
+    20,
+    20
+   ],
+   "water": [
+    20,
+    20
+   ],
+   "bandage": [
+    10,
+    10
+   ],
+   "herbal_salve": [
+    4,
+    4
+   ],
+   "salt": [
+    10,
+    10
+   ],
+   "cloth": [
+    10,
+    10
+   ],
+   "arrow": [
+    60,
+    60
+   ],
+   "bolt": [
+    30,
+    30
+   ],
+   "pickaxe": [
+    2,
+    2
+   ],
+   "hatchet": [
+    2,
+    2
+   ],
+   "bedroll": [
+    2,
+    2
+   ],
+   "leather": [
+    6,
+    6
+   ],
+   "seed_grain": [
+    10,
+    10
+   ],
+   "seed_herb": [
+    6,
+    6
+   ]
+  }
+ },
+ "market": {
+  "name": "Market Stalls",
+  "cash": 800,
+  "markup": 1.05,
+  "sell_rate": 0.62,
+  "buys": [
+   "valuable",
+   "ore",
+   "bar",
+   "material",
+   "magic"
+  ],
+  "stock": {
+   "fish": [
+    10,
+    10
+   ],
+   "salt": [
+    20,
+    20
+   ],
+   "cloth": [
+    10,
+    10
+   ],
+   "trinket": [
+    3,
+    1
+   ],
+   "powder_shot": [
+    10,
+    6
+   ]
+  }
+ },
+ "assayer": {
+  "name": "Assayer",
+  "cash": 900,
+  "markup": 1.15,
+  "sell_rate": 0.7,
+  "buys": [
+   "ore",
+   "bar",
+   "valuable"
+  ],
+  "stock": {
+   "rustite_bar": [
+    6,
+    4
+   ],
+   "greyvein_bar": [
+    3,
+    2
+   ],
+   "pickaxe": [
+    3,
+    3
+   ]
+  }
+ },
+ "smithy": {
+  "name": "Smithy",
+  "cash": 700,
+  "markup": 1.2,
+  "sell_rate": 0.5,
+  "buys": [
+   "ore",
+   "bar",
+   "weapon",
+   "tool",
+   "armor"
+  ],
+  "stock": {
+   "dagger_rustite": [
+    2,
+    1
+   ],
+   "shortsword_rustite": [
+    2,
+    1
+   ],
+   "axe_rustite": [
+    2,
+    1
+   ],
+   "spear_rustite": [
+    1,
+    1
+   ],
+   "mace_greyvein": [
+    1,
+    1
+   ],
+   "longsword_greyvein": [
+    1,
+    1
+   ],
+   "pickaxe": [
+    2,
+    2
+   ],
+   "voidglass_manual": [
+    1,
+    0
+   ],
+   "helm_rustite": [
+    1,
+    1
+   ]
+  }
+ },
+ "armorer": {
+  "name": "Armorer",
+  "cash": 500,
+  "markup": 1.2,
+  "sell_rate": 0.5,
+  "buys": [
+   "weapon",
+   "bar",
+   "material",
+   "armor"
+  ],
+  "stock": {
+   "shortsword_rustite": [
+    2,
+    1
+   ],
+   "spear_rustite": [
+    2,
+    1
+   ],
+   "crossbow_rustite": [
+    1,
+    1
+   ],
+   "bolt": [
+    30,
+    30
+   ],
+   "leather": [
+    6,
+    4
+   ],
+   "mail_rustite": [
+    1,
+    1
+   ],
+   "leather_jerkin": [
+    2,
+    1
+   ]
+  }
+ },
+ "workshop": {
+  "name": "Workshop",
+  "cash": 400,
+  "markup": 1.2,
+  "sell_rate": 0.5,
+  "buys": [
+   "material",
+   "tool",
+   "armor"
+  ],
+  "stock": {
+   "leather": [
+    10,
+    6
+   ],
+   "cloth": [
+    10,
+    6
+   ],
+   "bow_rustite": [
+    1,
+    1
+   ],
+   "arrow": [
+    60,
+    40
+   ],
+   "hatchet": [
+    2,
+    2
+   ]
+  }
+ },
+ "enchanter": {
+  "name": "Enchanter",
+  "cash": 600,
+  "markup": 1.3,
+  "sell_rate": 0.55,
+  "buys": [
+   "magic",
+   "valuable",
+   "material"
+  ],
+  "stock": {
+   "mana_draught": [
+    6,
+    4
+   ],
+   "mana_crystal": [
+    3,
+    2
+   ],
+   "enchanted_ink": [
+    3,
+    2
+   ],
+   "arcane_dust": [
+    4,
+    2
+   ]
+  }
+ },
+ "apothecary": {
+  "name": "Apothecary",
+  "cash": 300,
+  "markup": 1.2,
+  "sell_rate": 0.55,
+  "buys": [
+   "material",
+   "medicine",
+   "food"
+  ],
+  "stock": {
+   "bandage": [
+    10,
+    10
+   ],
+   "herbal_salve": [
+    8,
+    6
+   ],
+   "mana_draught": [
+    2,
+    2
+   ]
+  }
+ },
+ "tannery": {
+  "name": "Tannery",
+  "cash": 300,
+  "markup": 1.15,
+  "sell_rate": 0.55,
+  "buys": [
+   "material",
+   "food"
+  ],
+  "stock": {
+   "leather": [
+    10,
+    8
+   ],
+   "hide": [
+    6,
+    4
+   ],
+   "cooked_meat": [
+    8,
+    8
+   ],
+   "thornwood": [
+    4,
+    3
+   ],
+   "throwing_rustite": [
+    2,
+    1
+   ]
+  }
+ },
+ "scavenger_shop": {
+  "name": "Scavenger's Den",
+  "cash": 500,
+  "markup": 1.4,
+  "sell_rate": 0.4,
+  "buys": [
+   "valuable",
+   "material",
+   "weapon",
+   "ore",
+   "bar",
+   "magic"
+  ],
+  "stock": {
+   "scrap": [
+    10,
+    6
+   ],
+   "trinket": [
+    3,
+    2
+   ],
+   "relic_shard": [
+    1,
+    1
+   ],
+   "powder_shot": [
+    6,
+    4
+   ],
+   "firelock_rustite": [
+    1,
+    1
+   ],
+   "herbal_salve": [
+    3,
+    2
+   ]
+  }
+ }
 }

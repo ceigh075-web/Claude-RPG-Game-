@@ -27,7 +27,7 @@ class Character:
         self.skills = {s: float((skills or {}).get(s, 0)) for s in SKILLS}
         self.appearance = appearance or {}
         self.inventory = Inventory()
-        self.equipment = {"weapon": None, "ranged": None}
+        self.equipment = {"weapon": None, "ranged": None, "head": None, "body": None}
         self.xp_total = 0.0
         self.food = 80.0
         self.water = 80.0
@@ -69,6 +69,14 @@ class Character:
         """Carried weight / capacity (>1 means overloaded). Needs item data bound via Inventory."""
         w = self.inventory.total_weight()
         return w / max(1.0, self.carry_capacity)
+
+    def armor_value(self, data):
+        total = 0.0
+        for slot in ("head", "body"):
+            item = self.equipment.get(slot)
+            if item and self.inventory.has(item):
+                total += data.item(item).get("armor", 0.0)
+        return total
 
     # ------------------------------------------------------------ training
     def train(self, name, xp, race_data=None):
@@ -115,7 +123,8 @@ class Character:
         c = cls(d["id"], d["name"], d["race"], d["attributes"], d["skills"], d.get("pronouns", "they/them"),
                 d.get("appearance"))
         c.inventory = Inventory.from_dict(d["inventory"], data)
-        c.equipment = d["equipment"]
+        c.equipment = {"weapon": None, "ranged": None, "head": None, "body": None}
+        c.equipment.update(d["equipment"])
         c.xp_total = d["xp_total"]
         c.food, c.water, c.hp, c.mana = d["food"], d["water"], d["hp"], d["mana"]
         c.alive = d.get("alive", True)

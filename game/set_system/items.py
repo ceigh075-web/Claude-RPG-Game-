@@ -39,6 +39,8 @@ def use_item(state, char, item_id):
 
 def weapon_slot(data, item_id):
     it = data.item(item_id)
+    if it["type"] == "armor":
+        return it["slot"]
     if it["type"] != "weapon":
         return None
     return "ranged" if data.weapons[it["weapon"]]["class"] == "ranged" else "weapon"

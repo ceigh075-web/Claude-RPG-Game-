@@ -49,7 +49,10 @@ class InventoryScene(Scene):
                 return
         v = self.menu.handle(ev)
         if v:
-            if items_mod.can_use(self.data, v):
+            if self.data.item(v)["type"] == "recipe":
+                from ...set_system import crafting
+                ok, msg = crafting.learn(self.state, v)
+            elif items_mod.can_use(self.data, v):
                 ok, msg = items_mod.use_item(self.state, p, v)
             elif items_mod.weapon_slot(self.data, v):
                 ok, msg = items_mod.equip(self.state, p, v)
@@ -74,11 +77,13 @@ class InventoryScene(Scene):
         dx = 700
         ui.text(screen, "Equipped", (dx, r.y + 52), 26, ui.ACCENT)
         y = r.y + 84
-        for slot, label in (("weapon", "Melee"), ("ranged", "Ranged")):
+        for slot, label in (("weapon", "Melee"), ("ranged", "Ranged"), ("head", "Head"), ("body", "Body")):
             eq = p.equipment.get(slot)
             ui.text(screen, f"{label}: {self.data.item(eq)['name'] if eq else ('Fists' if slot == 'weapon' else '-')}",
                     (dx, y), 24)
             y += 28
+        ui.text(screen, f"Armor: {p.armor_value(self.data):.1f}", (dx, y), 24, ui.TEXT_DIM)
+        y += 28
         sel = self.menu.selected()
         if sel:
             it = self.data.item(sel)
@@ -95,6 +100,8 @@ class InventoryScene(Scene):
             for k in ("food", "water", "heal", "mana"):
                 if it.get(k):
                     stats.append(f"+{it[k]} {k}")
+            if it["type"] == "armor":
+                stats.append(f"Armor {it['armor']} ({it['slot']})")
             if it["type"] == "weapon":
                 w = self.data.weapons[it["weapon"]]
                 stats.append(f"Damage {it['damage']}  Speed {it['speed']}/s  Reach {w['reach']}")

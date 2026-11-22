@@ -16,6 +16,7 @@ CONTROLS = [
     ("F / Space", "Kick / dodge roll"),
     ("Q", "Switch melee / ranged weapon"),
     ("1 - 4", "Cast spell from your spell book"),
+    ("B", "Spell book: design, test and inscribe spells"),
     ("I", "Inventory"),
     ("C", "Character & factions"),
     ("M", "World map / leave for travel"),

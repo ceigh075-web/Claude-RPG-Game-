@@ -1,15 +1,483 @@
 {
-  "wolf":                {"name": "Grey Wolf",          "archetype": "fast",       "faction": null,      "hp": 30,  "damage": 6,  "weapon": "fists",     "speed": 95,  "armor": 0, "attack_range": 16, "aggro": 140, "flee_below": 0.25, "pack": [2, 4], "loot": {"meat": [1, 2], "hide": [0, 1]}, "xp": 8,  "color": [130, 130, 130], "shape": "beast"},
-  "ice_wolf":            {"name": "Frostfang Wolf",     "archetype": "fast",       "faction": null,      "hp": 50,  "damage": 10, "weapon": "fists",     "speed": 100, "armor": 2, "attack_range": 16, "aggro": 160, "flee_below": 0.2,  "pack": [2, 3], "loot": {"meat": [1, 2], "hide": [1, 2]}, "xp": 16, "color": [200, 220, 240], "shape": "beast"},
-  "bandit_cutthroat":    {"name": "Hollow Cutthroat",   "archetype": "aggressive", "faction": "hollow",  "hp": 45,  "damage": 9,  "weapon": "shortsword","speed": 80,  "armor": 2, "attack_range": 22, "aggro": 150, "flee_below": 0.2,  "pack": [1, 3], "loot": {"marks": [3, 15], "ration": [0, 1], "trinket": [0, 1]}, "xp": 12, "color": [90, 70, 60], "shape": "humanoid"},
-  "bandit_archer":       {"name": "Hollow Bowman",      "archetype": "ranged",     "faction": "hollow",  "hp": 35,  "damage": 8,  "weapon": "bow",       "speed": 75,  "armor": 1, "attack_range": 200,"aggro": 220, "flee_below": 0.3,  "pack": [1, 2], "loot": {"marks": [2, 10], "arrow": [3, 8]}, "xp": 12, "color": [70, 90, 60], "shape": "humanoid"},
-  "hollow_shieldbearer": {"name": "Hollow Shieldbearer","archetype": "defensive",  "faction": "hollow",  "hp": 70,  "damage": 9,  "weapon": "mace",      "speed": 65,  "armor": 6, "attack_range": 22, "aggro": 140, "flee_below": 0.0,  "pack": [1, 2], "loot": {"marks": [5, 20], "scrap": [1, 2]}, "xp": 18, "color": [70, 70, 80], "shape": "humanoid", "blocks": true},
-  "hollow_captain":      {"name": "Hollow Captain",     "archetype": "intelligent","faction": "hollow",  "hp": 110, "damage": 14, "weapon": "longsword", "speed": 80,  "armor": 5, "attack_range": 28, "aggro": 180, "flee_below": 0.15, "pack": [1, 1], "loot": {"marks": [30, 60], "greyvein_bar": [0, 1], "trinket": [1, 2]}, "xp": 40, "color": [40, 40, 50], "shape": "humanoid", "blocks": true, "commands_allies": true},
-  "cave_skitterer":      {"name": "Cave Skitterer",     "archetype": "fast",       "faction": null,      "hp": 25,  "damage": 7,  "weapon": "fists",     "speed": 110, "armor": 1, "attack_range": 14, "aggro": 120, "flee_below": 0.0,  "pack": [3, 5], "loot": {"mushrooms": [0, 1]}, "xp": 7, "color": [100, 80, 120], "shape": "bug"},
-  "stone_brute":         {"name": "Stone Brute",        "archetype": "heavy",      "faction": null,      "hp": 160, "damage": 22, "weapon": "hammer",    "speed": 50,  "armor": 10,"attack_range": 26, "aggro": 120, "flee_below": 0.0,  "pack": [1, 1], "loot": {"stone": [2, 4], "greyvein_ore": [1, 3]}, "xp": 45, "color": [120, 110, 100], "shape": "brute"},
-  "sand_wurm":           {"name": "Sand Wurm",          "archetype": "aggressive", "faction": null,      "hp": 80,  "damage": 14, "weapon": "fists",     "speed": 70,  "armor": 4, "attack_range": 20, "aggro": 130, "flee_below": 0.0,  "pack": [1, 1], "loot": {"hide": [1, 3], "salt": [1, 2]}, "xp": 24, "color": [200, 170, 110], "shape": "worm"},
-  "bog_lurker":          {"name": "Bog Lurker",         "archetype": "heavy",      "faction": null,      "hp": 120, "damage": 16, "weapon": "fists",     "speed": 55,  "armor": 3, "attack_range": 22, "aggro": 110, "flee_below": 0.0,  "pack": [1, 1], "loot": {"mirelight_herb": [1, 3], "hide": [1, 2]}, "xp": 32, "color": [60, 100, 70], "shape": "brute"},
-  "husk":                {"name": "Hollowed Husk",      "archetype": "aggressive", "faction": null,      "hp": 55,  "damage": 11, "weapon": "fists",     "speed": 60,  "armor": 2, "attack_range": 16, "aggro": 130, "flee_below": 0.0,  "pack": [2, 4], "loot": {"relic_shard": [0, 1], "trinket": [0, 1]}, "xp": 15, "color": [150, 160, 140], "shape": "humanoid"},
-  "crystal_golem":       {"name": "Crystal Golem",      "archetype": "defensive",  "faction": null,      "hp": 200, "damage": 20, "weapon": "fists",     "speed": 45,  "armor": 14,"attack_range": 24, "aggro": 110, "flee_below": 0.0,  "pack": [1, 2], "loot": {"mana_crystal": [1, 3], "voidglass_ore": [0, 1]}, "xp": 60, "color": [150, 220, 230], "shape": "brute", "blocks": true},
-  "thornblood_raider":   {"name": "Thornblood Raider",  "archetype": "aggressive", "faction": "thornblood","hp": 75, "damage": 13, "weapon": "axe",       "speed": 80,  "armor": 3, "attack_range": 22, "aggro": 140, "flee_below": 0.2,  "pack": [1, 3], "loot": {"hide": [1, 2], "thornwood": [0, 1], "marks": [2, 10]}, "xp": 22, "color": [110, 80, 50], "shape": "humanoid", "hostile_rep": -20}
+ "wolf": {
+  "name": "Grey Wolf",
+  "archetype": "fast",
+  "faction": null,
+  "hp": 30,
+  "damage": 6,
+  "weapon": "fists",
+  "speed": 95,
+  "armor": 0,
+  "attack_range": 16,
+  "aggro": 140,
+  "flee_below": 0.25,
+  "pack": [
+   2,
+   4
+  ],
+  "loot": {
+   "meat": [
+    1,
+    2
+   ],
+   "hide": [
+    0,
+    1
+   ]
+  },
+  "xp": 8,
+  "color": [
+   130,
+   130,
+   130
+  ],
+  "shape": "beast"
+ },
+ "ice_wolf": {
+  "name": "Frostfang Wolf",
+  "archetype": "fast",
+  "faction": null,
+  "hp": 50,
+  "damage": 10,
+  "weapon": "fists",
+  "speed": 100,
+  "armor": 2,
+  "attack_range": 16,
+  "aggro": 160,
+  "flee_below": 0.2,
+  "pack": [
+   2,
+   3
+  ],
+  "loot": {
+   "meat": [
+    1,
+    2
+   ],
+   "hide": [
+    1,
+    2
+   ]
+  },
+  "xp": 16,
+  "color": [
+   200,
+   220,
+   240
+  ],
+  "shape": "beast"
+ },
+ "bandit_cutthroat": {
+  "name": "Hollow Cutthroat",
+  "archetype": "aggressive",
+  "faction": "hollow",
+  "hp": 45,
+  "damage": 9,
+  "weapon": "shortsword",
+  "speed": 80,
+  "armor": 2,
+  "attack_range": 22,
+  "aggro": 150,
+  "flee_below": 0.2,
+  "pack": [
+   1,
+   3
+  ],
+  "loot": {
+   "marks": [
+    3,
+    15
+   ],
+   "ration": [
+    0,
+    1
+   ],
+   "trinket": [
+    0,
+    1
+   ]
+  },
+  "xp": 12,
+  "color": [
+   90,
+   70,
+   60
+  ],
+  "shape": "humanoid"
+ },
+ "bandit_archer": {
+  "name": "Hollow Bowman",
+  "archetype": "ranged",
+  "faction": "hollow",
+  "hp": 35,
+  "damage": 8,
+  "weapon": "bow",
+  "speed": 75,
+  "armor": 1,
+  "attack_range": 200,
+  "aggro": 220,
+  "flee_below": 0.3,
+  "pack": [
+   1,
+   2
+  ],
+  "loot": {
+   "marks": [
+    2,
+    10
+   ],
+   "arrow": [
+    3,
+    8
+   ]
+  },
+  "xp": 12,
+  "color": [
+   70,
+   90,
+   60
+  ],
+  "shape": "humanoid"
+ },
+ "hollow_shieldbearer": {
+  "name": "Hollow Shieldbearer",
+  "archetype": "defensive",
+  "faction": "hollow",
+  "hp": 70,
+  "damage": 9,
+  "weapon": "mace",
+  "speed": 65,
+  "armor": 6,
+  "attack_range": 22,
+  "aggro": 140,
+  "flee_below": 0.0,
+  "pack": [
+   1,
+   2
+  ],
+  "loot": {
+   "marks": [
+    5,
+    20
+   ],
+   "scrap": [
+    1,
+    2
+   ]
+  },
+  "xp": 18,
+  "color": [
+   70,
+   70,
+   80
+  ],
+  "shape": "humanoid",
+  "blocks": true
+ },
+ "hollow_captain": {
+  "name": "Hollow Captain",
+  "archetype": "intelligent",
+  "faction": "hollow",
+  "hp": 110,
+  "damage": 14,
+  "weapon": "longsword",
+  "speed": 80,
+  "armor": 5,
+  "attack_range": 28,
+  "aggro": 180,
+  "flee_below": 0.15,
+  "pack": [
+   1,
+   1
+  ],
+  "loot": {
+   "marks": [
+    30,
+    60
+   ],
+   "greyvein_bar": [
+    0,
+    1
+   ],
+   "trinket": [
+    1,
+    2
+   ]
+  },
+  "xp": 40,
+  "color": [
+   40,
+   40,
+   50
+  ],
+  "shape": "humanoid",
+  "blocks": true,
+  "commands_allies": true
+ },
+ "cave_skitterer": {
+  "name": "Cave Skitterer",
+  "archetype": "fast",
+  "faction": null,
+  "hp": 25,
+  "damage": 7,
+  "weapon": "fists",
+  "speed": 110,
+  "armor": 1,
+  "attack_range": 14,
+  "aggro": 120,
+  "flee_below": 0.0,
+  "pack": [
+   3,
+   5
+  ],
+  "loot": {
+   "mushrooms": [
+    0,
+    1
+   ]
+  },
+  "xp": 7,
+  "color": [
+   100,
+   80,
+   120
+  ],
+  "shape": "bug"
+ },
+ "stone_brute": {
+  "name": "Stone Brute",
+  "archetype": "heavy",
+  "faction": null,
+  "hp": 160,
+  "damage": 22,
+  "weapon": "hammer",
+  "speed": 50,
+  "armor": 10,
+  "attack_range": 26,
+  "aggro": 120,
+  "flee_below": 0.0,
+  "pack": [
+   1,
+   1
+  ],
+  "loot": {
+   "stone": [
+    2,
+    4
+   ],
+   "greyvein_ore": [
+    1,
+    3
+   ]
+  },
+  "xp": 45,
+  "color": [
+   120,
+   110,
+   100
+  ],
+  "shape": "brute"
+ },
+ "sand_wurm": {
+  "name": "Sand Wurm",
+  "archetype": "aggressive",
+  "faction": null,
+  "hp": 80,
+  "damage": 14,
+  "weapon": "fists",
+  "speed": 70,
+  "armor": 4,
+  "attack_range": 20,
+  "aggro": 130,
+  "flee_below": 0.0,
+  "pack": [
+   1,
+   1
+  ],
+  "loot": {
+   "hide": [
+    1,
+    3
+   ],
+   "salt": [
+    1,
+    2
+   ]
+  },
+  "xp": 24,
+  "color": [
+   200,
+   170,
+   110
+  ],
+  "shape": "worm"
+ },
+ "bog_lurker": {
+  "name": "Bog Lurker",
+  "archetype": "heavy",
+  "faction": null,
+  "hp": 120,
+  "damage": 16,
+  "weapon": "fists",
+  "speed": 55,
+  "armor": 3,
+  "attack_range": 22,
+  "aggro": 110,
+  "flee_below": 0.0,
+  "pack": [
+   1,
+   1
+  ],
+  "loot": {
+   "mirelight_herb": [
+    1,
+    3
+   ],
+   "hide": [
+    1,
+    2
+   ]
+  },
+  "xp": 32,
+  "color": [
+   60,
+   100,
+   70
+  ],
+  "shape": "brute"
+ },
+ "husk": {
+  "name": "Hollowed Husk",
+  "archetype": "aggressive",
+  "faction": null,
+  "hp": 55,
+  "damage": 11,
+  "weapon": "fists",
+  "speed": 60,
+  "armor": 2,
+  "attack_range": 16,
+  "aggro": 130,
+  "flee_below": 0.0,
+  "pack": [
+   2,
+   4
+  ],
+  "loot": {
+   "relic_shard": [
+    0,
+    1
+   ],
+   "trinket": [
+    0,
+    1
+   ]
+  },
+  "xp": 15,
+  "color": [
+   150,
+   160,
+   140
+  ],
+  "shape": "humanoid"
+ },
+ "crystal_golem": {
+  "name": "Crystal Golem",
+  "archetype": "defensive",
+  "faction": null,
+  "hp": 200,
+  "damage": 20,
+  "weapon": "fists",
+  "speed": 45,
+  "armor": 14,
+  "attack_range": 24,
+  "aggro": 110,
+  "flee_below": 0.0,
+  "pack": [
+   1,
+   2
+  ],
+  "loot": {
+   "mana_crystal": [
+    1,
+    3
+   ],
+   "voidglass_ore": [
+    0,
+    1
+   ]
+  },
+  "xp": 60,
+  "color": [
+   150,
+   220,
+   230
+  ],
+  "shape": "brute",
+  "blocks": true
+ },
+ "thornblood_raider": {
+  "name": "Thornblood Raider",
+  "archetype": "aggressive",
+  "faction": "thornblood",
+  "hp": 75,
+  "damage": 13,
+  "weapon": "axe",
+  "speed": 80,
+  "armor": 3,
+  "attack_range": 22,
+  "aggro": 140,
+  "flee_below": 0.2,
+  "pack": [
+   1,
+   3
+  ],
+  "loot": {
+   "hide": [
+    1,
+    2
+   ],
+   "thornwood": [
+    0,
+    1
+   ],
+   "marks": [
+    2,
+    10
+   ]
+  },
+  "xp": 22,
+  "color": [
+   110,
+   80,
+   50
+  ],
+  "shape": "humanoid",
+  "hostile_rep": -20
+ },
+ "training_dummy": {
+  "name": "Training Dummy",
+  "archetype": "defensive",
+  "faction": null,
+  "hp": 9999,
+  "damage": 0,
+  "weapon": "fists",
+  "speed": 0,
+  "armor": 0,
+  "attack_range": 0,
+  "aggro": 0,
+  "flee_below": 0,
+  "pack": [
+   1,
+   1
+  ],
+  "loot": {},
+  "xp": 0,
+  "color": [
+   170,
+   130,
+   80
+  ],
+  "shape": "dummy",
+  "training": true
+ }
 }

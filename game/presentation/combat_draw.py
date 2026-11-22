@@ -194,7 +194,7 @@ def draw_floaters(screen, world, camx, camy, scale=2):
                 tuple(int(c * (0.4 + 0.6 * alpha)) for c in col), bold=True, center=True)
 
 
-def draw_combat_hud(screen, world, state, data, W, H):
+def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):
     p = state.player
     pc = world.player
     # guard
@@ -214,7 +214,7 @@ def draw_combat_hud(screen, world, state, data, W, H):
     if p.equipment.get("ranged"):
         ui.text(screen, "[Q] switch", (r.right - 12, r.y + 8), 18, ui.TEXT_DIM, right=True)
     # spells
-    for i, sp in enumerate(state.spellbook[:4]):
+    for i, sp in enumerate((hotbar if hotbar is not None else state.spellbook)[:4]):
         props = spell_rules.compute(data, sp, p.skills["magic"])
         y = r.y + 34 + i * 20
         cd = world.spell_cd.get((pc.cid, sp["name"]), 0) if pc else 0

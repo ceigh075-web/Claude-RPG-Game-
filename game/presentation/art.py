@@ -319,6 +319,47 @@ class Art:
             pygame.draw.rect(s, (240, 140, 40), (4, 10, 8, 6))
             pygame.draw.rect(s, (250, 220, 120), (6, 12, 4, 3))
             return _outline(s)
+        if kind == "workbench":
+            s = pygame.Surface((T, T), pygame.SRCALPHA)
+            pygame.draw.rect(s, (150, 108, 64), (0, 4, T, 6))
+            pygame.draw.rect(s, (100, 70, 40), (1, 10, 2, 6))
+            pygame.draw.rect(s, (100, 70, 40), (13, 10, 2, 6))
+            pygame.draw.line(s, (180, 180, 190), (3, 3), (8, 3), 2)
+            pygame.draw.rect(s, (120, 80, 50), (10, 1, 4, 3))
+            return _outline(s)
+        if kind == "stove":
+            s = pygame.Surface((T, 20), pygame.SRCALPHA)
+            pygame.draw.rect(s, (70, 70, 76), (1, 4, 14, 16))
+            pygame.draw.rect(s, (40, 40, 44), (3, 12, 10, 6))
+            pygame.draw.rect(s, (240, 130, 40), (5, 14, 6, 3))
+            pygame.draw.rect(s, (80, 80, 86), (11, 0, 3, 5))
+            return _outline(s)
+        if kind == "alchemy_table":
+            s = pygame.Surface((T, T), pygame.SRCALPHA)
+            pygame.draw.rect(s, (110, 76, 50), (0, 6, T, 5))
+            pygame.draw.rect(s, (80, 56, 36), (2, 11, 2, 5))
+            pygame.draw.rect(s, (80, 56, 36), (12, 11, 2, 5))
+            for x, col in ((3, (120, 220, 140)), (8, (160, 120, 240)), (12, (240, 120, 120))):
+                pygame.draw.rect(s, col, (x, 2, 2, 4))
+                s.set_at((x, 1), (230, 230, 230))
+            return _outline(s)
+        if kind == "scribing_table":
+            s = pygame.Surface((T, T), pygame.SRCALPHA)
+            pygame.draw.polygon(s, (120, 86, 56), [(1, 6), (15, 4), (15, 10), (1, 11)])
+            pygame.draw.rect(s, (90, 60, 40), (3, 11, 2, 5))
+            pygame.draw.rect(s, (90, 60, 40), (11, 10, 2, 6))
+            pygame.draw.rect(s, (235, 225, 200), (4, 5, 7, 4))
+            pygame.draw.line(s, (150, 100, 230), (12, 2), (10, 7))
+            return _outline(s)
+        if kind == "training_dummy":
+            s = self._make_creature("dummy", (170, 130, 80), "down", 0)
+            return _outline(s)
+        if kind == "chest":
+            s = pygame.Surface((T, T), pygame.SRCALPHA)
+            pygame.draw.rect(s, (130, 86, 46), (1, 5, 14, 10))
+            pygame.draw.rect(s, (160, 110, 60), (1, 3, 14, 4))
+            pygame.draw.rect(s, (220, 190, 90), (7, 6, 2, 3))
+            return _outline(s)
         if kind == "lantern":
             s = pygame.Surface((T, T), pygame.SRCALPHA)
             pygame.draw.line(s, (80, 60, 40), (8, 15), (8, 4), 2)
@@ -509,6 +550,15 @@ class Art:
                 if d == "down":
                     s.set_at((9, hy), (20, 20, 20))
                     s.set_at((13, hy), (20, 20, 20))
+            return s
+        if shape == "dummy":
+            s = pygame.Surface((16, 24), pygame.SRCALPHA)
+            pygame.draw.rect(s, (110, 80, 50), (7, 10, 2, 14))
+            pygame.draw.rect(s, (110, 80, 50), (2, 11, 12, 2))
+            pygame.draw.ellipse(s, col, (4, 7, 8, 10))
+            pygame.draw.circle(s, (200, 170, 110), (8, 5), 4)
+            pygame.draw.line(s, (150, 40, 40), (6, 11), (10, 15))
+            pygame.draw.line(s, (150, 40, 40), (10, 11), (6, 15))
             return s
         if shape == "bug":
             s = pygame.Surface((16, 14), pygame.SRCALPHA)

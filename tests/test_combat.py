@@ -209,6 +209,8 @@ class TestRealtime(unittest.TestCase):
 
     def test_each_archetype_engages(self):
         for eid, e in DATA.enemies.items():
+            if e.get("training"):
+                continue
             st, m, w, pc = setup_world()
             st.player.attributes["health"] = 100  # survive long enough to observe
             st.player.hp = st.player.max_hp

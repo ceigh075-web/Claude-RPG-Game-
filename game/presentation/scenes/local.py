@@ -237,16 +237,20 @@ class LocalScene(Scene):
             cw.switch_weapon()
         elif pygame.K_1 <= k <= pygame.K_4:
             i = k - pygame.K_1
-            if i < len(self.state.spellbook):
+            bar = self.hotbar()
+            if i < len(bar):
                 if self.mouse_aim_t > 0:
                     self.aim_at_mouse()
-                ok, msg = cw.cast(pc, self.state.spellbook[i])
+                ok, msg = cw.cast(pc, bar[i])
                 if msg:
                     self.game.toast(msg)
         elif k == pygame.K_ESCAPE:
             self.game.scenes.push(PauseScene(self.game))
         elif k in (pygame.K_e, pygame.K_RETURN):
             self.interact()
+        elif k == pygame.K_b:
+            from .spellbook import SpellbookScene
+            self.game.scenes.push(SpellbookScene(self.game, at_table=False))
         elif k == pygame.K_i:
             from .inventory import InventoryScene
             self.game.scenes.push(InventoryScene(self.game))
@@ -263,6 +267,9 @@ class LocalScene(Scene):
         elif k == pygame.K_F9:
             if self.game.saves.exists(1):
                 self.game.load_game(1)
+
+    def hotbar(self):
+        return self.state.spellbook[:4]
 
     def open_map(self, leaving, preselect=None):
         from .worldmap import WorldMapScene
@@ -372,6 +379,16 @@ class LocalScene(Scene):
             self.use_bed()
         elif k == "bounty_board":
             self.read_board()
+        elif k in ("anvil", "furnace", "workbench", "stove", "alchemy_table", "campfire"):
+            from ...set_system.crafting import OBJECT_STATION
+            from .crafting import CraftingScene
+            self.game.scenes.push(CraftingScene(self.game, OBJECT_STATION[k]))
+        elif k == "scribing_table":
+            from .spellbook import SpellbookScene
+            self.game.scenes.push(SpellbookScene(self.game, at_table=True))
+        elif k == "training_dummy":
+            from .practice import PracticeScene
+            self.game.scenes.replace(PracticeScene(self.game))
 
     def open_shop(self, shop_type):
         keeper, at_work = npc_mod.shopkeeper(self.state, self.state.location, shop_type)
@@ -466,6 +483,7 @@ class LocalScene(Scene):
                     st.player.train("athletics", dt * 0.4, race)
                 else:
                     st.player.train("athletics", dt * 0.05, race)
+        pc.armor = st.player.armor_value(self.data)
         self.combat.update(dt, m)
         if self.combat.events:
             for msg in self.combat.events:
@@ -705,8 +723,8 @@ class LocalScene(Scene):
                 pr_r = pygame.Rect(W // 2 - w // 2, H - 64, w, 34)
                 ui.panel(screen, pr_r, alpha=210)
                 ui.text(screen, "[E] " + pr, (W // 2, H - 56), 24, ui.TEXT, center=True)
-        combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H)
-        ui.text(screen, "K/LMB attack  L/RMB block  F kick  Space dodge  1-4 spells  I inv  C char  M map  J journal",
+        combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H, self.hotbar())
+        ui.text(screen, "K/LMB attack  L/RMB block  F kick  Space dodge  1-4 spells  B book  I inv  C char  M map  J journal",
                 (12, H - 26), 20, ui.TEXT_DIM)
 
     def place_name(self):

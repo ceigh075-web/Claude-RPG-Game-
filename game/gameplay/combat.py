@@ -191,6 +191,7 @@ class CombatWorld:
                       race=st.race_data)
         c.facing = actor.facing
         c.aim = DIRS[c.facing]
+        c.armor = st.player.armor_value(self.data)
         self.player = c
         self.combatants.append(c)
         return c
@@ -204,7 +205,9 @@ class CombatWorld:
         c.group = group
         c.hostile = hostile
         c.home = (x, y)
-        c.ai = EnemyAI(c, e, self.rng)
+        c.ai = None if e.get("training") else EnemyAI(c, e, self.rng)
+        if e.get("training"):
+            c.mass, c.poise = 50.0, 5.0
         self.combatants.append(c)
         return c
 
@@ -216,7 +219,7 @@ class CombatWorld:
 
     @property
     def in_combat(self):
-        return any(c.alive and c.alerted and c.hostile for c in self.enemies())
+        return any(c.alive and c.alerted and c.hostile and not c.enemy.get("training") for c in self.enemies())
 
     # ================================================================ player commands
     def player_weapon(self):

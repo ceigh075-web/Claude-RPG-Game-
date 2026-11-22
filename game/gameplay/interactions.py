@@ -169,9 +169,7 @@ def for_object(state, loc_key, obj, lmap=None):
         return Interaction("Drink & refill flasks", minutes=5, run=run, kind="timed")
 
     if k == "campfire":
-        def run(s):
-            return ["You rest by the fire for an hour."] + timeflow.advance(s, 60, resting=True)
-        return Interaction("Rest by the fire (1 h)", minutes=0, run=run, kind="instant")
+        return Interaction("Use the campfire (cook / rest)", kind="scene")
 
     if k == "landmark":
         loc = data.location(loc_key) if loc_key in data.locations else {}
@@ -183,6 +181,12 @@ def for_object(state, loc_key, obj, lmap=None):
 
     if k in ("door", "exit_door", "counter", "bed"):
         return Interaction(LABELS[k], kind="scene")
+    if k in ("anvil", "furnace", "workbench", "stove", "alchemy_table"):
+        return Interaction(f"Use {k.replace('_', ' ')}", kind="scene")
+    if k == "scribing_table":
+        return Interaction("Use scribing table", kind="scene")
+    if k == "training_dummy":
+        return Interaction("Practice on the dummy", kind="scene")
     return None
 
 
