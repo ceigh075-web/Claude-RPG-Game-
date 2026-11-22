@@ -1,0 +1,13 @@
+{
+  "_comment": "Hour ranges [start, end) -> activity. Activities: work (at workplace/shop), wander (around town), tavern (inn), home (asleep at home), patrol (guard route), camp (wilderness camp). A schedule whose activity is 'home' makes the NPC unavailable for trade.",
+  "merchant":  [[0, 6, "home"], [6, 8, "wander"], [8, 19, "work"], [19, 22, "tavern"], [22, 24, "home"]],
+  "worker":    [[0, 5, "home"], [5, 17, "work"], [17, 21, "tavern"], [21, 24, "home"]],
+  "guard":     [[0, 6, "patrol"], [6, 14, "home"], [14, 24, "patrol"]],
+  "noble":     [[0, 8, "home"], [8, 18, "work"], [18, 21, "wander"], [21, 24, "home"]],
+  "scholar":   [[0, 7, "home"], [7, 20, "work"], [20, 24, "home"]],
+  "elder":     [[0, 5, "home"], [5, 9, "wander"], [9, 16, "work"], [16, 20, "wander"], [20, 24, "home"]],
+  "performer": [[0, 3, "tavern"], [3, 11, "home"], [11, 18, "wander"], [18, 24, "tavern"]],
+  "night_owl": [[0, 4, "tavern"], [4, 13, "home"], [13, 19, "wander"], [19, 24, "tavern"]],
+  "wanderer":  [[0, 6, "camp"], [6, 20, "wander"], [20, 24, "camp"]],
+  "hermit":    [[0, 7, "camp"], [7, 21, "work"], [21, 24, "camp"]]
+}

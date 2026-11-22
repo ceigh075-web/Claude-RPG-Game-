@@ -1,0 +1,124 @@
+{
+  "_comment": "Travel events. weight = relative chance; conditions narrow when they can occur. Choices apply effect lists through the Set System (world/effects.py). 'check' effects roll against a skill: chance = base + skill*per_point.",
+  "events": [
+    {"id": "abandoned_camp", "weight": 10, "min_danger": 1,
+     "text": "You find an abandoned campsite. The fire pit is cold, but a pack lies half-buried under leaves.",
+     "choices": [
+       {"label": "Search the camp (1 hour)", "effects": [{"op": "time", "hours": 1}, {"op": "loot", "table": "campsite"}, {"op": "xp", "skill": "gathering", "amount": 4}]},
+       {"label": "Leave it and keep moving", "effects": [{"op": "text", "text": "You leave the camp to whoever comes next."}]}
+     ]},
+    {"id": "merchant_caravan", "weight": 8, "terrain": ["road", "grassland", "desert", "coast", "hills"],
+     "text": "A Free Caravan League wagon train rolls alongside you. The trail boss offers to trade.",
+     "choices": [
+       {"label": "Buy 3 rations (20 marks)", "requires": {"gold": 20}, "effects": [{"op": "gold", "amount": -20}, {"op": "item", "id": "ration", "qty": 3}, {"op": "rep", "faction": "caravans", "amount": 1}]},
+       {"label": "Buy 4 water flasks (8 marks)", "requires": {"gold": 8}, "effects": [{"op": "gold", "amount": -8}, {"op": "item", "id": "water", "qty": 4}, {"op": "rep", "faction": "caravans", "amount": 1}]},
+       {"label": "Travel with them for a while", "effects": [{"op": "progress", "km": 4}, {"op": "rep", "faction": "caravans", "amount": 2}, {"op": "text", "text": "The wagons set a good pace and the guards share their gossip."}]},
+       {"label": "Wave them on", "effects": []}
+     ]},
+    {"id": "injured_traveler", "weight": 7,
+     "text": "A traveler sits by the road clutching a bloodied leg. \"Bandits,\" they gasp. \"Took everything.\"",
+     "choices": [
+       {"label": "Bandage their wound (1 bandage)", "requires": {"item": ["bandage", 1]}, "effects": [{"op": "item", "id": "bandage", "qty": -1}, {"op": "gold", "amount": 15}, {"op": "memory", "type": "kindness", "text": "Bandaged a wounded traveler on the road.", "importance": 2}, {"op": "text", "text": "They press a few coins into your hand and limp away grateful."}]},
+       {"label": "Share a ration", "requires": {"item": ["ration", 1]}, "effects": [{"op": "item", "id": "ration", "qty": -1}, {"op": "memory", "type": "kindness", "text": "Shared food with a robbed traveler.", "importance": 2}, {"op": "text", "text": "They thank you and promise to tell people of your kindness."}]},
+       {"label": "Walk past", "effects": [{"op": "text", "text": "Their eyes follow you down the road."}]}
+     ]},
+    {"id": "hostile_travelers", "weight": 8, "min_danger": 1,
+     "text": "Three figures in grey hoods step onto the road ahead. \"Toll's due, traveler. Everything you're carrying.\"",
+     "choices": [
+       {"label": "Fight", "effects": [{"op": "combat", "enemy": "bandit_cutthroat", "count": [1, 3]}]},
+       {"label": "Pay them off (25 marks)", "requires": {"gold": 25}, "effects": [{"op": "gold", "amount": -25}, {"op": "text", "text": "They count the coins and melt back into the brush."}]},
+       {"label": "Run", "effects": [{"op": "check", "skill": "athletics", "base": 0.45, "per_point": 0.01,
+          "success": [{"op": "text", "text": "You sprint off the road and lose them in the scrub."}, {"op": "xp", "skill": "athletics", "amount": 5}],
+          "fail": [{"op": "text", "text": "They run you down."}, {"op": "combat", "enemy": "bandit_cutthroat", "count": [1, 3]}]}]}
+     ]},
+    {"id": "ruined_structure", "weight": 6, "min_danger": 2,
+     "text": "Crumbling walls of pale stone rise from the ground — a ruin of the vanished builders.",
+     "choices": [
+       {"label": "Explore the ruin (2 hours)", "effects": [{"op": "time", "hours": 2}, {"op": "check", "skill": "dodging", "base": 0.6, "per_point": 0.008,
+          "success": [{"op": "loot", "table": "ruin"}, {"op": "text", "text": "Among the rubble something glints."}],
+          "fail": [{"op": "hp", "amount": -12}, {"op": "text", "text": "A floor gives way beneath you. You climb out bruised and empty-handed."}]}]},
+       {"label": "Note it and move on", "effects": [{"op": "memory", "type": "discovery", "text": "Spotted a builder ruin along the road.", "importance": 1}]}
+     ]},
+    {"id": "storm", "weight": 7, "weather": ["rain", "storm", "snow"],
+     "text": "The weather turns vicious. Visibility drops to nothing and the path turns to mud.",
+     "choices": [
+       {"label": "Make camp and wait it out (4 hours)", "effects": [{"op": "time", "hours": 4}, {"op": "text", "text": "You huddle under what shelter you can find until it passes."}]},
+       {"label": "Push on through it", "effects": [{"op": "check", "skill": "athletics", "base": 0.5, "per_point": 0.01,
+          "success": [{"op": "progress", "km": 2}, {"op": "xp", "skill": "athletics", "amount": 6}, {"op": "text", "text": "Soaked but stubborn, you make good ground."}],
+          "fail": [{"op": "hp", "amount": -10}, {"op": "water", "amount": -5}, {"op": "text", "text": "You slip down an embankment and wrench something."}]}]}
+     ]},
+    {"id": "wandering_npc", "weight": 5,
+     "text": "A lone wanderer shares the road with you for a mile, swapping news.",
+     "choices": [
+       {"label": "Swap stories", "effects": [{"op": "time", "hours": 1}, {"op": "rumor"}, {"op": "xp", "skill": "trading", "amount": 2}]},
+       {"label": "Keep to yourself", "effects": []}
+     ]},
+    {"id": "resource_deposit", "weight": 6, "terrain": ["hills", "mountain", "canyon", "snow", "volcanic"],
+     "text": "A streak of ore glints in a fresh rockslide beside the trail.",
+     "choices": [
+       {"label": "Dig it out (2 hours, needs a pickaxe)", "requires": {"item": ["pickaxe", 1]}, "effects": [{"op": "time", "hours": 2}, {"op": "loot", "table": "ore_streak"}, {"op": "xp", "skill": "mining", "amount": 8}]},
+       {"label": "Leave it", "effects": []}
+     ]},
+    {"id": "fresh_spring", "weight": 6, "terrain": ["forest", "grassland", "hills", "mountain", "moor", "swamp"],
+     "text": "You hear running water: a clear spring bubbles up between the rocks.",
+     "choices": [
+       {"label": "Drink and refill your flasks (30 min)", "effects": [{"op": "time", "hours": 0.5}, {"op": "water", "amount": 100}, {"op": "refill_water"}]},
+       {"label": "Keep going", "effects": []}
+     ]},
+    {"id": "foraging_patch", "weight": 7, "terrain": ["forest", "grassland", "swamp", "moor", "road"],
+     "text": "A thicket heavy with berries and edible roots lines the path.",
+     "choices": [
+       {"label": "Forage (1 hour)", "effects": [{"op": "time", "hours": 1}, {"op": "loot", "table": "forage"}, {"op": "xp", "skill": "gathering", "amount": 5}]},
+       {"label": "Keep going", "effects": []}
+     ]},
+    {"id": "wolf_pack", "weight": 6, "terrain": ["forest", "grassland", "hills", "snow", "moor"], "time": "night",
+     "text": "Eyes in the dark. A wolf pack is circling your camp.",
+     "choices": [
+       {"label": "Fight them off", "effects": [{"op": "combat", "enemy": "wolf", "count": [2, 3]}]},
+       {"label": "Throw them food (2 rations)", "requires": {"item": ["ration", 2]}, "effects": [{"op": "item", "id": "ration", "qty": -2}, {"op": "text", "text": "The pack squabbles over the food and loses interest in you."}]},
+       {"label": "Build up the fire and wait", "effects": [{"op": "time", "hours": 2}, {"op": "check", "skill": "gathering", "base": 0.55, "per_point": 0.01,
+          "success": [{"op": "text", "text": "The wolves keep their distance until dawn."}],
+          "fail": [{"op": "combat", "enemy": "wolf", "count": [2, 3]}]}]}
+     ]},
+    {"id": "toll_patrol", "weight": 6, "terrain": ["road", "grassland"],
+     "text": "A Crown patrol stops you. \"Road toll, five marks. By order of the Queen.\"",
+     "choices": [
+       {"label": "Pay the toll (5 marks)", "requires": {"gold": 5}, "effects": [{"op": "gold", "amount": -5}, {"op": "rep", "faction": "crown", "amount": 2}]},
+       {"label": "Refuse", "effects": [{"op": "rep", "faction": "crown", "amount": -5}, {"op": "rep", "faction": "caravans", "amount": 1}, {"op": "text", "text": "The sergeant writes your description in a little book."}, {"op": "memory", "type": "defiance", "text": "Refused to pay a Crown road toll.", "importance": 2}]}
+     ]},
+    {"id": "lost_child", "weight": 3, "min_danger": 1, "max_danger": 3,
+     "text": "A child sits crying at a fork in the road. They were separated from a caravan heading to the nearest town.",
+     "choices": [
+       {"label": "Escort them (2 hours)", "effects": [{"op": "time", "hours": 2}, {"op": "gold", "amount": 20}, {"op": "rep", "faction": "caravans", "amount": 4}, {"op": "memory", "type": "kindness", "text": "Returned a lost child to a caravan family.", "importance": 3}]},
+       {"label": "Point them the right way", "effects": [{"op": "text", "text": "They set off, sniffling, in roughly the right direction."}]}
+     ]},
+    {"id": "hollow_ambush", "weight": 5, "min_danger": 3,
+     "text": "Arrows thud into the ground at your feet. A Hollow ambush!",
+     "choices": [
+       {"label": "Charge the archers", "effects": [{"op": "combat", "enemy": "bandit_archer", "count": [1, 2]}]},
+       {"label": "Dive for cover and retreat", "effects": [{"op": "check", "skill": "dodging", "base": 0.5, "per_point": 0.01,
+          "success": [{"op": "progress", "km": -2}, {"op": "xp", "skill": "dodging", "amount": 6}, {"op": "text", "text": "You scramble back the way you came, unhurt."}],
+          "fail": [{"op": "hp", "amount": -15}, {"op": "progress", "km": -2}, {"op": "text", "text": "An arrow grazes you as you flee."}]}]}
+     ]}
+  ],
+  "loot_tables": {
+    "campsite":   [["ration", 1, 2, 0.6], ["water", 1, 2, 0.5], ["bandage", 1, 1, 0.3], ["marks", 3, 12, 0.5], ["trinket", 1, 1, 0.15], ["fiber", 2, 4, 0.4]],
+    "ruin":       [["relic_shard", 1, 1, 0.35], ["trinket", 1, 2, 0.5], ["scrap", 1, 3, 0.6], ["marks", 5, 25, 0.5], ["mana_crystal", 1, 1, 0.1]],
+    "ore_streak": [["rustite_ore", 2, 4, 0.8], ["greyvein_ore", 1, 2, 0.35], ["sunsilver_ore", 1, 1, 0.08]],
+    "forage":     [["berries", 2, 5, 0.9], ["herbs", 1, 3, 0.5], ["mushrooms", 1, 3, 0.4], ["fiber", 1, 3, 0.5]],
+    "scavenge":   [["scrap", 1, 2, 0.6], ["cloth", 1, 2, 0.4], ["trinket", 1, 1, 0.15], ["marks", 1, 8, 0.4], ["bandage", 1, 1, 0.15], ["arrow", 2, 6, 0.2]],
+    "smuggler":   [["marks", 10, 40, 0.8], ["powder_shot", 2, 4, 0.4], ["ale", 1, 3, 0.5], ["trinket", 1, 2, 0.4]]
+  },
+  "rumors": [
+    "They say the Hollow pays Crown sergeants to look the other way on the Duskmoor road.",
+    "Miners swear something big walks the bottom of the Deep Galleries. Forewoman Kast won't send anyone down.",
+    "A hunter up on Frostfang Ridge knows where the Sunsilver seams are. Doesn't like visitors.",
+    "The Ashen Circle pays good marks for anything pulled out of the Sunken Abbey.",
+    "Widow's Crossing has good water and empty houses. Shame about the wolves.",
+    "Hammerlee's master smith would trade his own anvil for a lump of Voidglass.",
+    "The Redwater pit champion has never lost. Never.",
+    "Ashfall Crater's been smoking more than usual. The murrok shaman says it's waking.",
+    "Somebody's caged in the Hollow camp at Redrock Canyon — a thief, they say.",
+    "Saltmarket buys everything. Sell your salvage there, not to that crook in Duskreach."
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "human": {
+    "name": "Human", "plural": "Humans",
+    "appearance": "Varied skin tones and hair; medium build.",
+    "background": "The most numerous people of the region, founders of the Crown and the caravan towns.",
+    "attribute_mods": {"strength": 0, "speed": 0, "health": 0, "dexterity": 0},
+    "skill_mods": {"trading": 5},
+    "xp_mult": 1.1,
+    "needs_mult": {"food": 1.0, "water": 1.0},
+    "strengths": ["Learn all skills 10% faster", "+5 Trading"],
+    "weaknesses": ["No attribute bonuses"],
+    "skin": [[236, 196, 160], [198, 146, 104], [140, 96, 64], [96, 64, 44]],
+    "hair": [[40, 30, 20], [120, 80, 40], [200, 170, 90], [160, 60, 30], [70, 70, 70]],
+    "body_scale": 1.0
+  },
+  "kethari": {
+    "name": "Kethari", "plural": "Kethari",
+    "appearance": "Stocky, with grey or ochre skin flecked with stone-like freckles.",
+    "background": "Mountain folk who claim to be born from the rock; the backbone of the Ironhold Guild.",
+    "attribute_mods": {"strength": 4, "speed": -3, "health": 4, "dexterity": 0},
+    "skill_mods": {"mining": 10, "crafting": 5},
+    "xp_mult": 1.0,
+    "magic_mult": 0.8,
+    "needs_mult": {"food": 1.2, "water": 0.9},
+    "strengths": ["+Strength, +Health", "+10 Mining"],
+    "weaknesses": ["-Speed", "Magic skill grows 20% slower", "Eat more"],
+    "skin": [[150, 150, 145], [170, 140, 100], [120, 115, 110]],
+    "hair": [[60, 55, 50], [180, 170, 160], [110, 60, 30]],
+    "body_scale": 1.05
+  },
+  "sylth": {
+    "name": "Sylth", "plural": "Sylth",
+    "appearance": "Tall and slender with pale blue or lilac skin and long swept-back ears.",
+    "background": "A wandering people drawn to places where magic pools; founders of the Ashen Circle.",
+    "attribute_mods": {"strength": -2, "speed": 3, "health": -3, "dexterity": 4},
+    "skill_mods": {"magic": 10},
+    "xp_mult": 1.0,
+    "magic_mult": 1.25,
+    "needs_mult": {"food": 0.8, "water": 1.25},
+    "strengths": ["+Speed, +Dexterity", "+10 Magic, magic grows 25% faster", "Eat less"],
+    "weaknesses": ["-Health, -Strength", "Need more water"],
+    "skin": [[170, 190, 230], [190, 170, 220], [150, 200, 210]],
+    "hair": [[230, 230, 240], [60, 50, 90], [120, 180, 200]],
+    "body_scale": 1.0
+  },
+  "murrok": {
+    "name": "Murrok", "plural": "Murrok",
+    "appearance": "Broad, furred and tusked, with amber eyes.",
+    "background": "Forest clans of the east, proud hunters long at odds with the Crown.",
+    "attribute_mods": {"strength": 3, "speed": 0, "health": 5, "dexterity": -2},
+    "skill_mods": {"gathering": 10, "unarmed": 5},
+    "xp_mult": 1.0,
+    "craft_mult": 0.85,
+    "needs_mult": {"food": 1.1, "water": 1.0},
+    "strengths": ["+Health, +Strength", "+10 Gathering"],
+    "weaknesses": ["-Dexterity", "Crafting grows 15% slower", "Distrusted in Crown towns"],
+    "skin": [[120, 90, 60], [90, 80, 70], [150, 120, 80]],
+    "hair": [[70, 50, 30], [40, 35, 30], [140, 110, 70]],
+    "body_scale": 1.1
+  }
+}

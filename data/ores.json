@@ -1,0 +1,26 @@
+{
+  "rustite": {
+    "name": "Rustite", "tier": 1, "rarity": "common", "value": 4, "bar_value": 12,
+    "mine_time": 20, "mining_skill": 0, "color": [176, 92, 54],
+    "equipment": {"damage_mult": 1.0, "speed_mult": 0.95, "weight_mult": 1.2, "durability": 60, "armor_mult": 1.0, "mana_conduct": 0.0},
+    "uses": "Cheap starter weapons, tools, nails and building fittings."
+  },
+  "greyvein": {
+    "name": "Greyvein Iron", "tier": 2, "rarity": "uncommon", "value": 12, "bar_value": 34,
+    "mine_time": 30, "mining_skill": 10, "color": [140, 150, 160],
+    "equipment": {"damage_mult": 1.35, "speed_mult": 1.0, "weight_mult": 1.0, "durability": 120, "armor_mult": 1.5, "mana_conduct": 0.0},
+    "uses": "Reliable weapons and the best armor for its price; defenses and base fittings."
+  },
+  "sunsilver": {
+    "name": "Sunsilver", "tier": 3, "rarity": "rare", "value": 35, "bar_value": 95,
+    "mine_time": 40, "mining_skill": 25, "color": [235, 215, 120],
+    "equipment": {"damage_mult": 1.6, "speed_mult": 1.15, "weight_mult": 0.7, "durability": 110, "armor_mult": 1.8, "mana_conduct": 0.15},
+    "uses": "Light, fast weapons and armor; spell foci."
+  },
+  "voidglass": {
+    "name": "Voidglass", "tier": 4, "rarity": "very_rare", "value": 90, "bar_value": 240,
+    "mine_time": 60, "mining_skill": 45, "color": [90, 50, 140],
+    "equipment": {"damage_mult": 2.1, "speed_mult": 1.05, "weight_mult": 0.85, "durability": 80, "armor_mult": 2.2, "mana_conduct": 0.35},
+    "uses": "Legendary-grade weapons and magical equipment."
+  }
+}

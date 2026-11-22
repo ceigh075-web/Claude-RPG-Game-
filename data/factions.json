@@ -1,0 +1,45 @@
+{
+  "crown": {
+    "name": "Crown of Velmora", "leader": "queen_aldra", "seat": "velmora",
+    "territory": ["velmora", "brackenford", "duskreach", "meadowrun", "kingsroad_verge", "widows_crossing"],
+    "goals": ["Keep the roads under royal law", "Tax trade", "Destroy the Hollow"],
+    "color": [70, 100, 180], "start_rep": 0, "hostile_below": -40
+  },
+  "ironhold": {
+    "name": "Ironhold Guild", "leader": "borun_kett", "seat": "hammerlee",
+    "territory": ["hammerlee", "cinderdeep", "cinder_pass", "deep_galleries", "frostfang_ridge"],
+    "goals": ["Control all ore and smithing", "Keep the Crown's taxes low"],
+    "color": [170, 100, 50], "start_rep": 0, "hostile_below": -40
+  },
+  "caravans": {
+    "name": "Free Caravan League", "leader": "sela_marrow", "seat": "saltmarket",
+    "territory": ["saltmarket", "saltwind_dunes", "wreckers_cove"],
+    "goals": ["Open, safe roads", "Abolish tolls", "Profit"],
+    "color": [40, 150, 150], "start_rep": 0, "hostile_below": -40
+  },
+  "ashen": {
+    "name": "Ashen Circle", "leader": "ivo_thale", "seat": "glimmerfen",
+    "territory": ["glimmerfen", "mirelight_bog", "sunken_abbey"],
+    "goals": ["Study and regulate magic", "Recover relics of the vanished builders"],
+    "color": [120, 80, 170], "start_rep": 0, "hostile_below": -40
+  },
+  "thornblood": {
+    "name": "Thornblood Clans", "leader": "gruka", "seat": "thornhollow",
+    "territory": ["thornhollow", "thornwild", "ashfall_crater"],
+    "goals": ["Murrok sovereignty over the Thornwild", "Keep the Crown out of the east"],
+    "color": [120, 90, 40], "start_rep": -5, "hostile_below": -30
+  },
+  "hollow": {
+    "name": "The Hollow", "leader": "black_ren", "seat": "hollow_fort",
+    "territory": ["hollow_fort", "redrock_canyon", "duskmoor"],
+    "goals": ["Bleed the caravans", "Break the Crown's hold on the roads"],
+    "color": [60, 60, 60], "start_rep": -30, "hostile_below": -10
+  },
+  "relations": {
+    "crown|ironhold": 20, "crown|caravans": 10, "crown|ashen": 30, "crown|thornblood": -40, "crown|hollow": -90,
+    "ironhold|caravans": -10, "ironhold|ashen": 0, "ironhold|thornblood": -10, "ironhold|hollow": -60,
+    "caravans|ashen": 10, "caravans|thornblood": 15, "caravans|hollow": -80,
+    "ashen|thornblood": -5, "ashen|hollow": -50,
+    "thornblood|hollow": -20
+  }
+}

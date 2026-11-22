@@ -1,0 +1,11 @@
+{
+  "ai": {
+    "enabled": true,
+    "backend": "ollama",
+    "endpoint": "http://localhost:11434",
+    "model": "llama3.2:3b",
+    "timeout_seconds": 20,
+    "temperature": 0.8,
+    "max_tokens": 220
+  }
+}

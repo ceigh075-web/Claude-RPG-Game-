@@ -1,0 +1,2308 @@
+[
+ {
+  "id": "hessa",
+  "name": "Hessa Moorweld",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 52,
+  "occupation": "Provisioner",
+  "home": "brackenford",
+  "faction": "crown",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 2,
+   "confidence": 6,
+   "intelligence": 6,
+   "honesty": 8,
+   "greed": 3,
+   "loyalty": 8,
+   "sociability": 7
+  },
+  "attributes": {
+   "strength": 12,
+   "speed": 9,
+   "health": 14,
+   "dexterity": 10
+  },
+  "skills": {
+   "trading": 30,
+   "gathering": 25
+  },
+  "equipment": [
+   "dagger_rustite"
+  ],
+  "background": "Widowed farmer who turned her late husband's grain shed into the village provision shop. Knows everyone's business and feeds anyone who's hungry.",
+  "greeting": "Morning, love. You look like you could use a proper meal.",
+  "likes": [
+   "food",
+   "herbs"
+  ],
+  "dislikes": [
+   "drink",
+   "weapons"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 45,
+   "favor": "hessa_minder",
+   "favor_desc": "Find someone to mind her shop while she's away (pay 100 marks for a hand)."
+  },
+  "shop": "provisioner"
+ },
+ {
+  "id": "tobin",
+  "name": "Tobin Reed",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 19,
+  "occupation": "Farmhand",
+  "home": "brackenford",
+  "faction": null,
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 3,
+   "confidence": 4,
+   "intelligence": 5,
+   "honesty": 7,
+   "greed": 2,
+   "loyalty": 7,
+   "sociability": 8
+  },
+  "attributes": {
+   "strength": 11,
+   "speed": 12,
+   "health": 12,
+   "dexterity": 9
+  },
+  "skills": {
+   "gathering": 15,
+   "melee": 5
+  },
+  "equipment": [
+   "axe_rustite"
+  ],
+  "background": "Bored out of his mind hauling grain sacks. Dreams of the caravan roads and keeps a notebook of every traveler's story.",
+  "greeting": "You're not from around here! Where've you been? Anywhere interesting?",
+  "likes": [
+   "weapons",
+   "jewelry"
+  ],
+  "dislikes": [
+   "food"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 15
+  }
+ },
+ {
+  "id": "garrow",
+  "name": "Old Garrow",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 67,
+  "occupation": "Retired Soldier",
+  "home": "brackenford",
+  "faction": "crown",
+  "schedule": "elder",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 5,
+   "confidence": 7,
+   "intelligence": 7,
+   "honesty": 9,
+   "greed": 2,
+   "loyalty": 9,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 16,
+   "speed": 6,
+   "health": 15,
+   "dexterity": 14
+  },
+  "skills": {
+   "melee": 45,
+   "blocking": 40
+  },
+  "equipment": [
+   "longsword_greyvein"
+  ],
+  "background": "Fought in the Thornblood wars forty years ago and still walks the fence line at dawn. Thinks young people are soft, and is usually right.",
+  "greeting": "Hmph. Another wanderer. Can you even hold a sword?",
+  "likes": [
+   "weapons",
+   "drink"
+  ],
+  "dislikes": [
+   "jewelry"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "respect": 40,
+   "favor": "garrow_spar",
+   "favor_desc": "Prove yourself in a sparring match."
+  }
+ },
+ {
+  "id": "wren",
+  "name": "Wren Ashby",
+  "race": "sylth",
+  "pronouns": "she/her",
+  "age": 24,
+  "occupation": "Herbalist",
+  "home": "brackenford",
+  "faction": null,
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 9,
+   "aggression": 1,
+   "confidence": 3,
+   "intelligence": 7,
+   "honesty": 9,
+   "greed": 2,
+   "loyalty": 7,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 7,
+   "speed": 13,
+   "health": 9,
+   "dexterity": 14
+  },
+  "skills": {
+   "gathering": 30,
+   "magic": 15,
+   "crafting": 20
+  },
+  "equipment": [
+   "dagger_rustite"
+  ],
+  "background": "Settled in Brackenford after her wandering family moved on without her. Grows medicinal herbs behind the inn and patches up every scraped knee in the village.",
+  "greeting": "Oh! Hello. Are you hurt? You look a little scuffed.",
+  "likes": [
+   "herbs",
+   "books"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 35,
+   "favor": "wren_mirelight",
+   "favor_desc": "Bring her 3 Mirelight Herbs from the bog."
+  }
+ },
+ {
+  "id": "bram",
+  "name": "Bram Tull",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 45,
+  "occupation": "Innkeeper",
+  "home": "brackenford",
+  "faction": null,
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 3,
+   "confidence": 6,
+   "intelligence": 5,
+   "honesty": 5,
+   "greed": 7,
+   "loyalty": 5,
+   "sociability": 9
+  },
+  "attributes": {
+   "strength": 13,
+   "speed": 8,
+   "health": 14,
+   "dexterity": 8
+  },
+  "skills": {
+   "trading": 35
+  },
+  "equipment": [],
+  "background": "Runs The Leaning Plough. Jovial, loud, and always counting coins under the bar.",
+  "greeting": "Welcome to The Leaning Plough! Bed's 8 marks, ale's 3, gossip's free.",
+  "likes": [
+   "drink",
+   "jewelry"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 250,
+   "favor_desc": "Pay for a replacement innkeeper."
+  },
+  "shop": "inn"
+ },
+ {
+  "id": "queen_aldra",
+  "name": "Queen Aldra Venn",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 48,
+  "occupation": "Queen of Velmora",
+  "home": "velmora",
+  "faction": "crown",
+  "schedule": "noble",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 5,
+   "confidence": 9,
+   "intelligence": 9,
+   "honesty": 6,
+   "greed": 4,
+   "loyalty": 7,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 9,
+   "health": 12,
+   "dexterity": 11
+  },
+  "skills": {
+   "trading": 40,
+   "melee": 20
+  },
+  "equipment": [
+   "longsword_sunsilver"
+  ],
+  "background": "Took the throne after her brother died in the Thornblood wars. Pragmatic, tired, and convinced the Hollow will be the end of the realm if no one stops them.",
+  "greeting": "Speak plainly. My time is the realm's.",
+  "likes": [
+   "books",
+   "jewelry"
+  ],
+  "dislikes": [
+   "hide"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "crown": 80
+   },
+   "respect": 70,
+   "friendship": 50,
+   "favor": "aldra_succession",
+   "favor_desc": "Destroy the Hollow and secure a successor for the throne."
+  },
+  "leader": true
+ },
+ {
+  "id": "ilsa",
+  "name": "Captain Ilsa Varn",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 36,
+  "occupation": "Guard Captain",
+  "home": "velmora",
+  "faction": "crown",
+  "schedule": "guard",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 6,
+   "confidence": 8,
+   "intelligence": 7,
+   "honesty": 8,
+   "greed": 2,
+   "loyalty": 9,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 18,
+   "speed": 13,
+   "health": 18,
+   "dexterity": 15
+  },
+  "skills": {
+   "melee": 50,
+   "blocking": 45,
+   "dodging": 25
+  },
+  "equipment": [
+   "longsword_greyvein"
+  ],
+  "background": "Rose from gate guard to captain of the city watch. Hates corruption more than she hates bandits.",
+  "greeting": "State your business in Velmora, traveler.",
+  "likes": [
+   "weapons",
+   "tools"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "rep": {
+    "crown": 40
+   },
+   "respect": 40
+  }
+ },
+ {
+  "id": "corwin",
+  "name": "Corwin Hale",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 29,
+  "occupation": "Disgraced Noble",
+  "home": "velmora",
+  "faction": null,
+  "schedule": "night_owl",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 3,
+   "confidence": 7,
+   "intelligence": 6,
+   "honesty": 2,
+   "greed": 7,
+   "loyalty": 3,
+   "sociability": 9
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 12,
+   "health": 11,
+   "dexterity": 15
+  },
+  "skills": {
+   "trading": 30,
+   "dodging": 20,
+   "melee": 15
+  },
+  "equipment": [
+   "shortsword_greyvein"
+  ],
+  "background": "Third son of a minor house, disowned after a gambling scandal. Charming, broke, and very good at talking his way out of trouble.",
+  "greeting": "Well! A new face. Tell me, friend, do you play cards?",
+  "likes": [
+   "jewelry",
+   "drink"
+  ],
+  "dislikes": [
+   "tools"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "gold": 150
+  }
+ },
+ {
+  "id": "marta",
+  "name": "Marta Quill",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 41,
+  "occupation": "Royal Archivist",
+  "home": "velmora",
+  "faction": "crown",
+  "schedule": "scholar",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 1,
+   "confidence": 5,
+   "intelligence": 10,
+   "honesty": 9,
+   "greed": 2,
+   "loyalty": 7,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 6,
+   "speed": 8,
+   "health": 10,
+   "dexterity": 12
+  },
+  "skills": {
+   "magic": 20,
+   "trading": 15
+  },
+  "equipment": [],
+  "background": "Keeps the Crown's records and secretly writes an unauthorised history of the vanished builders.",
+  "greeting": "Mind the scrolls. Oh - are you an adventurer? Have you seen any ruins?",
+  "likes": [
+   "books",
+   "relic"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 30,
+   "favor": "marta_relic",
+   "favor_desc": "Bring her a Relic Shard from the ruins."
+  }
+ },
+ {
+  "id": "brask",
+  "name": "Sergeant Brask",
+  "race": "kethari",
+  "pronouns": "he/him",
+  "age": 39,
+  "occupation": "Crown Sergeant",
+  "home": "velmora",
+  "faction": "crown",
+  "schedule": "guard",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 6,
+   "confidence": 7,
+   "intelligence": 4,
+   "honesty": 8,
+   "greed": 3,
+   "loyalty": 9,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 22,
+   "speed": 8,
+   "health": 22,
+   "dexterity": 11
+  },
+  "skills": {
+   "melee": 40,
+   "blocking": 35
+  },
+  "equipment": [
+   "hammer_greyvein"
+  ],
+  "background": "A Kethari who joined the Crown army to send money home to Cinderdeep. Blunt, dependable, and owed several years of back pay.",
+  "greeting": "Hah. You've got a miner's hands. Or you will.",
+  "likes": [
+   "ore",
+   "drink"
+  ],
+  "dislikes": [
+   "magic"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "crown": 25
+   },
+   "gold": 200,
+   "favor_desc": "Buy out the rest of his service contract."
+  }
+ },
+ {
+  "id": "lysa",
+  "name": "Lysa Dorne",
+  "race": "sylth",
+  "pronouns": "she/her",
+  "age": 26,
+  "occupation": "Street Bard",
+  "home": "velmora",
+  "faction": null,
+  "schedule": "performer",
+  "personality": {
+   "friendliness": 9,
+   "aggression": 2,
+   "confidence": 8,
+   "intelligence": 6,
+   "honesty": 6,
+   "greed": 4,
+   "loyalty": 5,
+   "sociability": 10
+  },
+  "attributes": {
+   "strength": 8,
+   "speed": 14,
+   "health": 10,
+   "dexterity": 16
+  },
+  "skills": {
+   "dodging": 25,
+   "magic": 15,
+   "trading": 20
+  },
+  "equipment": [
+   "dagger_sunsilver"
+  ],
+  "background": "Plays the plaza fountain by day and the noble salons by night, collecting secrets as easily as coins.",
+  "greeting": "A new audience! Shall I play you something sad or something scandalous?",
+  "likes": [
+   "jewelry",
+   "herbs"
+  ],
+  "dislikes": [
+   "hide"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 25
+  }
+ },
+ {
+  "id": "ruda",
+  "name": "Forewoman Ruda Kast",
+  "race": "kethari",
+  "pronouns": "she/her",
+  "age": 44,
+  "occupation": "Mine Forewoman",
+  "home": "cinderdeep",
+  "faction": "ironhold",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 5,
+   "confidence": 9,
+   "intelligence": 6,
+   "honesty": 7,
+   "greed": 4,
+   "loyalty": 8,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 24,
+   "speed": 9,
+   "health": 24,
+   "dexterity": 10
+  },
+  "skills": {
+   "mining": 60,
+   "melee": 25
+  },
+  "equipment": [
+   "hammer_greyvein"
+  ],
+  "background": "Runs the upper galleries with an iron voice. Lost her crew to a collapse in the Deep Galleries and wants the lower seams reopened safely.",
+  "greeting": "If you're here to gawk, gawk somewhere else. If you're here to dig, grab a pick.",
+  "likes": [
+   "ore",
+   "tools"
+  ],
+  "dislikes": [
+   "magic"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "ironhold": 30
+   },
+   "respect": 40
+  }
+ },
+ {
+  "id": "pell",
+  "name": "Pell Underhill",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 20,
+  "occupation": "Miner",
+  "home": "cinderdeep",
+  "faction": "ironhold",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 1,
+   "confidence": 3,
+   "intelligence": 5,
+   "honesty": 9,
+   "greed": 3,
+   "loyalty": 6,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 13,
+   "speed": 10,
+   "health": 12,
+   "dexterity": 9
+  },
+  "skills": {
+   "mining": 20
+  },
+  "equipment": [],
+  "background": "Sends every mark home to a sick mother in Saltmarket. Terrified of the dark, works in it anyway.",
+  "greeting": "H-hello. Are you from the guild? I've been working, I promise.",
+  "likes": [
+   "food",
+   "herbs"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "gold": 60
+  }
+ },
+ {
+  "id": "grint",
+  "name": "Grint",
+  "race": "murrok",
+  "pronouns": "he/him",
+  "age": 34,
+  "occupation": "Ex-raider Miner",
+  "home": "cinderdeep",
+  "faction": null,
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 3,
+   "aggression": 8,
+   "confidence": 7,
+   "intelligence": 4,
+   "honesty": 6,
+   "greed": 4,
+   "loyalty": 8,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 22,
+   "speed": 11,
+   "health": 24,
+   "dexterity": 8
+  },
+  "skills": {
+   "unarmed": 40,
+   "mining": 30,
+   "melee": 20
+  },
+  "equipment": [
+   "knuckles_rustite"
+  ],
+  "background": "Left the Thornblood raiding bands after a raid went wrong. Digs rock now, because rock doesn't scream.",
+  "greeting": "You want something, talk. You want a fight, also fine.",
+  "likes": [
+   "food",
+   "hide"
+  ],
+  "dislikes": [
+   "jewelry"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "respect": 30,
+   "favor": "grint_brawl",
+   "favor_desc": "Beat him in a fistfight."
+  }
+ },
+ {
+  "id": "ottile",
+  "name": "Ottile Brune",
+  "race": "kethari",
+  "pronouns": "she/her",
+  "age": 58,
+  "occupation": "Ore Assayer",
+  "home": "cinderdeep",
+  "faction": "ironhold",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 2,
+   "confidence": 7,
+   "intelligence": 9,
+   "honesty": 4,
+   "greed": 9,
+   "loyalty": 5,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 12,
+   "speed": 6,
+   "health": 14,
+   "dexterity": 11
+  },
+  "skills": {
+   "trading": 55,
+   "mining": 25
+  },
+  "equipment": [],
+  "background": "Weighs every lump of ore that leaves Cinderdeep and takes a sliver of each. Very, very rich.",
+  "greeting": "Ore? Let's see it. Don't waste my scale with rubbish.",
+  "likes": [
+   "jewelry",
+   "ore"
+  ],
+  "dislikes": [
+   "food"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 400
+  },
+  "shop": "assayer"
+ },
+ {
+  "id": "borun_kett",
+  "name": "Guildmaster Borun Kett",
+  "race": "kethari",
+  "pronouns": "he/him",
+  "age": 61,
+  "occupation": "Guildmaster",
+  "home": "hammerlee",
+  "faction": "ironhold",
+  "schedule": "noble",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 4,
+   "confidence": 9,
+   "intelligence": 8,
+   "honesty": 6,
+   "greed": 7,
+   "loyalty": 8,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 20,
+   "speed": 7,
+   "health": 20,
+   "dexterity": 12
+  },
+  "skills": {
+   "crafting": 70,
+   "trading": 50
+  },
+  "equipment": [
+   "hammer_sunsilver"
+  ],
+  "background": "Has run the Ironhold Guild for twenty years and intends to outlive both the Queen and her taxes.",
+  "greeting": "Every blade in this region passes through my guild eventually. What do you want?",
+  "likes": [
+   "ore",
+   "tools"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "ironhold": 80
+   },
+   "respect": 70,
+   "friendship": 50,
+   "favor": "kett_succession",
+   "favor_desc": "Secure the guild's future: deliver 20 Sunsilver bars and back his chosen successor."
+  },
+  "leader": true
+ },
+ {
+  "id": "halvard",
+  "name": "Master Halvard Stone",
+  "race": "kethari",
+  "pronouns": "he/him",
+  "age": 50,
+  "occupation": "Master Smith",
+  "home": "hammerlee",
+  "faction": "ironhold",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 4,
+   "confidence": 9,
+   "intelligence": 7,
+   "honesty": 8,
+   "greed": 5,
+   "loyalty": 7,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 24,
+   "speed": 7,
+   "health": 20,
+   "dexterity": 15
+  },
+  "skills": {
+   "crafting": 75,
+   "melee": 30
+  },
+  "equipment": [
+   "hammer_greyvein"
+  ],
+  "background": "The finest smith in Hammerlee, and he will tell you so. Has never forged Voidglass and is quietly obsessed with it.",
+  "greeting": "Don't touch the anvil. What are you buying?",
+  "likes": [
+   "ore",
+   "weapons"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "ironhold": 50
+   },
+   "friendship": 40,
+   "favor": "halvard_voidglass",
+   "favor_desc": "Bring him 3 Voidglass ore."
+  },
+  "shop": "smithy"
+ },
+ {
+  "id": "nessa",
+  "name": "Nessa Coil",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 31,
+  "occupation": "Tinkerer",
+  "home": "hammerlee",
+  "faction": "ironhold",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 3,
+   "confidence": 7,
+   "intelligence": 9,
+   "honesty": 7,
+   "greed": 4,
+   "loyalty": 6,
+   "sociability": 8
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 11,
+   "health": 11,
+   "dexterity": 17
+  },
+  "skills": {
+   "crafting": 55,
+   "ranged": 30
+  },
+  "equipment": [
+   "firelock_greyvein"
+  ],
+  "background": "Invented (she insists) the firelock. The guild thinks her contraptions are a fire hazard. They are.",
+  "greeting": "Careful, that one's loaded. Probably. What do you think of springs?",
+  "likes": [
+   "tools",
+   "ore"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 30,
+   "favor": "nessa_powder",
+   "favor_desc": "Bring her 5 Salt and 2 Sunsilver ore for her powder experiments."
+  }
+ },
+ {
+  "id": "jory",
+  "name": "Jory Lark",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 17,
+  "occupation": "Apprentice Smith",
+  "home": "hammerlee",
+  "faction": "ironhold",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 2,
+   "confidence": 2,
+   "intelligence": 5,
+   "honesty": 8,
+   "greed": 2,
+   "loyalty": 8,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 13,
+   "speed": 10,
+   "health": 11,
+   "dexterity": 10
+  },
+  "skills": {
+   "crafting": 20
+  },
+  "equipment": [],
+  "background": "Halvard's apprentice. Burns himself every day, apologises every day.",
+  "greeting": "S-sorry, master's busy. Can I help? I can probably help.",
+  "likes": [
+   "weapons",
+   "food"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 20
+  }
+ },
+ {
+  "id": "vell",
+  "name": "Vell Ambrose",
+  "race": "sylth",
+  "pronouns": "they/them",
+  "age": 33,
+  "occupation": "Leatherworker",
+  "home": "hammerlee",
+  "faction": null,
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 2,
+   "confidence": 8,
+   "intelligence": 8,
+   "honesty": 6,
+   "greed": 6,
+   "loyalty": 4,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 9,
+   "speed": 13,
+   "health": 10,
+   "dexterity": 18
+  },
+  "skills": {
+   "crafting": 50,
+   "trading": 30
+  },
+  "equipment": [
+   "dagger_sunsilver"
+  ],
+  "background": "Makes armor so fine the Queen's guard orders from them. Finds everyone else slightly vulgar.",
+  "greeting": "You'd look less dreadful in a fitted jerkin. I can help with that, for a price.",
+  "likes": [
+   "jewelry",
+   "hide"
+  ],
+  "dislikes": [
+   "ore"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "gold": 250
+  },
+  "shop": "workshop"
+ },
+ {
+  "id": "sela_marrow",
+  "name": "Sela Marrow",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 46,
+  "occupation": "Mistress of the Caravan League",
+  "home": "saltmarket",
+  "faction": "caravans",
+  "schedule": "noble",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 3,
+   "confidence": 9,
+   "intelligence": 9,
+   "honesty": 5,
+   "greed": 8,
+   "loyalty": 6,
+   "sociability": 8
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 10,
+   "health": 12,
+   "dexterity": 13
+  },
+  "skills": {
+   "trading": 80,
+   "dodging": 20
+  },
+  "equipment": [
+   "dagger_sunsilver"
+  ],
+  "background": "Built the Free Caravan League from three wagons and a debt. Believes every problem has a price.",
+  "greeting": "Merchant, mercenary or mark? Everyone in Saltmarket is one of the three.",
+  "likes": [
+   "jewelry",
+   "books"
+  ],
+  "dislikes": [
+   "hide"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "caravans": 80
+   },
+   "friendship": 50,
+   "respect": 60,
+   "favor": "marrow_succession",
+   "favor_desc": "Make the roads safe (the Hollow defeated) and confirm her successor."
+  },
+  "leader": true
+ },
+ {
+  "id": "odo",
+  "name": "Captain Odo Brine",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 52,
+  "occupation": "Smuggler Captain",
+  "home": "saltmarket",
+  "faction": "caravans",
+  "schedule": "night_owl",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 5,
+   "confidence": 8,
+   "intelligence": 6,
+   "honesty": 3,
+   "greed": 8,
+   "loyalty": 4,
+   "sociability": 8
+  },
+  "attributes": {
+   "strength": 16,
+   "speed": 10,
+   "health": 16,
+   "dexterity": 13
+  },
+  "skills": {
+   "trading": 40,
+   "melee": 30,
+   "ranged": 25
+  },
+  "equipment": [
+   "firelock_rustite"
+  ],
+  "background": "Officially a merchant captain. Unofficially, nothing passes Wrecker's Cove without his say-so.",
+  "greeting": "Ahoy, landlubber. Looking for work that doesn't ask questions?",
+  "likes": [
+   "drink",
+   "jewelry"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 300
+  }
+ },
+ {
+  "id": "fenna",
+  "name": "Fenna Kiln",
+  "race": "murrok",
+  "pronouns": "she/her",
+  "age": 28,
+  "occupation": "Caravan Guard",
+  "home": "saltmarket",
+  "faction": "caravans",
+  "schedule": "guard",
+  "personality": {
+   "friendliness": 9,
+   "aggression": 5,
+   "confidence": 7,
+   "intelligence": 5,
+   "honesty": 8,
+   "greed": 3,
+   "loyalty": 9,
+   "sociability": 9
+  },
+  "attributes": {
+   "strength": 19,
+   "speed": 12,
+   "health": 22,
+   "dexterity": 11
+  },
+  "skills": {
+   "melee": 40,
+   "blocking": 30,
+   "athletics": 30
+  },
+  "equipment": [
+   "spear_greyvein"
+  ],
+  "background": "Has walked every caravan road in the region and sings on all of them. Badly.",
+  "greeting": "Heya! You heading out? Roads are safer with company!",
+  "likes": [
+   "food",
+   "herbs"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "gold": 120
+  }
+ },
+ {
+  "id": "isk",
+  "name": "Isk",
+  "race": "sylth",
+  "pronouns": "he/him",
+  "age": 40,
+  "occupation": "Information Broker",
+  "home": "saltmarket",
+  "faction": null,
+  "schedule": "night_owl",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 3,
+   "confidence": 7,
+   "intelligence": 9,
+   "honesty": 2,
+   "greed": 8,
+   "loyalty": 3,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 8,
+   "speed": 15,
+   "health": 9,
+   "dexterity": 17
+  },
+  "skills": {
+   "dodging": 40,
+   "trading": 45,
+   "ranged": 20
+  },
+  "equipment": [
+   "throwing_sunsilver"
+  ],
+  "background": "Sells secrets in the warehouse district. No one knows his real name, including, he claims, himself.",
+  "greeting": "Everything has a price. Even this conversation. Lucky for you, the first minute's free.",
+  "likes": [
+   "books",
+   "jewelry"
+  ],
+  "dislikes": [
+   "food"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 200,
+   "favor": "isk_secret",
+   "favor_desc": "Trade him a secret: bring a Relic Shard from the Sunken Abbey."
+  }
+ },
+ {
+  "id": "tamsin",
+  "name": "Tamsin Grael",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 38,
+  "occupation": "Fishmonger",
+  "home": "saltmarket",
+  "faction": "caravans",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 2,
+   "confidence": 6,
+   "intelligence": 5,
+   "honesty": 6,
+   "greed": 5,
+   "loyalty": 6,
+   "sociability": 10
+  },
+  "attributes": {
+   "strength": 12,
+   "speed": 10,
+   "health": 13,
+   "dexterity": 11
+  },
+  "skills": {
+   "trading": 30,
+   "gathering": 25
+  },
+  "equipment": [
+   "dagger_rustite"
+  ],
+  "background": "Sells the freshest fish and the stalest gossip in Saltmarket, and enjoys the second more.",
+  "greeting": "Fresh fish! Fresh news! Did you hear what happened at the docks?",
+  "likes": [
+   "food",
+   "jewelry"
+  ],
+  "dislikes": [
+   "magic"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 30
+  },
+  "shop": "provisioner"
+ },
+ {
+  "id": "ivo_thale",
+  "name": "Archmage Ivo Thale",
+  "race": "sylth",
+  "pronouns": "he/him",
+  "age": 112,
+  "occupation": "Archmage",
+  "home": "glimmerfen",
+  "faction": "ashen",
+  "schedule": "scholar",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 2,
+   "confidence": 8,
+   "intelligence": 10,
+   "honesty": 7,
+   "greed": 3,
+   "loyalty": 6,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 6,
+   "speed": 10,
+   "health": 9,
+   "dexterity": 14
+  },
+  "skills": {
+   "magic": 90
+  },
+  "equipment": [],
+  "background": "Leader of the Ashen Circle for half a century. Believes the vanished builders destroyed themselves with unregulated magic.",
+  "greeting": "Ah. Another bright spark who thinks they understand mana. Sit.",
+  "likes": [
+   "magic",
+   "books"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "ashen": 80
+   },
+   "friendship": 50,
+   "skill": {
+    "magic": 60
+   },
+   "favor": "thale_spire",
+   "favor_desc": "Recover the core relic of the Shattered Spire."
+  },
+  "leader": true
+ },
+ {
+  "id": "mirela",
+  "name": "Mirela Vox",
+  "race": "sylth",
+  "pronouns": "she/her",
+  "age": 37,
+  "occupation": "Spell Tutor",
+  "home": "glimmerfen",
+  "faction": "ashen",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 3,
+   "aggression": 4,
+   "confidence": 8,
+   "intelligence": 9,
+   "honesty": 7,
+   "greed": 5,
+   "loyalty": 6,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 8,
+   "speed": 12,
+   "health": 10,
+   "dexterity": 15
+  },
+  "skills": {
+   "magic": 65,
+   "trading": 30
+  },
+  "equipment": [],
+  "background": "Teaches spell construction to anyone who can pay and few who can keep up. Ruthlessly precise.",
+  "greeting": "Your mana flow is atrocious. Fortunately, I charge by the lesson.",
+  "likes": [
+   "magic",
+   "books"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "rep": {
+    "ashen": 30
+   },
+   "skill": {
+    "magic": 20
+   }
+  },
+  "shop": "enchanter"
+ },
+ {
+  "id": "hob",
+  "name": "Hob Mosswick",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 55,
+  "occupation": "Bog Guide",
+  "home": "glimmerfen",
+  "faction": null,
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 2,
+   "confidence": 4,
+   "intelligence": 6,
+   "honesty": 7,
+   "greed": 3,
+   "loyalty": 6,
+   "sociability": 7
+  },
+  "attributes": {
+   "strength": 13,
+   "speed": 11,
+   "health": 15,
+   "dexterity": 12
+  },
+  "skills": {
+   "gathering": 45,
+   "ranged": 25
+  },
+  "equipment": [
+   "spear_rustite"
+  ],
+  "background": "Knows every safe path through Mirelight Bog, and most of the unsafe ones.",
+  "greeting": "Mind the green water, friend. Green's fine. Glowing green - not fine.",
+  "likes": [
+   "drink",
+   "food"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 80
+  }
+ },
+ {
+  "id": "anwen",
+  "name": "Sister Anwen",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 30,
+  "occupation": "Circle Healer",
+  "home": "glimmerfen",
+  "faction": "ashen",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 10,
+   "aggression": 1,
+   "confidence": 5,
+   "intelligence": 7,
+   "honesty": 9,
+   "greed": 1,
+   "loyalty": 8,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 8,
+   "speed": 10,
+   "health": 11,
+   "dexterity": 12
+  },
+  "skills": {
+   "magic": 40,
+   "gathering": 25
+  },
+  "equipment": [],
+  "background": "A healer who left the Crown temples to study light-magic medicine with the Ashen Circle.",
+  "greeting": "Be welcome. If you carry any wounds - any at all - come to me first.",
+  "likes": [
+   "herbs",
+   "books"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 40
+  }
+ },
+ {
+  "id": "kara",
+  "name": "Kara 'Ironjaw' Vosk",
+  "race": "kethari",
+  "pronouns": "she/her",
+  "age": 42,
+  "occupation": "Mercenary Boss",
+  "home": "redwater",
+  "faction": null,
+  "schedule": "noble",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 7,
+   "confidence": 9,
+   "intelligence": 6,
+   "honesty": 5,
+   "greed": 7,
+   "loyalty": 6,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 25,
+   "speed": 10,
+   "health": 24,
+   "dexterity": 13
+  },
+  "skills": {
+   "melee": 60,
+   "blocking": 45
+  },
+  "equipment": [
+   "battleaxe_greyvein"
+  ],
+  "background": "Runs the Redwater Company and the fighting pit. Earned her nickname by catching a mace with her teeth.",
+  "greeting": "You fight? You pay? Or you leave. Those are the options.",
+  "likes": [
+   "weapons",
+   "drink"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "respect": 60,
+   "gold": 500,
+   "favor_desc": "Earn her respect in the pit and buy out her company's contract."
+  }
+ },
+ {
+  "id": "rennick",
+  "name": "Rennick Shaw",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 47,
+  "occupation": "Veteran Sellsword",
+  "home": "redwater",
+  "faction": null,
+  "schedule": "guard",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 5,
+   "confidence": 7,
+   "intelligence": 6,
+   "honesty": 6,
+   "greed": 6,
+   "loyalty": 5,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 20,
+   "speed": 11,
+   "health": 20,
+   "dexterity": 16
+  },
+  "skills": {
+   "melee": 55,
+   "blocking": 35,
+   "ranged": 20
+  },
+  "equipment": [
+   "longsword_greyvein"
+  ],
+  "background": "Has fought for every faction in the region and been betrayed by most of them.",
+  "greeting": "Two hundred marks and I'll follow you into anything short of the Spire.",
+  "likes": [
+   "drink",
+   "weapons"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 200
+  }
+ },
+ {
+  "id": "lio",
+  "name": "Lio Tamber",
+  "race": "murrok",
+  "pronouns": "he/him",
+  "age": 23,
+  "occupation": "Pit Fighter",
+  "home": "redwater",
+  "faction": null,
+  "schedule": "performer",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 8,
+   "confidence": 9,
+   "intelligence": 4,
+   "honesty": 6,
+   "greed": 5,
+   "loyalty": 5,
+   "sociability": 8
+  },
+  "attributes": {
+   "strength": 23,
+   "speed": 15,
+   "health": 21,
+   "dexterity": 12
+  },
+  "skills": {
+   "unarmed": 55,
+   "dodging": 35
+  },
+  "equipment": [
+   "knuckles_greyvein"
+  ],
+  "background": "Undefeated champion of the Redwater pit for two seasons. Very loud about it.",
+  "greeting": "You've heard of me. Everyone's heard of me. Want an autograph or a beating?",
+  "likes": [
+   "food",
+   "jewelry"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "respect": 35,
+   "favor": "lio_pit",
+   "favor_desc": "Beat him in the fighting pit."
+  }
+ },
+ {
+  "id": "della",
+  "name": "Della Crane",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 35,
+  "occupation": "Bounty Clerk",
+  "home": "redwater",
+  "faction": null,
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 3,
+   "confidence": 7,
+   "intelligence": 8,
+   "honesty": 8,
+   "greed": 4,
+   "loyalty": 7,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 10,
+   "health": 12,
+   "dexterity": 14
+  },
+  "skills": {
+   "trading": 35,
+   "ranged": 30
+  },
+  "equipment": [
+   "crossbow_rustite"
+  ],
+  "background": "Keeps the bounty ledger and pays out fairly, which in Redwater makes her a saint.",
+  "greeting": "Bounties on the board, pay on proof. No proof, no pay.",
+  "likes": [
+   "books",
+   "drink"
+  ],
+  "dislikes": [
+   "hide"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 35
+  }
+ },
+ {
+  "id": "shade",
+  "name": "Yeva 'Shade'",
+  "race": "sylth",
+  "pronouns": "she/her",
+  "age": 29,
+  "occupation": "Mercenary Archer",
+  "home": "redwater",
+  "faction": null,
+  "schedule": "night_owl",
+  "personality": {
+   "friendliness": 3,
+   "aggression": 5,
+   "confidence": 8,
+   "intelligence": 7,
+   "honesty": 6,
+   "greed": 5,
+   "loyalty": 7,
+   "sociability": 2
+  },
+  "attributes": {
+   "strength": 10,
+   "speed": 16,
+   "health": 11,
+   "dexterity": 20
+  },
+  "skills": {
+   "ranged": 60,
+   "dodging": 40
+  },
+  "equipment": [
+   "bow_sunsilver"
+  ],
+  "background": "A silent archer who only takes contracts against bandits. Doesn't say why.",
+  "greeting": "...",
+  "likes": [
+   "weapons",
+   "herbs"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "gold": 250
+  }
+ },
+ {
+  "id": "gruka",
+  "name": "Warchief Gruka",
+  "race": "murrok",
+  "pronouns": "he/him",
+  "age": 55,
+  "occupation": "Warchief",
+  "home": "thornhollow",
+  "faction": "thornblood",
+  "schedule": "noble",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 7,
+   "confidence": 9,
+   "intelligence": 6,
+   "honesty": 7,
+   "greed": 3,
+   "loyalty": 9,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 28,
+   "speed": 10,
+   "health": 28,
+   "dexterity": 10
+  },
+  "skills": {
+   "melee": 65,
+   "unarmed": 50
+  },
+  "equipment": [
+   "battleaxe_sunsilver"
+  ],
+  "background": "Led the clans through the last war with the Crown and has kept an uneasy peace since. Will not bow.",
+  "greeting": "An outsider in Thornhollow. Speak, and speak true.",
+  "likes": [
+   "hide",
+   "weapons"
+  ],
+  "dislikes": [
+   "jewelry"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "thornblood": 80
+   },
+   "respect": 70,
+   "friendship": 40,
+   "favor": "gruka_peace",
+   "favor_desc": "Broker a lasting peace between the clans and the Crown."
+  },
+  "leader": true
+ },
+ {
+  "id": "ama",
+  "name": "Ama Thornsinger",
+  "race": "murrok",
+  "pronouns": "she/her",
+  "age": 64,
+  "occupation": "Shaman",
+  "home": "thornhollow",
+  "faction": "thornblood",
+  "schedule": "elder",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 2,
+   "confidence": 7,
+   "intelligence": 8,
+   "honesty": 8,
+   "greed": 2,
+   "loyalty": 8,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 14,
+   "speed": 8,
+   "health": 18,
+   "dexterity": 10
+  },
+  "skills": {
+   "magic": 50,
+   "gathering": 40
+  },
+  "equipment": [],
+  "background": "Speaks to the forest and the clan listens. Believes the Ashfall Crater is waking up.",
+  "greeting": "The trees told me someone was coming. They did not say you'd be so small.",
+  "likes": [
+   "herbs",
+   "magic"
+  ],
+  "dislikes": [
+   "ore"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "rep": {
+    "thornblood": 30
+   },
+   "friendship": 30
+  }
+ },
+ {
+  "id": "brakka",
+  "name": "Brakka",
+  "race": "murrok",
+  "pronouns": "she/her",
+  "age": 31,
+  "occupation": "Hunter",
+  "home": "thornhollow",
+  "faction": "thornblood",
+  "schedule": "worker",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 6,
+   "confidence": 8,
+   "intelligence": 6,
+   "honesty": 8,
+   "greed": 3,
+   "loyalty": 7,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 21,
+   "speed": 15,
+   "health": 21,
+   "dexterity": 15
+  },
+  "skills": {
+   "ranged": 45,
+   "gathering": 40,
+   "melee": 25
+  },
+  "equipment": [
+   "bow_greyvein"
+  ],
+  "background": "The clan's best tracker. Judges people by whether they can keep up.",
+  "greeting": "You walk loud. Like a cart.",
+  "likes": [
+   "hide",
+   "weapons"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "respect": 40,
+   "favor": "brakka_hunt",
+   "favor_desc": "Complete the hunting trial in the Thornwild."
+  }
+ },
+ {
+  "id": "tashi",
+  "name": "Tashi Burrfoot",
+  "race": "murrok",
+  "pronouns": "he/him",
+  "age": 20,
+  "occupation": "Young Trader",
+  "home": "thornhollow",
+  "faction": "thornblood",
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 9,
+   "aggression": 2,
+   "confidence": 5,
+   "intelligence": 6,
+   "honesty": 8,
+   "greed": 4,
+   "loyalty": 6,
+   "sociability": 9
+  },
+  "attributes": {
+   "strength": 14,
+   "speed": 12,
+   "health": 15,
+   "dexterity": 11
+  },
+  "skills": {
+   "trading": 30,
+   "gathering": 20
+  },
+  "equipment": [
+   "throwing_rustite"
+  ],
+  "background": "The first murrok in generations to trade openly with the Crown towns. Endlessly curious about the west.",
+  "greeting": "A traveler! Is it true that in Velmora the houses are made entirely of stone?",
+  "likes": [
+   "jewelry",
+   "books"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 20
+  },
+  "shop": "tannery"
+ },
+ {
+  "id": "elise",
+  "name": "Warden Elise Harrow",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 40,
+  "occupation": "Frontier Warden",
+  "home": "duskreach",
+  "faction": "crown",
+  "schedule": "guard",
+  "personality": {
+   "friendliness": 4,
+   "aggression": 5,
+   "confidence": 8,
+   "intelligence": 7,
+   "honesty": 9,
+   "greed": 2,
+   "loyalty": 9,
+   "sociability": 3
+  },
+  "attributes": {
+   "strength": 19,
+   "speed": 13,
+   "health": 19,
+   "dexterity": 15
+  },
+  "skills": {
+   "melee": 45,
+   "ranged": 40
+  },
+  "equipment": [
+   "crossbow_greyvein"
+  ],
+  "background": "Commands twelve tired soldiers at the edge of the map. Has written to Velmora for reinforcements nine times.",
+  "greeting": "Duskreach is open. The east isn't. Don't go past the tower after dark.",
+  "likes": [
+   "weapons",
+   "food"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "rep": {
+    "crown": 20
+   },
+   "respect": 30
+  }
+ },
+ {
+  "id": "mott",
+  "name": "Mott Grimsby",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 50,
+  "occupation": "Scavenger Dealer",
+  "home": "duskreach",
+  "faction": null,
+  "schedule": "merchant",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 2,
+   "confidence": 6,
+   "intelligence": 6,
+   "honesty": 3,
+   "greed": 9,
+   "loyalty": 3,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 11,
+   "speed": 8,
+   "health": 13,
+   "dexterity": 12
+  },
+  "skills": {
+   "trading": 45
+  },
+  "equipment": [
+   "dagger_rustite"
+  ],
+  "background": "Buys what scavengers drag back from the east and sells it at four times the price. Asks no questions.",
+  "greeting": "Relics, scrap, oddities. Buying and selling. Mostly buying cheap.",
+  "likes": [
+   "jewelry",
+   "relic"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "gold": 150
+  },
+  "shop": "scavenger_shop"
+ },
+ {
+  "id": "kethra",
+  "name": "Kethra Dunmore",
+  "race": "kethari",
+  "pronouns": "she/her",
+  "age": 27,
+  "occupation": "Ruin Delver",
+  "home": "duskreach",
+  "faction": null,
+  "schedule": "wanderer",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 4,
+   "confidence": 9,
+   "intelligence": 7,
+   "honesty": 7,
+   "greed": 5,
+   "loyalty": 6,
+   "sociability": 7
+  },
+  "attributes": {
+   "strength": 18,
+   "speed": 12,
+   "health": 19,
+   "dexterity": 14
+  },
+  "skills": {
+   "mining": 35,
+   "melee": 30,
+   "dodging": 25
+  },
+  "equipment": [
+   "polearm_greyvein"
+  ],
+  "background": "Has been inside the Shattered Spire twice and came back both times, which makes her the region's leading expert.",
+  "greeting": "Planning to go east? Good. I need someone mad enough to come with me.",
+  "likes": [
+   "relic",
+   "ore"
+  ],
+  "dislikes": [
+   "herbs"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 30
+  }
+ },
+ {
+  "id": "aubric",
+  "name": "Father Aubric",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 63,
+  "occupation": "Hermit Priest",
+  "home": "duskreach",
+  "faction": null,
+  "schedule": "elder",
+  "personality": {
+   "friendliness": 8,
+   "aggression": 1,
+   "confidence": 4,
+   "intelligence": 8,
+   "honesty": 9,
+   "greed": 1,
+   "loyalty": 7,
+   "sociability": 4
+  },
+  "attributes": {
+   "strength": 9,
+   "speed": 7,
+   "health": 12,
+   "dexterity": 10
+  },
+  "skills": {
+   "magic": 35,
+   "gathering": 20
+  },
+  "equipment": [
+   "mace_rustite"
+  ],
+  "background": "Tends the frontier chapel and buries what the husks leave behind. Something in the Spire took his brother.",
+  "greeting": "Light keep you, traveler. You've come a long way to the edge of things.",
+  "likes": [
+   "herbs",
+   "books"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 40,
+   "favor": "aubric_husks",
+   "favor_desc": "Clear the husks from Duskmoor's standing stones."
+  }
+ },
+ {
+  "id": "ysolde",
+  "name": "Ysolde Frost",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 34,
+  "occupation": "Lone Hunter",
+  "home": "frostfang_ridge",
+  "faction": null,
+  "schedule": "wanderer",
+  "personality": {
+   "friendliness": 3,
+   "aggression": 5,
+   "confidence": 8,
+   "intelligence": 7,
+   "honesty": 8,
+   "greed": 3,
+   "loyalty": 7,
+   "sociability": 1
+  },
+  "attributes": {
+   "strength": 18,
+   "speed": 14,
+   "health": 19,
+   "dexterity": 18
+  },
+  "skills": {
+   "ranged": 55,
+   "gathering": 45
+  },
+  "equipment": [
+   "bow_greyvein"
+  ],
+  "background": "Lives alone on the ridge, hunting ice wolves and mapping Sunsilver veins nobody else can reach.",
+  "greeting": "You'll freeze in that. Sit by the fire before you say anything.",
+  "likes": [
+   "hide",
+   "food"
+  ],
+  "dislikes": [
+   "jewelry"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "friendship": 35,
+   "favor": "ysolde_hides",
+   "favor_desc": "Bring her 4 Raw Hides so she can make it through winter."
+  }
+ },
+ {
+  "id": "margit",
+  "name": "Margit",
+  "race": "human",
+  "pronouns": "she/her",
+  "age": 77,
+  "occupation": "Bog Witch",
+  "home": "mirelight_bog",
+  "faction": null,
+  "schedule": "hermit",
+  "personality": {
+   "friendliness": 5,
+   "aggression": 3,
+   "confidence": 8,
+   "intelligence": 9,
+   "honesty": 6,
+   "greed": 5,
+   "loyalty": 5,
+   "sociability": 2
+  },
+  "attributes": {
+   "strength": 7,
+   "speed": 7,
+   "health": 12,
+   "dexterity": 11
+  },
+  "skills": {
+   "magic": 55,
+   "gathering": 60
+  },
+  "equipment": [],
+  "background": "Expelled from the Ashen Circle forty years ago for 'unsanctioned experimentation'. Still experimenting.",
+  "greeting": "Visitors! How rare. Do try not to step on the toads; some of them used to be people.",
+  "likes": [
+   "herbs",
+   "magic"
+  ],
+  "dislikes": [
+   "weapons"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "friendship": 40,
+   "favor": "margit_crystals",
+   "favor_desc": "Bring her 3 Mana Crystals."
+  }
+ },
+ {
+  "id": "corin",
+  "name": "Sir Corin Vale",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 32,
+  "occupation": "Wandering Knight",
+  "home": "widows_crossing",
+  "faction": null,
+  "schedule": "wanderer",
+  "personality": {
+   "friendliness": 7,
+   "aggression": 4,
+   "confidence": 6,
+   "intelligence": 6,
+   "honesty": 10,
+   "greed": 1,
+   "loyalty": 10,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 20,
+   "speed": 12,
+   "health": 20,
+   "dexterity": 14
+  },
+  "skills": {
+   "melee": 50,
+   "blocking": 50
+  },
+  "equipment": [
+   "longsword_greyvein"
+  ],
+  "background": "A knight without a lord, sworn to protect Widow's Crossing until it is lived in again.",
+  "greeting": "Hail, traveler. These roads need guarding, and I am the one guarding them.",
+  "likes": [
+   "weapons",
+   "food"
+  ],
+  "dislikes": [
+   "drink"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "respect": 30,
+   "favor": "corin_settle",
+   "favor_desc": "Bring people back to Widow's Crossing: found an outpost there."
+  }
+ },
+ {
+  "id": "nix",
+  "name": "Nix",
+  "race": "sylth",
+  "pronouns": "they/them",
+  "age": 22,
+  "occupation": "Captive Thief",
+  "home": "redrock_canyon",
+  "faction": null,
+  "schedule": "wanderer",
+  "personality": {
+   "friendliness": 6,
+   "aggression": 4,
+   "confidence": 6,
+   "intelligence": 8,
+   "honesty": 4,
+   "greed": 6,
+   "loyalty": 6,
+   "sociability": 6
+  },
+  "attributes": {
+   "strength": 9,
+   "speed": 17,
+   "health": 10,
+   "dexterity": 18
+  },
+  "skills": {
+   "dodging": 45,
+   "melee": 25
+  },
+  "equipment": [
+   "dagger_greyvein"
+  ],
+  "background": "A thief who stole from the Hollow and got caught. Currently in a cage, currently very polite.",
+  "greeting": "Hey! Hey, you! Get me out of here and I swear I'll make it worth your while.",
+  "likes": [
+   "jewelry",
+   "food"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": true,
+  "recruit": {
+   "favor": "nix_rescue",
+   "favor_desc": "Free Nix from the Hollow's cage in Redrock Canyon."
+  }
+ },
+ {
+  "id": "black_ren",
+  "name": "Black Ren",
+  "race": "human",
+  "pronouns": "he/him",
+  "age": 44,
+  "occupation": "Chief of the Hollow",
+  "home": "hollow_fort",
+  "faction": "hollow",
+  "schedule": "night_owl",
+  "personality": {
+   "friendliness": 3,
+   "aggression": 8,
+   "confidence": 9,
+   "intelligence": 8,
+   "honesty": 4,
+   "greed": 8,
+   "loyalty": 5,
+   "sociability": 5
+  },
+  "attributes": {
+   "strength": 22,
+   "speed": 14,
+   "health": 22,
+   "dexterity": 18
+  },
+  "skills": {
+   "melee": 65,
+   "dodging": 45
+  },
+  "equipment": [
+   "longsword_sunsilver"
+  ],
+  "background": "A former Crown officer who turned outlaw after Velmora hanged his men for a defeat that wasn't theirs. Runs the Hollow like an army.",
+  "greeting": "You walked into my fort. Either you're very brave or very lost.",
+  "likes": [
+   "weapons",
+   "drink"
+  ],
+  "dislikes": [
+   "books"
+  ],
+  "romanceable": false,
+  "recruit": {
+   "favor": "ren_spared",
+   "favor_desc": "Defeat Black Ren in combat and spare his life.",
+   "alt": {
+    "rep": {
+     "hollow": 50
+    },
+    "respect": 50
+   }
+  },
+  "leader": true
+ }
+]
