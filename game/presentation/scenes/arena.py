@@ -33,6 +33,7 @@ class ArenaScene(LocalScene):
         self.npcs = []
         self.active_groups = {"arena"}
         self.last_hour = st.clock.hour
+        self.spawn_companions()
         rng = random.Random(st.rng.random())
         for i in range(self.count):
             tx, ty = self.map.find_open_near(self.map.w - 10 + rng.randint(-2, 3), self.map.h // 2 + rng.randint(-4, 4), 4)
@@ -80,6 +81,8 @@ class ArenaScene(LocalScene):
         travel.finish_combat(st, outcome, self.enemy_id, self.count, killed)
         # loot left lying on the road is gathered up if you won
         if outcome == "victory":
+            from ...set_system import companions as comp_mod
+            comp_mod.shared_victory(st, killed)
             for pk in self.combat.pickups:
                 if pk["item"] == "marks":
                     st.gold += pk["qty"]

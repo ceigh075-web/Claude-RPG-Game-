@@ -35,6 +35,8 @@ def can_recruit(state, npc):
         return False, "already"
     if not state.memory.fact(f"npc:{npc['id']}:alive", True):
         return False, "dead"
+    if state.flags.get(f"rejoin_free:{npc['id']}"):
+        return True, "rejoin"
     main, alt = requirements(state, npc)
     if all(m for _, m in main):
         return True, "main"

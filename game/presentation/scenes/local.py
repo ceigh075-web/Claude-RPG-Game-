@@ -64,7 +64,29 @@ class LocalScene(Scene):
         self.last_hour = st.clock.hour
         self.active_groups = set()
         self.spawn_npcs()
+        self.spawn_companions()
         self.spawn_enemies()
+
+    def spawn_companions(self):
+        """Squad members follow the player; companions told to wait here stand where they were left."""
+        from ...set_system import companions as comp_mod
+        st = self.state
+        px, py = self.player.x, self.player.y
+        for i, cid in enumerate(comp_mod.squad(st)):
+            ch = comp_mod.char(st, cid)
+            x, y = px - 14 + (i % 2) * 28, py + 10 + (i // 2) * 12
+            tx, ty = self.map.find_open_near(int(x // T), int(y // T), 3)
+            self.combat.add_companion(cid, ch, tx * T + 8, ty * T + 12, npc_look(self.data, self.data.npcs[cid]))
+        if st.sub_location is None and self.loc_key == st.location:
+            for cid, comp in st.companions.items():
+                if not comp["active"] and comp["task"] == "wait" and comp.get("wait_at") == st.location:
+                    spot = comp.get("wait_pos")
+                    if not spot:
+                        ex, ey = self.map.find_open_near(*self.map.entry, 4)
+                        spot = (ex * T + 8 + len(cid) % 5 * 10, ey * T + 12)
+                        comp["wait_pos"] = list(spot)
+                    self.combat.add_companion(cid, comp["char"], spot[0], spot[1],
+                                              npc_look(self.data, self.data.npcs[cid]), wait_spot=tuple(spot))
 
     # ================================================================ enemies
     def spawn_enemies(self):
@@ -113,6 +135,8 @@ class LocalScene(Scene):
             eid = next((sp["enemy"] for i, sp in enumerate(self.map.spawns) if f"{st.location}:{i}" == gid), None)
             if eid:
                 e = self.data.enemies[eid]
+                from ...set_system import companions as comp_mod
+                comp_mod.shared_victory(st, len([c for c in self.combat.kills if c == eid]))
                 st.memory.record("player", "battle", f"Cleared a group of {e['name']}s at {self.data.location(st.location)['name']}.",
                                  day=st.clock.day_index, minute=st.clock.total_minutes % 1440,
                                  importance=2 if e.get("faction") else 1, related=[eid], location=st.location)
@@ -250,6 +274,12 @@ class LocalScene(Scene):
             self.game.scenes.push(PauseScene(self.game))
         elif k in (pygame.K_e, pygame.K_RETURN):
             self.interact()
+        elif k == pygame.K_p:
+            from .party import PartyScene
+            self.game.scenes.push(PartyScene(self.game))
+        elif k == pygame.K_r:
+            from .party import RelationshipsScene
+            self.game.scenes.push(RelationshipsScene(self.game))
         elif k == pygame.K_b:
             from .spellbook import SpellbookScene
             self.game.scenes.push(SpellbookScene(self.game, at_table=False))
@@ -284,7 +314,7 @@ class LocalScene(Scene):
         fx, fy = self.player.facing_vec()
         qx, qy = px + fx * 10, py + fy * 10
         best, best_d = None, INTERACT_RANGE
-        for a in self.npcs:
+        for a in self.npcs + [c for c in self.combat.companions() if c.alive]:
             d = math.hypot(a.x - qx, (a.y - 6) - qy)
             reach = best_d + (18 if getattr(a, "stationary", False) else 0)  # talk across a shop counter
             if d < reach:
@@ -509,6 +539,10 @@ class LocalScene(Scene):
                 self.game.notify(msgs)
         if st.clock.hour != self.last_hour:
             self.last_hour = st.clock.hour
+            if self.map.kind == "wild":
+                from ...set_system import companions as comp_mod
+                for msg in comp_mod.gather(st, 1, self.combat.rng):
+                    self.game.toast(msg)
             self.spawn_npcs()
             self.depleted = inter.depleted_keys(st, self.loc_key, m.objects)
         for a in self.npcs:
@@ -629,7 +663,7 @@ class LocalScene(Scene):
         pygame.transform.scale(c, (W, H), screen)
         combat_draw.draw_floaters(screen, self.combat, camx, camy)
         # NPC names (screen space)
-        for a in self.npcs:
+        for a in self.npcs + self.combat.companions():
             if self.player.dist_to(a.x, a.y) < 70:
                 label = a.npc["name"] if a.npc else "Shopkeeper"
                 ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 30 - camy) * 2)), 20, ui.TEXT, center=True)
@@ -708,6 +742,15 @@ class LocalScene(Scene):
             conds.append("overloaded")
         if conds:
             ui.text(screen, ", ".join(c.title() for c in conds), (r.x + 12, r.bottom + 6), 22, ui.TEXT_BAD)
+        from ...set_system import companions as comp_mod
+        y = r.bottom + 32
+        for cid in comp_mod.squad(st):
+            ch = comp_mod.char(st, cid)
+            ui.text(screen, ch.name.split()[0] if len(ch.name) > 14 else ch.name, (r.x + 4, y), 18, ui.TEXT)
+            ui.bar(screen, (r.x + 110, y + 3, 120, 9), ch.hp / ch.max_hp, ui.HP)
+            if ch.food < 25 or ch.water < 25:
+                ui.text(screen, "needs supplies", (r.x + 236, y), 16, ui.TEXT_BAD)
+            y += 18
         # right side info
         loc = self.data.location(st.location)
         place = self.place_name()

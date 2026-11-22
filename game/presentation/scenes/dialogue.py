@@ -67,8 +67,30 @@ class DialogueScene(Scene):
         self.menu.set_entries(e)
 
     def extra_entries(self):
-        """Recruitment and romance options (extended by the companion system)."""
-        return [("Would you travel with me?", "join")]
+        """Recruitment, companion orders and romance options."""
+        from ...set_system import companions as comp_mod
+        st, npc = self.state, self.npc
+        e = []
+        if npc["id"] in st.companions:
+            comp = st.companions[npc["id"]]
+            if comp["task"] != "follow":
+                e.append(("Come with me.", "c_follow"))
+            if comp["task"] == "follow":
+                e.append(("Gather supplies as we travel.", "c_gather"))
+                e.append(("Wait here for me.", "c_wait"))
+            e.append(("It's time we parted ways.", "c_dismiss"))
+        else:
+            e.append(("Would you travel with me?", "join"))
+        r = rel.get(st, npc["id"])
+        if rel.can_ask_out(st, npc):
+            e.append(("Would you like to spend more time together... just us?", "r_ask"))
+        if r["romance"] in ("dating", "partners") and r.get("last_date") != st.clock.day_index:
+            e.append(("Let's spend the evening together (2 hours).", "r_date"))
+        if rel.can_commit(st, npc):
+            e.append(("I want to be with you. Only you.", "r_commit"))
+        if r["romance"] in ("dating", "partners"):
+            e.append(("I think we should end things.", "r_break"))
+        return e
 
     def peace_possible(self):
         st = self.state
@@ -108,7 +130,7 @@ class DialogueScene(Scene):
         if v == "type":
             self.typing = ""
         elif v in TOPIC_LINES:
-            if v == "join":
+            if v == "join" and not recruitment.can_recruit(self.state, self.npc)[0]:
                 self.show_requirements()
             self.send(TOPIC_LINES[v], v)
         elif v == "duel":
@@ -126,7 +148,42 @@ class DialogueScene(Scene):
             self.extra_action(v)
 
     def extra_action(self, v):
-        pass
+        from ...set_system import companions as comp_mod, timeflow
+        st, npc = self.state, self.npc
+        msg = None
+        if v in ("c_follow", "c_gather", "c_wait"):
+            ok, msg = comp_mod.set_task(st, npc["id"], {"c_follow": "follow", "c_gather": "gather", "c_wait": "wait"}[v])
+            if ok and self.local is not None:
+                self.local.load_map(spawn=(self.local.player.x, self.local.player.y))
+        elif v == "c_dismiss":
+            def go():
+                ok, m = comp_mod.dismiss(st, npc["id"])
+                self.game.notify(m)
+                if self.local is not None:
+                    self.local.load_map(spawn=(self.local.player.x, self.local.player.y))
+                self.close()
+            self.game.scenes.push(ConfirmScene(self.game, "Part ways?", f"Send {npc['name']} home? They will take their "
+                                               "own gear; shared supplies come back to you.", go))
+            return
+        elif v == "r_ask":
+            ok, msg = rel.ask_out(st, npc)
+        elif v == "r_commit":
+            ok, msg = rel.commit(st, npc)
+        elif v == "r_break":
+            ok, msg = rel.breakup(st, npc["id"])
+        elif v == "r_date":
+            r = rel.get(st, npc["id"])
+            r["last_date"] = st.clock.day_index
+            timeflow.advance(st, 120)
+            rel.change(st, npc["id"], affection=5, trust=3, friendship=2)
+            st.memory.record(npc["id"], "relationship", f"{npc['name']} and {st.player.name} spent an evening together.",
+                             day=st.clock.day_index, minute=st.clock.total_minutes % 1440, importance=2,
+                             related=["player"], location=st.location)
+            msg = f"You spend a quiet evening with {npc['name']}."
+        if msg:
+            self.log.append((npc["name"] if v.startswith("r_") else "", msg))
+            self.game.toast(msg)
+        self.build()
 
     def show_requirements(self):
         main, alt = recruitment.requirements(self.state, self.npc)
@@ -177,8 +234,24 @@ class DialogueScene(Scene):
         self.build()
 
     def offer_recruit(self):
-        """Extended by the companion system."""
-        pass
+        from ...set_system import companions as comp_mod
+        st, npc = self.state, self.npc
+        ok, path = recruitment.can_recruit(st, npc)
+        if not ok:
+            return
+        req = {"main": npc["recruit"], "alt": npc["recruit"].get("alt", {}), "rejoin": {}}[path]
+        cost = req.get("gold", 0)
+
+        def go():
+            ok2, msg = comp_mod.recruit(st, npc)
+            self.game.notify(msg)
+            if ok2 and self.local is not None:
+                self.local.spawn_npcs()
+                self.local.load_map(spawn=(self.local.player.x, self.local.player.y))
+            self.close()
+        self.game.scenes.push(ConfirmScene(self.game, f"Recruit {npc['name']}?",
+            f"{npc['name']} is ready to join you" + (f" for {cost} marks." if cost else ".")
+            + (" They lead a faction: their people will choose a successor." if npc.get("leader") else ""), go))
 
     def update(self, dt):
         if self.waiting:

@@ -111,6 +111,30 @@ def main():
     key(g, pygame.K_RETURN)
     assert st.flags.get("duel_won:garrow")
     assert type(g.scenes.top).__name__ == "LocalScene"
+    # Phase 6: recruit via dialogue, party screen, transfer, relationships, companion in the world
+    from game.set_system import relationships as rel
+    st.gold = 500
+    rel.change(st, "tobin", friendship=30)
+    d = DialogueScene(g, g.data.npcs["tobin"], g.scenes.top)
+    g.scenes.push(d)
+    d.menu.index = [e[1] for e in d.menu.entries].index("join")
+    key(g, pygame.K_RETURN)
+    for _ in range(30):
+        g.step(DT, [])
+    assert type(g.scenes.top).__name__ == "ConfirmScene", g.scenes.top
+    key(g, pygame.K_RETURN)
+    assert "tobin" in st.companions, "recruit failed"
+    while type(g.scenes.top).__name__ != "LocalScene":
+        g.scenes.pop()
+    local = g.scenes.top
+    assert local.combat.companions(), "companion not spawned"
+    for _ in range(60):
+        g.step(DT, [])
+    shot(g, "p6_companion_in_world")
+    from game.presentation.scenes import party
+    push(g, party.PartyScene(g), "p6_party")
+    push(g, party.TransferScene(g, "tobin"), "p6_transfer", [pygame.K_RETURN])
+    push(g, party.RelationshipsScene(g), "p6_relationships")
     extra = globals().get("EXTRA")
     if extra:
         extra(g, push, key, shot)

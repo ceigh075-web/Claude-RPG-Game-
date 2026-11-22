@@ -10,8 +10,12 @@ def advance(state, minutes, resting=False, exertion=1.0, water_mult=1.0):
     state.clock.advance(minutes)
     msgs = needs.tick(state.player, minutes / 60.0, state.race_data, exertion=exertion,
                       resting=resting, water_mult=water_mult)
+    from . import companions, daily
+    companions.tick_needs(state, minutes / 60.0, exertion, resting, water_mult)
     if state.clock.day_index != day_before:
         state.stats["days"] = state.stats.get("days", 0) + (state.clock.day_index - day_before)
+        for _ in range(min(7, state.clock.day_index - day_before)):  # long sleeps/travel: simulate at most a week
+            msgs += daily.new_day(state)
     return msgs
 
 

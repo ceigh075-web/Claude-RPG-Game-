@@ -242,6 +242,8 @@ def arrive(state):
     state.flags["arrived_from"] = origin
     state.travel = None
     first = state.discover(state.location)
+    from ..set_system import companions as comp_mod
+    comp_mod.shared_travel(state, state.location)
     name = state.data.location(state.location)["name"]
     state.add_log(f"Arrived at {name}." + (" (New location discovered!)" if first else ""))
     return first

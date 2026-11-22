@@ -17,6 +17,7 @@ CONTROLS = [
     ("Q", "Switch melee / ranged weapon"),
     ("1 - 4", "Cast spell from your spell book"),
     ("B", "Spell book: design, test and inscribe spells"),
+    ("P / R", "Your company (squad) / relationships"),
     ("I", "Inventory"),
     ("C", "Character & factions"),
     ("M", "World map / leave for travel"),
@@ -143,12 +144,12 @@ class ControlsScene(Scene):
 
     def draw(self, screen):
         ui.dim(screen, 120)
-        r = ui.panel(screen, ((W - 700) // 2, 90, 700, 540), "Controls")
+        r = ui.panel(screen, ((W - 700) // 2, 50, 700, 620), "Controls")
         y = r.y + 56
         for k, d in CONTROLS:
             ui.text(screen, k, (r.x + 30, y), 24, ui.ACCENT)
             ui.text(screen, d, (r.x + 210, y), 24)
-            y += 34
+            y += 31
 
 
 class PauseScene(Scene):

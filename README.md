@@ -25,6 +25,7 @@ Python 3.11+ is required. Saves go to `saves/` (override with `KINDRED_SAVE_DIR`
 | Q | Switch melee / ranged weapon |
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
+| B / P / R | Spell book / your company / relationships |
 | M | World map (choose a destination to travel) |
 | Esc | Pause menu |
 | F5 / F9 | Quick save / quick load |

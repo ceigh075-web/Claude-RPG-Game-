@@ -9,8 +9,8 @@ from . import items as items_mod
 KO_HP = 5
 
 
-def player_profile(state):
-    p = state.player
+def player_profile(state, p=None):
+    p = p or state.player
     data = state.data
     wtype, item_id = items_mod.equipped_weapon(data, p)
     w = data.weapons[wtype]
@@ -29,6 +29,9 @@ def resolve(state, enemy_id, count):
     data, rng, p = state.data, state.rng, state.player
     e = data.enemies[enemy_id]
     prof = player_profile(state)
+    from . import companions as comp_mod
+    allies = [comp_mod.char(state, cid) for cid in comp_mod.squad(state)]
+    ally_profs = [player_profile(state, a) for a in allies]
     foes = [{"hp": float(e["hp"])} for _ in range(count)]
     msgs = [f"You fight {count} {e['name']}{'s' if count > 1 else ''}!"]
     t = 0.0
@@ -48,12 +51,23 @@ def resolve(state, enemy_id, count):
                 elif e.get("flee_below", 0) and foes[0]["hp"] < e["hp"] * e["flee_below"] and rng.random() < 0.3:
                     foes.pop(0)
                     fled += 1
-        # enemies attack (at most 3 can reach you at once)
+        for a, ap in zip(allies, ally_profs):
+            if foes and a.hp > KO_HP and rng.random() < ap["speed"] * dt and rng.random() < ap["hit"]:
+                foes[0]["hp"] -= max(1.0, ap["damage"] - e["armor"] * 0.5) * rng.uniform(0.8, 1.2)
+                if foes[0]["hp"] <= 0:
+                    foes.pop(0)
+                    killed += 1
+        # enemies attack (at most 3 can reach the party at once); blows spread over the party
+        party = [(p, prof)] + [(a, ap) for a, ap in zip(allies, ally_profs) if a.hp > KO_HP]
         for f in foes[:3]:
             if rng.random() < 0.8 * dt:
-                if rng.random() < prof["defend"]:
+                who, wp = party[rng.randrange(len(party))]
+                if rng.random() < wp["defend"]:
                     continue
-                p.damage(e["damage"] * rng.uniform(0.7, 1.1))
+                who.damage(e["damage"] * rng.uniform(0.7, 1.1))
+                if who is not p:
+                    who.hp = max(who.hp, 1.0)
+                    who.alive = True
     lost_hp = hp_start - p.hp
     race = state.race_data
     w = data.weapons[prof["weapon"]]
@@ -64,6 +78,8 @@ def resolve(state, enemy_id, count):
     p.train("blocking", 1 + killed, race)
     p.train("dodging", 1 + killed, race)
     loot_msgs = []
+    if not foes and allies:
+        comp_mod.shared_victory(state, killed)
     if not foes:
         msgs.append(f"Victory! You defeated {killed}" + (f" and {fled} fled" if fled else "") + f". (-{lost_hp:.0f} HP)")
         for _ in range(killed):

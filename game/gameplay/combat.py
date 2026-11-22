@@ -196,6 +196,21 @@ class CombatWorld:
         self.combatants.append(c)
         return c
 
+    def add_companion(self, cid, char, x, y, look, wait_spot=None):
+        from .companion_ai import CompanionAI
+        c = Combatant(x, y, look, char.move_speed(), char.name, team="player", char=char,
+                      race=self.data.races[char.race])
+        c.companion_id = cid
+        c.npc = self.data.npcs[cid]
+        c.armor = char.armor_value(self.data)
+        c.ai = CompanionAI(c, self.rng, wait_spot)
+        c.hostile = True
+        self.combatants.append(c)
+        return c
+
+    def companions(self):
+        return [c for c in self.combatants if getattr(c, "companion_id", None)]
+
     def spawn_enemy(self, enemy_id, x, y, group=None, hostile=True, edef=None, look=None):
         from .enemy_ai import EnemyAI
         e = edef or self.data.enemies[enemy_id]
@@ -546,6 +561,11 @@ class CombatWorld:
         self.tokens.discard(tgt.cid)
         if tgt is self.player:
             return
+        if getattr(tgt, "companion_id", None):
+            tgt.downed = True
+            tgt.char.hp = 0.0
+            self.events.append(f"{tgt.name} is down!")
+            return
         self.kills.append(tgt.enemy_id)
         st = self.state
         e = tgt.enemy
@@ -562,6 +582,8 @@ class CombatWorld:
         fac = e.get("faction")
         if fac:
             factions.change_rep(st, fac, -2, f"killed a {e['name']}")
+            from ..set_system import companions as comp_mod
+            self.events += comp_mod.react_to_kill(st, fac)
             if fac == "hollow":
                 factions.change_rep(st, "crown", 1, "killed Hollow outlaws")
                 factions.change_rep(st, "caravans", 1, "killed Hollow outlaws")
@@ -594,9 +616,23 @@ class CombatWorld:
             p[4] -= dt
         self.particles = [p for p in self.particles if p[4] > 0]
         self._collect_pickups()
+        # downed companions get back up once the fighting is over
+        if not self.in_combat:
+            self.calm_t = getattr(self, "calm_t", 0.0) + dt
+            if self.calm_t > 3.0:
+                for c in self.companions():
+                    if getattr(c, "downed", False):
+                        c.downed = False
+                        c.char.hp = max(1.0, c.char.max_hp * 0.2)
+                        c.char.alive = True
+                        c.set_state("idle")
+                        c.dead_t = 0.0
+                        self.events.append(f"{c.name} staggers back to their feet.")
+        else:
+            self.calm_t = 0.0
         # remove faded corpses and escaped enemies
-        self.combatants = [c for c in self.combatants if not (c.state == "dead" and c.dead_t > 1.6 and c is not self.player)
-                           and not c.fled]
+        self.combatants = [c for c in self.combatants if not (c.state == "dead" and c.dead_t > 1.6 and c is not self.player
+                                                                 and not c.char) and not c.fled]
 
     def _update_combatant(self, c, dt, lmap):
         c.state_t += dt
@@ -707,17 +743,18 @@ class CombatWorld:
         p = c.profile
         st = self.state
         wt = p["weapon"]
-        if c is self.player:
+        if c.char:
             w = self.data.weapons[wt]
             ammo = w.get("ammo")
-            inv = st.player.inventory
+            inv = c.char.inventory
             item = getattr(c, "weapon_item", None)
             used = item if ammo == "self" else ammo
             if used and inv.has(used):
                 inv.remove(used)
                 if ammo == "self" and not inv.has(used):
-                    st.player.equipment["ranged"] = None
-                    st.settings["weapon_mode"] = "melee"
+                    c.char.equipment["ranged"] = None
+                    if c is self.player:
+                        st.settings["weapon_mode"] = "melee"
         pellets = p.get("pellets", 1)
         spread = math.radians(p["arc"]) if pellets > 1 else 0.0
         base = math.atan2(c.aim[1], c.aim[0])
@@ -730,7 +767,7 @@ class CombatWorld:
                 prof["knockback"] = p["knockback"] / pellets * 1.6
             pr = Projectile(c.x + math.cos(a) * 8, c.y - 8 + math.sin(a) * 8, math.cos(a) * spd, math.sin(a) * spd,
                             c.team, c, prof, rng_left=p["reach"], kind=kind, pierce=p.get("pierce", 0), charge=charge)
-            pr.drop_item = getattr(c, "weapon_item", None) if kind == "knife" and c is self.player else None
+            pr.drop_item = getattr(c, "weapon_item", None) if kind == "knife" and c.char else None
             self.projectiles.append(pr)
         if wt == "firelock":
             self.shake = max(self.shake, 2.5)

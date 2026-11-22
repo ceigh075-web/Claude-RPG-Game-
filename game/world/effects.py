@@ -90,6 +90,10 @@ def apply(state, effects, ctx=None):
             factions.change_rep(state, eff["faction"], eff["amount"], ctx.get("reason"))
             msgs.append(f"{state.data.factions[eff['faction']]['name']} reputation {eff['amount']:+d}")
         elif op == "memory":
+            if eff["type"] == "kindness":
+                from ..set_system import companions as comp_mod, relationships as rel
+                rel.note(state, "kindness")
+                comp_mod.react_to_kindness(state)
             state.memory.record("player", eff["type"], eff["text"], day=state.clock.day_index,
                                 minute=state.clock.total_minutes % 1440, importance=eff.get("importance", 1),
                                 location=ctx.get("location", state.location))

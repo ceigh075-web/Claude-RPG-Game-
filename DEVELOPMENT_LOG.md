@@ -12,10 +12,39 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
 | 3 Combat | ✅ Done |
 | 4 Items & Magic | ✅ Done |
 | 5 NPCs & Local AI | ✅ Done |
-| 6 Companions & Relationships | — |
+| 6 Companions & Relationships | ✅ Done |
 | 7 World Simulation | Factions/reputation/shops partially built (used by Phase 2) |
 | 8 Base Building | — |
 | 9 Polish | — |
+
+## Session 3 — Phase 6: Companions & Relationships
+- **Recruiting** (`set_system/companions.py`): an NPC who meets their path (main, alt, or a free rejoin
+  after dismissal) can be recruited from dialogue. The game asks for confirmation and pays any cost. The
+  companion gets a full Character built from their sheet and gear. A test verifies **all 47** can be
+  recruited. Recruiting a faction leader records a succession in world history.
+- **Squad:** up to 4 active companions. Tasks are follow, gather, wait (here), and guard or work (the
+  last two need a home or base, Phase 8). The party screen (P) shows stats, equipment, relationship and
+  bonds. The transfer screen moves items and equips a companion's weapons and armor. Dismissed
+  companions go home, return shared supplies, and can rejoin for free.
+- **Shared needs:** companions' food, water and health tick with time. They eat from their own pack,
+  then yours.
+- **Companion combat** (`gameplay/companion_ai.py`): follow; engage alerted hostiles near you; block
+  telegraphed hits (based on Blocking skill); heal hurt allies with spell numbers computed by the Set
+  System, paid with their own mana; retreat when low; use ranged weapons if they have ammo. They go
+  *down* (never die in a fight) and get up after it ends. Enemies target companions too. Auto-resolved
+  skirmishes include the party.
+- **Buddy system:** each day, squad pairs bond or clash based on personality compatibility. Statuses are
+  friends, rivals and couple (romanceable pairs), recorded in Set AI. Banter shows as messages.
+- **Reactions and shared experiences:** victories and journeys raise friendship and are remembered.
+  Killing a companion's own faction members angers them. Kind choices please the friendly ones.
+- **Romance in dialogue:** ask out once they're *interested* (affection plus compatibility), spend
+  evenings together (once a day), commit after a week of dating with high affection and trust, or break
+  up. Jealousy hits current partners. Neglect cools things.
+- **Relationships screen (R):** everyone you've met, their values, compatibility, tastes (once friends)
+  and shared history from Set AI.
+- **Daily hub** (`set_system/daily.py`): one ordered place for once-a-day systems. World events and the
+  base hook in here.
+- Tests: `tests/test_phase6.py`.
 
 ## Session 3 — Phase 5: NPCs & Local AI
 - **Client** (`local_ai/client.py`): Ollama `/api/chat` (JSON format) or OpenAI-compatible

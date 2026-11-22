@@ -34,6 +34,12 @@ class GameState:
         self.known_recipes = []                # gated recipe families learned (e.g. "voidglass")
         self.relationships = {}                # npc_id -> relationship record (set_system/relationships.py)
         self.favors = {}                       # favor_id -> {"status", "started", "npc"}
+        self.companions = {}                   # npc_id -> {"char": Character, "task", "active", "joined", "wait_at"}
+        self.bonds = {}                        # "a|b" -> {"value", "status"} between companions
+        self.property = {}                     # town_id -> owned house info (Phase 8)
+        self.base = {}                         # outpost state (Phase 8)
+        self.world = {"active_events": [], "modifiers": [], "history_days": []}  # world simulation (Phase 7)
+        self.jobs = []                         # accepted jobs/bounties (Phase 7)
         self.stats = {"km_travelled": 0.0, "days": 0}
         self.log = []
         self.memory = MemoryStore()
@@ -85,6 +91,8 @@ class GameState:
             "flags": self.flags, "settings": self.settings, "stats": self.stats, "log": self.log,
             "spellbook": self.spellbook, "spell_drafts": self.spell_drafts, "known_recipes": self.known_recipes,
             "relationships": self.relationships, "favors": self.favors,
+            "companions": {k: dict(v, char=v["char"].to_dict()) for k, v in self.companions.items()},
+            "bonds": self.bonds, "property": self.property, "base": self.base, "world": self.world, "jobs": self.jobs,
         }
 
     @classmethod
@@ -112,6 +120,12 @@ class GameState:
         s.known_recipes = d.get("known_recipes", [])
         s.relationships = d.get("relationships", {})
         s.favors = d.get("favors", {})
+        s.companions = {k: dict(v, char=Character.from_dict(v["char"], data)) for k, v in d.get("companions", {}).items()}
+        s.bonds = d.get("bonds", {})
+        s.property = d.get("property", {})
+        s.base = d.get("base", {})
+        s.world = d.get("world", s.world)
+        s.jobs = d.get("jobs", [])
         s.settings.setdefault("weapon_mode", "melee")
         if memory is not None:
             s.memory = memory
