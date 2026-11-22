@@ -2,3 +2,7 @@ saves/
 __pycache__/
 *.pyc
 *.tmp
+build/
+dist/
+KindredRoads_data/
+*.zip

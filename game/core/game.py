@@ -16,15 +16,19 @@ from ..world import mapgen
 WINDOW = (1280, 720)
 CANVAS = (640, 360)
 FPS = 60
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config.json")
+from .paths import CONFIG_PATH, DEFAULT_CONFIG
 
 
 def load_config():
-    try:
-        with open(CONFIG_PATH, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return {}
+    """User config (next to the exe / project) overrides the bundled defaults."""
+    cfg = {}
+    for path in (DEFAULT_CONFIG, CONFIG_PATH):
+        try:
+            with open(path, encoding="utf-8") as f:
+                cfg.update(json.load(f))
+        except (OSError, json.JSONDecodeError):
+            pass
+    return cfg
 
 
 class Game:
@@ -34,6 +38,11 @@ class Game:
             os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
         pygame.init()
         pygame.display.set_caption("Kindred Roads")
+        try:
+            from .paths import BUNDLE_ROOT
+            pygame.display.set_icon(pygame.image.load(os.path.join(BUNDLE_ROOT, "assets", "icon32.png")))
+        except (pygame.error, FileNotFoundError):
+            pass
         self.screen = pygame.display.set_mode(WINDOW)
         self.canvas = pygame.Surface(CANVAS)
         self.clock = pygame.time.Clock()

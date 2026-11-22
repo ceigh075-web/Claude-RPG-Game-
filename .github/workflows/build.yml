@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish a Release when a version tag is pushed
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m unittest -v
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+      - name: Headless playthroughs
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: |
+          python tools/autoplay.py out/autoplay
+          python tools/combat_demo.py out/combat
+          python tools/ui_smoke.py out/ui
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: KindredRoads-windows
+            exe: KindredRoads.exe
+          - os: ubuntu-latest
+            artifact: KindredRoads-linux
+            exe: KindredRoads
+          - os: macos-latest
+            artifact: KindredRoads-macos
+            exe: KindredRoads
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller pillow
+      - name: Build executable
+        run: pyinstaller --noconfirm KindredRoads.spec
+      - name: Self-test the executable
+        shell: bash
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: ./dist/${{ matrix.exe }} --selftest
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p package/KindredRoads
+          cp dist/${{ matrix.exe }} package/KindredRoads/
+          cp README.md PLAYING.md package/KindredRoads/
+          cd package && 7z a ../${{ matrix.artifact }}.zip KindredRoads || zip -r ../${{ matrix.artifact }}.zip KindredRoads
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*.zip
+          generate_release_notes: true

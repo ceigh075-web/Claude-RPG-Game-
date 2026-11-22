@@ -16,14 +16,33 @@ Oregon-Trail-style text journey, then explore, fight, gather and talk in real-ti
   faction that grows or breaks, faction honours and successions. Everything is written to an
   append-only history that NPCs remember.
 
-## Run
+## Download & play
+
+- **Windows .exe:** open the repository's **Releases** page (or the latest **Actions → Build** run) and
+  download `KindredRoads-windows.zip`. Unzip it and run `KindredRoads.exe`. Builds for Linux and macOS
+  are there too. See [PLAYING.md](PLAYING.md).
+- **From source (any OS, Python 3.11+):** double-click `Play (Windows).bat`, or run `./play.sh` on
+  Linux/macOS, or:
 
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
 
-Python 3.11+ is required. Saves go to `saves/` (override with `KINDRED_SAVE_DIR`).
+Saves go to `saves/` when running from source, and to `KindredRoads_data/` next to the executable in
+packaged builds.
+
+## Build an executable yourself
+
+```bash
+pip install pyinstaller pillow
+pyinstaller KindredRoads.spec
+dist/KindredRoads --selftest
+```
+
+PyInstaller builds for the OS it runs on, so build the `.exe` on Windows. GitHub Actions
+(`.github/workflows/build.yml`) builds and self-tests Windows, Linux and macOS executables on every push.
+Pushing a tag like `v1.0.0` publishes them as a Release.
 
 ## Controls
 

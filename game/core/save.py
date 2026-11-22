@@ -10,7 +10,7 @@ from ..set_ai.memory import MemoryStore
 SAVE_VERSION = 2
 NUM_SLOTS = 3
 AUTOSAVE_SLOT = 0
-DEFAULT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "saves")
+from .paths import SAVE_DIR as DEFAULT_DIR
 
 
 # Migration functions upgrade a raw save dict from version N to N+1.
