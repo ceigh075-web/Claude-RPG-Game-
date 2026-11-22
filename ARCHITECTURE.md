@@ -30,7 +30,8 @@ kindred_roads/
     local_ai/             model client, prompt/context builder, personality, response parsing,
                           action-request validation bridge, fallback dialogue
     world/                world graph, travel simulation, travel events, location state, map generation
-    gameplay/             entities, player controller, collision, interactions, (later) enemy AI & companions
+    gameplay/             entities, collision, interactions, NPC presence, real-time combat runtime
+                          (combat.py) and deterministic enemy AI (enemy_ai.py); companions later
     presentation/         art generation, camera, UI widgets, HUD, scenes (menus, travel, local)
   tests/                  unittest suite (python -m unittest)
   tools/                  dev scripts (data validation, screenshots)
@@ -72,6 +73,18 @@ buy_item, offer_recruit, give_gift_ack, share_rumor, start_favor, end_conversati
 requirements) and executes or rejects. The result is fed back so the NPC's next line matches reality.
 The model never touches stats, items, money, relationships or history directly. If the model is
 unreachable, malformed, or slow, `local_ai/fallback.py` builds dialogue from personality templates.
+
+## Combat split
+
+- `set_system/combat.py` holds the rules: attack profiles, phase timings, hit resolution (block, guard
+  break, backstab, armor, stagger, statuses) and training gains. These are pure functions and are unit-tested.
+- `set_system/spells.py` computes every number for a spell from its four parts and validates allowed
+  combinations.
+- `gameplay/combat.py` is the runtime: combatants, attack state machine, projectiles, spell shapes,
+  pickups, attack tokens. It decides *when* things touch; the rules decide *what happens*.
+- `gameplay/enemy_ai.py` contains the archetype behaviours. They are deterministic given the seeded RNG.
+- `presentation/combat_draw.py` draws poses, swings, effects and the HUD.
+- `set_system/skirmish.py` auto-resolves fights for travel events the player chooses not to fight in real time.
 
 ## Core loop
 

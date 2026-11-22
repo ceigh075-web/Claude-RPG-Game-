@@ -3,6 +3,7 @@ from .clock import GameClock
 from .rng import GameRNG
 from ..set_ai.memory import MemoryStore
 from ..set_system import factions
+from ..set_system.spells import starter_spellbook
 from ..set_system.stats import Character, new_player
 
 START_LOCATION = "brackenford"
@@ -27,7 +28,8 @@ class GameState:
         self.reputation = {}
         self.faction_relations = {}
         self.flags = {}
-        self.settings = {"pace": "steady", "rations": "normal"}
+        self.settings = {"pace": "steady", "rations": "normal", "weapon_mode": "melee"}
+        self.spellbook = starter_spellbook()   # permanently inscribed spells (first 4 are hotkeyed)
         self.stats = {"km_travelled": 0.0, "days": 0}
         self.log = []
         self.memory = MemoryStore()
@@ -77,6 +79,7 @@ class GameState:
             "discovered": sorted(self.discovered), "location_states": self.location_states,
             "reputation": self.reputation, "faction_relations": self.faction_relations,
             "flags": self.flags, "settings": self.settings, "stats": self.stats, "log": self.log,
+            "spellbook": self.spellbook,
         }
 
     @classmethod
@@ -99,6 +102,8 @@ class GameState:
         s.settings = d["settings"]
         s.stats = d["stats"]
         s.log = d["log"]
+        s.spellbook = d.get("spellbook", starter_spellbook())
+        s.settings.setdefault("weapon_mode", "melee")
         if memory is not None:
             s.memory = memory
         return s

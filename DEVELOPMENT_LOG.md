@@ -9,13 +9,66 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
 | 0 Planning | ✅ Done |
 | 1 Foundation | ✅ Done |
 | 2 World | ✅ Done |
-| 3 Combat | ⏭ Next |
-| 4 Items & Magic | Data designed (ores, weapons, magic.json); systems not built |
+| 3 Combat | ✅ Done |
+| 4 Items & Magic | ⏭ Next. All 16 weapons fight, the spell rules and runtime exist; crafting and the spell-creation UI are still to do |
 | 5 NPCs & Local AI | Roster (47) + fallback dialogue built; model client not built |
 | 6 Companions & Relationships | — |
 | 7 World Simulation | Factions/reputation/shops partially built (used by Phase 2) |
 | 8 Base Building | — |
 | 9 Polish | — |
+
+## Session 2 — Phase 3: Combat
+
+### Built
+- **Rules** (`set_system/combat.py`): attack profiles from weapon, ore, attributes and skill; wind-up,
+  active and recovery phases; 3-hit combos with a finisher; kick; block arc with a guard meter and guard
+  breaks; dodge with i-frames; backstab; armor and armor pierce; knockback vs mass; stagger vs poise;
+  bleed and other statuses; training gains per hit.
+- **Spells** (`set_system/spells.py`): sub-element × movement × stat × tier gives mana, power, range, area,
+  duration and cooldown, with validity rules. 400+ valid combinations, all tested. Blood spells cost HP.
+  Spell-book capacity is 2 + level/3. A starter book holds *Ash Dart* and *Mending Light*.
+- **Runtime** (`gameplay/combat.py`): combatants (the player wraps the Character, so HP is shared with the
+  Set System), all 12 melee and 4 ranged weapon types, ammo use (arrows, bolts, powder; thrown knives drop
+  as pickups), all 9 spell movement classes (projectile, homing, beam, wave, area, ground, orbit, ward,
+  aura) and all 10 stat payloads, buffs and shields, loot pickups, reputation effects on kills, hit-stop
+  and screen shake.
+- **Enemy AI** (`gameplay/enemy_ai.py`): 6 archetypes, attack tokens (at most 2 attacking at once),
+  per-archetype pauses between attacks, reactions to the player's wind-up (block or dodge) and
+  recovery (punish), flanking orders from the captain, ranged kiting with line of sight, obstacle
+  avoidance, fleeing and escaping.
+- **World integration:** wilderness enemy groups spawn from map spawn points, and pack size comes from
+  the data. Defeated groups respawn after 4 days. Escapes either way are written to Set AI, and enemies
+  that remember the player notice them from further away. Thornblood raiders are neutral until provoked.
+  Defeat means being knocked out and robbed. Combat makes you thirsty faster.
+- **Travel:** fight events let you choose a real-time arena fight (flee off the edges) or auto-resolve.
+- **Presentation:** creature sprites (beast, bug, worm, brute, hooded outlaws), attack, block and dodge
+  poses, swing arcs and trails, white hit flash, death fall and fade, damage numbers, health bars,
+  status particles, spell visuals, a combat HUD (weapon, ammo, spell slots with cooldowns, guard), and
+  mouse aiming.
+- **Saves:** version 2, adding the spell book and weapon mode. A v1→v2 migration is included and tested.
+
+### Decisions
+- Dodge moved to Space, so interaction is E/Enter only.
+- Fights never kill the player outright. A knockout is a meaningful setback and keeps the
+  "begin with nothing" loop intact. NPC death and permanence come with Phases 5–7.
+- Beasts don't steal marks; outlaws do.
+
+### Testing
+- 55 unit tests (`tests/test_systems.py`, `tests/test_combat.py`). Combat coverage: weapon
+  distinctness, ore scaling, combos, block, guard break, backstab, i-frames, armor, bleed, every spell
+  combination, every weapon hitting, ammo use, every movement class hitting, heal and buff, mana and
+  cooldown, every enemy type engaging, a bot beating a wolf pack, the attack-token cap, fleeing,
+  neutral-until-provoked, loot and reputation on kill.
+- `tools/combat_demo.py` runs a bot through a Greywood fight and a road ambush (arena → victory →
+  travel log) and saves screenshots.
+- Performance: about 3.3 ms per frame headless with 6 archers.
+
+### Next (Phase 4)
+- Smelting (ore → bars) and crafting all 16 weapon types plus armor, tools, medicine and food at
+  stations (anvil and furnace already exist in smithy interiors).
+- Armor items in equipment slots (combatants already read `armor`).
+- Spell creation UI: choose parts, preview the computed stats, test-cast against a dummy, inscribe in the
+  spell book within capacity, replace a spell for a Mana Crystal.
 
 ## Session 1 — Planning, Phase 1, Phase 2
 
@@ -74,9 +127,6 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
   screenshots.
 
 ### Known limitations / next steps
-- **Phase 3 (next):** real-time combat in local maps. Use `LocalMap.spawns` for enemy placement and
-  `data/enemies.json` archetypes. Add punch, kick, block, dodge, knockback and stagger. Let travel
-  "Fight" choices open a combat arena.
 - The "Would you travel with me?" option only explains requirements. Real recruitment is Phase 6.
 - The bounty board is informational only. Bounty contracts come in Phase 7.
 - Property for sale is shown but can't be bought yet (Phase 8).

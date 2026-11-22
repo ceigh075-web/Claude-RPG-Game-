@@ -6,14 +6,26 @@ import os
 from .state import GameState
 from ..set_ai.memory import MemoryStore
 
-SAVE_VERSION = 1
+SAVE_VERSION = 2
 NUM_SLOTS = 3
 DEFAULT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "saves")
 
 
 # Migration functions upgrade a raw save dict from version N to N+1.
+def _v1_to_v2(payload):
+    """Phase 3: spellbook and weapon mode added."""
+    from ..set_system.spells import starter_spellbook
+    st = payload["state"]
+    st.setdefault("spellbook", starter_spellbook())
+    st["settings"].setdefault("weapon_mode", "melee")
+    if st.get("travel"):
+        st["travel"].setdefault("pending_combat", None)
+    payload["version"] = 2
+    return payload
+
+
 MIGRATIONS = {
-    # 1: lambda d: ...  (add when SAVE_VERSION becomes 2)
+    1: _v1_to_v2,
 }
 
 

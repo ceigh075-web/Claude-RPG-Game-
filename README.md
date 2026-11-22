@@ -18,7 +18,12 @@ Python 3.11+ is required. Saves go to `saves/` (override with `KINDRED_SAVE_DIR`
 |---|---|
 | WASD / arrows | Move (8 directions) |
 | Shift | Sprint |
-| E / Space | Interact / talk / confirm |
+| E / Enter | Interact / talk / confirm |
+| K / left mouse | Attack (combos; hold to draw a bow) |
+| L / right mouse | Block (hold) |
+| F / Space | Kick / dodge roll |
+| Q | Switch melee / ranged weapon |
+| 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
 | M | World map (choose a destination to travel) |
 | Esc | Pause menu |
@@ -29,6 +34,7 @@ Python 3.11+ is required. Saves go to `saves/` (override with `KINDRED_SAVE_DIR`
 ```bash
 python -m unittest            # unit tests
 python tools/autoplay.py out  # headless scripted playthrough + screenshots
+python tools/combat_demo.py out  # headless bot fights (wilderness + road ambush) + screenshots
 python tools/build_npcs.py    # regenerate data/npcs.json from the roster table
 ```
 

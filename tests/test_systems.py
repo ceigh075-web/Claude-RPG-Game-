@@ -203,9 +203,11 @@ class TestSave(unittest.TestCase):
             sm = SaveManager(d)
             sm.save(s, 1)
             p = os.path.join(sm.slot_dir(1), "state.json")
-            payload = json.load(open(p))
+            with open(p) as f:
+                payload = json.load(f)
             payload["version"] = 999
-            json.dump(payload, open(p, "w"))
+            with open(p, "w") as f:
+                json.dump(payload, f)
             with self.assertRaises(SaveError):
                 sm.load(1, DATA)
 
@@ -293,9 +295,14 @@ class TestTravel(unittest.TestCase):
         self.assertIn(res["outcome"], ("victory", "defeat"))
         s = new_state(seed=3)
         s.gold = 100
+        res = skirmish.resolve(s, "hollow_captain", 4)
+        self.assertEqual(res["outcome"], "defeat")
+        self.assertLess(s.gold, 100)  # outlaws rob you
+        s = new_state(seed=3)
+        s.gold = 100
         res = skirmish.resolve(s, "stone_brute", 4)
         self.assertEqual(res["outcome"], "defeat")
-        self.assertLess(s.gold, 100)
+        self.assertEqual(s.gold, 100)  # beasts don't take coin
         self.assertGreater(s.player.hp, 0)
 
 
@@ -344,3 +351,23 @@ class TestReachability(unittest.TestCase):
                 for b in m.buildings.values():
                     dx, dy = b["door"]
                     self.assertIn((dx, dy + 1), seen, f"{lid}: door of {b['label']} unreachable")
+
+
+class TestMigration(unittest.TestCase):
+    def test_v1_save_upgrades(self):
+        import json
+        s = new_state()
+        with tempfile.TemporaryDirectory() as d:
+            sm = SaveManager(d)
+            sm.save(s, 1)
+            p = os.path.join(sm.slot_dir(1), "state.json")
+            with open(p) as f:
+                payload = json.load(f)
+            payload["version"] = 1
+            del payload["state"]["spellbook"]
+            del payload["state"]["settings"]["weapon_mode"]
+            with open(p, "w") as f:
+                json.dump(payload, f)
+            l = sm.load(1, DATA)
+            self.assertEqual(len(l.spellbook), 2)
+            self.assertEqual(l.settings["weapon_mode"], "melee")

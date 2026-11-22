@@ -10,7 +10,12 @@ W, H = 1280, 720
 CONTROLS = [
     ("WASD / Arrows", "Move (8 directions)"),
     ("Shift", "Sprint (tires you: more thirst)"),
-    ("E / Space", "Interact, talk, confirm"),
+    ("E / Enter", "Interact, talk, confirm"),
+    ("K / Left mouse", "Attack (repeat for combos; hold to draw a bow)"),
+    ("L / Right mouse", "Block (hold)"),
+    ("F / Space", "Kick / dodge roll"),
+    ("Q", "Switch melee / ranged weapon"),
+    ("1 - 4", "Cast spell from your spell book"),
     ("I", "Inventory"),
     ("C", "Character & factions"),
     ("M", "World map / leave for travel"),
@@ -137,11 +142,11 @@ class ControlsScene(Scene):
 
     def draw(self, screen):
         ui.dim(screen, 120)
-        r = ui.panel(screen, ((W - 640) // 2, 150, 640, 400), "Controls")
+        r = ui.panel(screen, ((W - 700) // 2, 90, 700, 540), "Controls")
         y = r.y + 56
         for k, d in CONTROLS:
             ui.text(screen, k, (r.x + 30, y), 24, ui.ACCENT)
-            ui.text(screen, d, (r.x + 230, y), 24)
+            ui.text(screen, d, (r.x + 210, y), 24)
             y += 34
 
 

@@ -473,6 +473,31 @@ def _generate_mine(data, loc_id, building, rng):
     return m
 
 
+ARENA_BIOME = {"road": "grassland"}
+
+
+def generate_arena(data, terrain, seed):
+    """A small open battlefield for fights that happen on the road during travel.
+    The left and right edges are open: walking off either side means fleeing."""
+    rng = stable_rng("arena", terrain, seed)
+    biome = ARENA_BIOME.get(terrain, terrain)
+    m = LocalMap("arena", "On the road", 40, 23, biome, "arena")
+    for _ in range(8):
+        _blob(m, rng.randint(3, m.w - 4), rng.randint(3, m.h - 4), rng.randint(1, 3), ALT, rng)
+    m.rect(0, m.h // 2 - 1, m.w, 2, PATH)
+    tree = TREE_KIND.get(biome, "tree")
+    _scatter(m, 9, rng, lambda x, y: m.add(tree, x, y, variant=rng.randint(0, 3)), avoid_center=6)
+    _scatter(m, 7, rng, lambda x, y: m.add("rock", x, y, variant=rng.randint(0, 3)), avoid_center=6)
+    border = BORDER_OBJECT.get(biome, "tree")
+    for x in range(m.w):
+        for y in (0, m.h - 1):
+            if not m.occupied(x, y):
+                m.add(border, x, y, variant=rng.randint(0, 3))
+    m.exits = [{"to": "flee_west", "x": 0, "y": m.h // 2}, {"to": "flee_east", "x": m.w - 1, "y": m.h // 2}]
+    m.entry = (8, m.h // 2)
+    return m
+
+
 def generate(data, world, loc_id):
     if loc_id in data.towns:
         return generate_town(data, world, loc_id)

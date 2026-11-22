@@ -61,6 +61,18 @@ class TravelScene(Scene):
 
     def check_event(self):
         tr = self.tr
+        if tr and tr.get("pending_combat"):
+            pc = tr["pending_combat"]
+            e = self.data.enemies[pc["enemy"]]
+            self.event = {"text": f"{pc['count']} {e['name']}{'s' if pc['count'] > 1 else ''} block your way. "
+                                  f"Fight them yourself, or let the fight play out?"}
+            self.event_menu = ui.ListMenu([("Fight it out (real-time)", "fight"), ("Let it play out (auto-resolve)", "auto")],
+                                          (260, 330, 760, 200), 26, row_h=34)
+            self.combat_choice = True
+            self.auto = False
+            self.build_menu()
+            return
+        self.combat_choice = False
         if tr and tr["pending_event"]:
             ev = travel.event_by_id(self.state, tr["pending_event"])
             entries = [(c["label"], i, effects.requirement_met(self.state, c.get("requires")))
@@ -76,6 +88,16 @@ class TravelScene(Scene):
     def handle(self, ev):
         if self.event_menu:
             v = self.event_menu.handle(ev)
+            if v is not None and getattr(self, "combat_choice", False):
+                if v == "fight":
+                    from .arena import ArenaScene
+                    self.game.scenes.replace(ArenaScene(self.game))
+                else:
+                    res = travel.auto_resolve_combat(self.state)
+                    self.game.notify(res["messages"][-1:])
+                    self.check_event()
+                    self.after_step()
+                return
             if v is not None:
                 msgs = travel.choose(self.state, v)
                 self.game.notify(msgs[-1:] if msgs else [])

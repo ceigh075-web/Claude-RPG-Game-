@@ -117,7 +117,52 @@ short spread blast, huge knockback, very slow reload, uses powder).
 Each has damage, attack speed, reach, arc, knockback, stagger, stat scaling, two-handedness and a
 special trait (dagger backstab, spear thrust reach, mace armor-break, etc.).
 
-## Magic (data/elements.json, data/spell_parts.json)
+## Combat (Phase 3)
+
+Real-time, top-down. Every attack has **wind-up → active → recovery** phases whose lengths come from the
+weapon's speed and the attacker's Dexterity and skill. Hits are tested against the weapon's **reach and arc**.
+
+| Action | Notes |
+|---|---|
+| Attack (K / left mouse) | Melee chains into a 3-hit combo; the 3rd hit is a finisher (+40% damage, more knockback and stagger). Bows are held to draw (up to +80%). |
+| Kick (F) | Short reach, big knockback, damages an enemy's guard. 1 s cooldown. |
+| Block (L / right mouse, hold) | Covers a 150° front arc. Reduces damage to 8–30% (better with Blocking skill) and costs **guard**. When guard runs out, or a hammer or battle axe hits, the block breaks and the blocker is staggered. Moving at 45% speed. |
+| Dodge (Space) | 0.32 s roll with 0.24 s of invulnerability. 0.65 s cooldown. |
+| Spells (1–4) | Cast from the spell book (see Magic). Starter spells: *Ash Dart* (projectile damage) and *Mending Light* (heal aura). |
+| Switch (Q) | Toggle between the melee and ranged weapon. |
+
+- **Knockback** depends on the weapon, Strength and the target's mass. **Stagger** interrupts a target
+  whose poise is lower than the hit's stagger value. Heavy enemies have high poise.
+- **Weapon traits:** dagger backstab ×3, axe/battle-axe bleed, mace ignores half of armor,
+  hammer/battle-axe break guards, longsword/greatsword/polearm sweep several targets, spear has the
+  longest reach, crossbow bolts pierce, firelock fires a 5-pellet spread, thrown knives can be picked up again.
+- **Status effects:** bleed, burn, poison and scald (damage over time); chill (slow); root and entangle;
+  shock and stagger; blind (attacks miss 50%); pull; pierce (armor broken).
+- **Learning by doing:** landing hits trains the weapon skill and the attributes that weapon scales with.
+  Taking damage trains Health. Blocking and dodging train their skills.
+- **Defeat is not death:** you are knocked out. Outlaws rob you; beasts eat your food. You wake up weak.
+
+### Enemy AI (deterministic)
+Enemies read distance, both sides' reach, the player's attack phase (a wind-up is a threat; recovery is an
+opening), their own health, nearby allies and line of sight.
+
+- **Aggressive:** presses in and punishes the player's recovery.
+- **Defensive:** advances behind a raised guard, blocks telegraphed hits, then counterattacks.
+- **Fast:** hit-and-run in packs, circling and lunging.
+- **Heavy:** slow, high poise, long telegraphed swings that break guards.
+- **Ranged:** keeps 90–200 px away, strafes, needs line of sight.
+- **Intelligent:** waits at the edge of its reach, dodges or blocks, and its group flanks from different sides.
+
+Only **two attackers** may swing at once (attack tokens), and every archetype pauses between attacks, so
+fights stay fair and readable. Wounded enemies flee. Enemies that escape, or groups the player runs from,
+**remember** the player: this is recorded in Set AI, and next time they notice the player from 50% farther away.
+Defeated groups respawn after 4 days. Faction members (Thornblood raiders) are neutral unless provoked or
+your standing is low, and attacking them costs reputation.
+
+**Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
+(walk off either side to flee) or *let it play out* (resolved by the Set System).
+
+## Magic (data/magic.json)
 
 4 elements × 4 sub-elements:
 

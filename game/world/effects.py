@@ -113,7 +113,14 @@ def apply(state, effects, ctx=None):
             msgs += apply(state, eff[branch], ctx)
         elif op == "combat":
             lo, hi = eff["count"]
-            res = skirmish.resolve(state, eff["enemy"], state.rng.randint(lo, hi))
+            count = state.rng.randint(lo, hi)
+            if ctx.get("defer_combat"):
+                # the scene lets the player fight it out in real time or auto-resolve
+                ctx["pending_combat"] = {"enemy": eff["enemy"], "count": count}
+                name = state.data.enemies[eff["enemy"]]["name"]
+                msgs.append(f"Combat! {count} {name}{'s' if count > 1 else ''}.")
+                break
+            res = skirmish.resolve(state, eff["enemy"], count)
             msgs += res["messages"]
             ctx["combat"] = res
         else:

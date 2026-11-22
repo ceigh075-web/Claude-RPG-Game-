@@ -450,6 +450,107 @@ class Art:
                 s.set_at((px, py), _shade(skin, 0.7))
         return s
 
+    # ================================================================== creatures / combat
+    def combatant(self, look, direction, frame, action=False):
+        shape = look.get("shape", "humanoid")
+        if shape in ("humanoid", None):
+            img = self.character({k: v for k, v in look.items() if k not in ("shape", "hood")}, direction, frame, action)
+            if look.get("hood"):
+                return self._get(("hooded", tuple(look["shirt"]), direction, frame, action),
+                                 lambda: self._hood(img, look, direction))
+            return img
+        if shape == "brute":
+            base = self.character({k: v for k, v in look.items() if k not in ("shape", "hood")}, direction, frame, action)
+            return self._get(("brute", tuple(look["shirt"]), direction, frame, action),
+                             lambda: pygame.transform.scale(base, (24, 36)))
+        key = ("creature", shape, tuple(look["shirt"]), direction, frame % 4)
+        return self._get(key, lambda: _outline(self._make_creature(shape, tuple(look["shirt"]), direction, frame % 4)))
+
+    def _hood(self, img, look, d):
+        s = img.copy()
+        col = _shade(tuple(look["shirt"]), 0.8)
+        pygame.draw.rect(s, col, (4, 1, 10, 3))
+        if d == "up":
+            pygame.draw.rect(s, col, (4, 1, 10, 9))
+        elif d == "left":
+            pygame.draw.rect(s, col, (8, 1, 6, 9))
+        elif d == "right":
+            pygame.draw.rect(s, col, (3, 1, 6, 9))
+        else:
+            pygame.draw.rect(s, col, (4, 1, 2, 8))
+            pygame.draw.rect(s, col, (12, 1, 2, 8))
+        return s
+
+    def _make_creature(self, shape, col, d, frame):
+        dark, light = _shade(col, 0.7), _shade(col, 1.2)
+        step = (0, 1, 0, -1)[frame]
+        if shape == "beast":
+            s = pygame.Surface((22, 16), pygame.SRCALPHA)
+            if d in ("left", "right"):
+                pygame.draw.ellipse(s, col, (3, 5, 13, 7))
+                pygame.draw.line(s, dark, (3, 7), (0, 4 + step), 2)          # tail
+                for lx, o in ((5, step), (8, -step), (11, step), (14, -step)):
+                    pygame.draw.rect(s, dark, (lx, 11, 2, 4 + o if o > 0 else 4))
+                pygame.draw.circle(s, col, (17, 6), 4)
+                pygame.draw.rect(s, light, (19, 6, 3, 2))                     # snout
+                pygame.draw.polygon(s, dark, [(15, 3), (16, 0), (18, 3)])      # ear
+                s.set_at((18, 5), (20, 20, 20))
+                if d == "left":
+                    s = pygame.transform.flip(s, True, False)
+            else:
+                pygame.draw.ellipse(s, col, (6, 2, 10, 13))
+                for lx, o in ((6, step), (14, -step)):
+                    pygame.draw.rect(s, dark, (lx, 4 + o, 2, 3))
+                    pygame.draw.rect(s, dark, (lx, 11 - o, 2, 3))
+                hy = 12 if d == "down" else 2
+                pygame.draw.circle(s, col, (11, hy), 4)
+                pygame.draw.polygon(s, dark, [(7, hy - 3), (8, hy - 6), (10, hy - 3)])
+                pygame.draw.polygon(s, dark, [(12, hy - 3), (14, hy - 6), (15, hy - 3)])
+                if d == "down":
+                    s.set_at((9, hy), (20, 20, 20))
+                    s.set_at((13, hy), (20, 20, 20))
+            return s
+        if shape == "bug":
+            s = pygame.Surface((16, 14), pygame.SRCALPHA)
+            for i in range(3):
+                o = step if i % 2 else -step
+                pygame.draw.line(s, dark, (3, 4 + i * 3), (0, 3 + i * 3 + o))
+                pygame.draw.line(s, dark, (12, 4 + i * 3), (15, 3 + i * 3 - o))
+            pygame.draw.ellipse(s, col, (3, 2, 10, 11))
+            pygame.draw.line(s, dark, (8, 2), (8, 12))
+            pygame.draw.circle(s, light, (5, 5), 1)
+            return s
+        if shape == "worm":
+            s = pygame.Surface((24, 16), pygame.SRCALPHA)
+            for i in range(5):
+                x = 3 + i * 4
+                y = 9 + int(2 * math.sin(i + frame))
+                pygame.draw.circle(s, col if i % 2 else dark, (x, y), 4 - (1 if i == 0 else 0))
+            pygame.draw.circle(s, light, (20, 7), 4)
+            pygame.draw.line(s, (240, 230, 210), (22, 8), (23, 10))
+            if d == "left":
+                s = pygame.transform.flip(s, True, False)
+            return s
+        s = pygame.Surface((16, 16), pygame.SRCALPHA)
+        s.fill(col)
+        return s
+
+    def white(self, img):
+        """Solid white silhouette used for hit flashes."""
+        return self._get(("white", id(img)), lambda: pygame.mask.from_surface(img).to_surface(
+            setcolor=(255, 255, 255, 230), unsetcolor=(0, 0, 0, 0)))
+
+    def pickup(self, item_type):
+        def make():
+            s = pygame.Surface((8, 8), pygame.SRCALPHA)
+            col = {"marks": (240, 200, 80), "weapon": (200, 200, 210), "ore": (180, 120, 80), "food": (200, 80, 60),
+                   "valuable": (120, 220, 220), "magic": (160, 120, 240)}.get(item_type, (200, 180, 140))
+            pygame.draw.circle(s, _shade(col, 0.6), (4, 5), 3)
+            pygame.draw.circle(s, col, (4, 4), 3)
+            s.set_at((3, 3), (255, 255, 255))
+            return s
+        return self._get(("pickup", item_type), make)
+
     # ================================================================== misc
     def light(self, radius):
         def make():

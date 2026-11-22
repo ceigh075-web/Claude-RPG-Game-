@@ -70,19 +70,8 @@ def resolve(state, enemy_id, count):
             loot_msgs += roll_enemy_loot(state, enemy_id)
         outcome = "victory"
     else:
-        p.hp = max(p.hp, KO_HP)
-        p.alive = True
-        stolen = int(state.gold * 0.4)
-        state.gold -= stolen
-        food_taken = min(p.inventory.count("ration"), 2)
-        if food_taken:
-            p.inventory.remove("ration", food_taken)
-        msgs.append(f"You are beaten down and left in the dirt. They take {stolen} marks"
-                    + (f" and {food_taken} rations." if food_taken else "."))
+        msgs.append(apply_defeat(state, enemy_id))
         outcome = "defeat"
-        state.memory.record(enemy_id, "encounter", f"A band of {e['name']}s beat and robbed {p.name}.",
-                            day=state.clock.day_index, minute=state.clock.total_minutes % 1440, importance=2,
-                            related=["player"], location=state.location)
     if fled:
         state.memory.record(enemy_id, "escaped", f"{fled} {e['name']}(s) fled a fight with {p.name}.",
                             day=state.clock.day_index, minute=state.clock.total_minutes % 1440, importance=1,
@@ -110,3 +99,25 @@ def roll_enemy_loot(state, enemy_id):
             state.player.inventory.add(item, n)
             msgs.append(f"Looted {n}x {state.data.item(item)['name']}.")
     return msgs
+
+
+def apply_defeat(state, enemy_id):
+    """The player is beaten (never killed outright by a fight): robbed, left weak. Returns a message."""
+    p = state.player
+    e = state.data.enemies[enemy_id]
+    p.hp = max(p.hp, KO_HP)
+    p.alive = True
+    takes_loot = e.get("faction") is not None
+    stolen = int(state.gold * 0.4) if takes_loot else 0
+    state.gold -= stolen
+    food_taken = min(p.inventory.count("ration"), 2)
+    if food_taken:
+        p.inventory.remove("ration", food_taken)
+    state.memory.record(enemy_id, "encounter", f"{e['name']}s beat {p.name}" + (" and robbed them." if stolen else "."),
+                        day=state.clock.day_index, minute=state.clock.total_minutes % 1440, importance=2,
+                        related=["player"], location=state.location)
+    if takes_loot:
+        return (f"You are beaten down and left in the dirt. They take {stolen} marks"
+                + (f" and {food_taken} rations." if food_taken else "."))
+    return "You collapse, mauled. When you come to, the beasts have torn into your food" + \
+        (f" ({food_taken} rations lost)." if food_taken else ".")

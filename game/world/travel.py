@@ -2,7 +2,7 @@
 from . import effects, weather
 from .worldmap import TERRAIN_SPEED
 from ..set_system import items as items_mod
-from ..set_system import timeflow
+from ..set_system import skirmish, timeflow
 
 BASE_KMH = 4.5
 PACES = {
@@ -27,7 +27,7 @@ def start(state, world, dest):
         return False, "There is no direct route there."
     state.travel = {
         "from": state.location, "to": dest, "km": route["km"], "done": 0.0, "terrain": route["terrain"],
-        "hours": 0.0, "pending_event": None, "log": [], "arrived": False,
+        "hours": 0.0, "pending_event": None, "pending_combat": None, "log": [], "arrived": False,
         "danger": world.route_danger(state.location, dest),
     }
     state.mode = "travel"
@@ -94,7 +94,7 @@ def auto_consume(state):
 def step(state, rng_events=True):
     """Advance one hour of travel. Returns a list of messages. May set travel['pending_event']."""
     t = state.travel
-    if t is None or t["arrived"] or t["pending_event"]:
+    if t is None or t["arrived"] or t["pending_event"] or t.get("pending_combat"):
         return []
     msgs = []
     pace_mult, exertion, hp_loss, _ = PACES[state.settings["pace"]]
@@ -174,13 +174,43 @@ def choose(state, choice_index):
     if not effects.requirement_met(state, choice.get("requires")):
         return ["You can't do that."]
     log(state, f"> {choice['label']}")
-    msgs = effects.apply(state, choice["effects"], {"location": t["to"], "reason": ev["id"]})
+    ctx = {"location": t["to"], "reason": ev["id"], "defer_combat": True}
+    msgs = effects.apply(state, choice["effects"], ctx)
     t["pending_event"] = None
+    if ctx.get("pending_combat"):
+        t["pending_combat"] = ctx["pending_combat"]
     if t["done"] >= t["km"] - 1e-6:
         t["arrived"] = True
     for m in msgs:
         log(state, m)
     return msgs
+
+
+def auto_resolve_combat(state):
+    """Resolve a pending travel fight abstractly (the player chose not to fight in real time)."""
+    t = state.travel
+    pc = t["pending_combat"]
+    t["pending_combat"] = None
+    res = skirmish.resolve(state, pc["enemy"], pc["count"])
+    for m in res["messages"]:
+        log(state, m)
+    return res
+
+
+def finish_combat(state, outcome, enemy_id, count, killed):
+    """Record the result of a real-time travel fight."""
+    t = state.travel
+    t["pending_combat"] = None
+    name = state.data.enemies[enemy_id]["name"]
+    if outcome == "victory":
+        log(state, f"You win the fight against {count} {name}(s).")
+    elif outcome == "fled":
+        log(state, f"You break away from the {name}s and escape down the road.")
+        state.memory.record(enemy_id, "escaped", f"{state.player.name} escaped a fight with {name}s on the road.",
+                            day=state.clock.day_index, minute=state.clock.total_minutes % 1440, importance=2,
+                            related=["player"], location=t["to"])
+    else:
+        log(state, f"The {name}s beat you ({killed} of them fell first).")
 
 
 def rest(state, hours):

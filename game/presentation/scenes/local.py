@@ -1,5 +1,6 @@
-"""Top-down local exploration: towns, wilderness, interiors."""
+"""Top-down local exploration and real-time combat: towns, wilderness, interiors."""
 import math
+import random
 
 import pygame
 
@@ -7,10 +8,12 @@ from ...core.rng import stable_rng
 from ...core.scene import Scene
 from ...gameplay import interactions as inter
 from ...gameplay import npcs as npc_mod
+from ...gameplay.combat import CombatWorld, facing_from, norm
 from ...gameplay.entity import Actor, Wanderer
-from ...set_system import timeflow
+from ...set_system import factions, skirmish, timeflow
 from ...world import mapgen as mg
 from ...world import weather
+from .. import combat_draw
 from ..art import npc_look, random_look
 from ..ui import widgets as ui
 from .common import ConfirmScene, MessageScene, PauseScene
@@ -22,6 +25,9 @@ TIME_SCALE = 1.0          # game minutes per real second while exploring
 SPRINT_MULT = 1.6
 INTERACT_RANGE = 22
 LIGHT_KINDS = {"campfire": 70, "lantern": 54, "furnace": 60, "well": 0}
+GROUP_RESPAWN_DAYS = 4
+ATTACK_KEYS = (pygame.K_k,)
+BLOCK_KEYS = (pygame.K_l,)
 
 
 class LocalScene(Scene):
@@ -31,11 +37,16 @@ class LocalScene(Scene):
         self.minute_acc = 0.0
         self.action = None
         self.leave_cooldown = 0.0
+        self.mouse_aim_t = 0.0
+        self.mouse_pos = (0, 0)
+        self.combat = None
         self.load_map()
 
     # ================================================================ setup
     def load_map(self, spawn=None):
         st = self.state
+        if self.combat is not None:
+            self.note_escape()
         if st.sub_location:
             self.map = self.game.interior_map(st.location, st.sub_location)
             self.loc_key = f"{st.location}/{st.sub_location}"
@@ -46,10 +57,81 @@ class LocalScene(Scene):
         if spawn is None:
             spawn = self._spawn_point()
         p = st.player
-        self.player = Actor(spawn[0], spawn[1], p.appearance, p.move_speed(), name=p.name)
+        actor = Actor(spawn[0], spawn[1], p.appearance, p.move_speed(), name=p.name)
+        self.combat = CombatWorld(self.game, st, self.map, random.Random(st.rng.random()))
+        self.player = self.combat.add_player(actor)
         st.local_pos = (self.player.x, self.player.y)
         self.last_hour = st.clock.hour
+        self.active_groups = set()
         self.spawn_npcs()
+        self.spawn_enemies()
+
+    # ================================================================ enemies
+    def spawn_enemies(self):
+        """Spawn this wilderness area's enemy groups that aren't currently defeated."""
+        st, m = self.state, self.map
+        if m.kind != "wild" or st.sub_location:
+            return
+        groups = st.location_state(self.loc_key).setdefault("groups", {})
+        now = st.clock.total_minutes
+        for i, sp in enumerate(m.spawns):
+            gid = f"{st.location}:{i}"
+            g = groups.get(gid, {})
+            if g.get("until", 0) > now:
+                continue
+            e = self.data.enemies[sp["enemy"]]
+            rng = stable_rng("pack", gid, st.clock.day_index)
+            n = rng.randint(*e["pack"])
+            fac = e.get("faction")
+            if fac and "hostile_rep" in e:
+                hostile = st.reputation.get(fac, 0) < e["hostile_rep"]
+            else:
+                hostile = factions.is_hostile(st, fac) if fac else True
+            for _ in range(n):
+                tx, ty = m.find_open_near(sp["x"] + rng.randint(-2, 2), sp["y"] + rng.randint(-2, 2), 4)
+                c = self.combat.spawn_enemy(sp["enemy"], tx * T + 8, ty * T + 12, group=gid, hostile=hostile)
+                c.remembers = bool(g.get("remembers"))
+            self.active_groups.add(gid)
+
+    def check_groups(self):
+        """Record defeated or scattered groups (Set System state + Set AI memory)."""
+        st = self.state
+        groups = st.location_state(self.loc_key).setdefault("groups", {})
+        for c in getattr(self.combat, "escaped", []):
+            st.memory.record(c.enemy_id, "escaped", f"A {c.name} fled from a fight with {st.player.name}.",
+                             day=st.clock.day_index, minute=st.clock.total_minutes % 1440, importance=1,
+                             related=["player"], location=st.location)
+        self.combat.escaped = []
+        for gid in list(self.active_groups):
+            members = [c for c in self.combat.combatants if c.group == gid]
+            if any(c.alive for c in members):
+                continue
+            self.active_groups.discard(gid)
+            groups[gid] = {"until": st.clock.total_minutes + GROUP_RESPAWN_DAYS * 1440}
+            eid = next((sp["enemy"] for i, sp in enumerate(self.map.spawns) if f"{st.location}:{i}" == gid), None)
+            if eid:
+                e = self.data.enemies[eid]
+                st.memory.record("player", "battle", f"Cleared a group of {e['name']}s at {self.data.location(st.location)['name']}.",
+                                 day=st.clock.day_index, minute=st.clock.total_minutes % 1440,
+                                 importance=2 if e.get("faction") else 1, related=[eid], location=st.location)
+
+    def note_escape(self):
+        """Leaving while hostiles are hunting you: they remember (unkilled enemies keep memories)."""
+        st = self.state
+        if self.combat is None or not self.combat.in_combat:
+            return
+        groups = st.location_state(self.loc_key).setdefault("groups", {})
+        for gid in {c.group for c in self.combat.enemies() if c.alerted and c.hostile and c.group}:
+            if gid not in self.active_groups:
+                continue
+            groups.setdefault(gid, {})["remembers"] = True
+            eid = next(c.enemy_id for c in self.combat.enemies() if c.group == gid)
+            st.memory.record(eid, "escaped", f"{st.player.name} fled from a fight with {self.data.enemies[eid]['name']}s.",
+                             day=st.clock.day_index, minute=st.clock.total_minutes % 1440, importance=2,
+                             related=["player"], location=st.location)
+
+    def on_exit(self):
+        self.note_escape()
 
     def rebuild_solid(self):
         self.depleted = inter.depleted_keys(self.state, self.loc_key, self.map.objects)
@@ -106,7 +188,34 @@ class LocalScene(Scene):
                 self.npcs.append(a)
 
     # ================================================================ input
+    def mouse_world(self):
+        camx, camy = self.camera()
+        return self.mouse_pos[0] / 2 + camx, self.mouse_pos[1] / 2 + camy
+
+    def aim_at_mouse(self):
+        mx, my = self.mouse_world()
+        self.player.aim = norm(mx - self.player.x, my - (self.player.y - 8))
+
     def handle(self, ev):
+        pc = self.player
+        cw = self.combat
+        if ev.type == pygame.MOUSEMOTION:
+            self.mouse_pos = ev.pos
+            self.mouse_aim_t = 3.0
+            return
+        if ev.type == pygame.MOUSEBUTTONDOWN and not self.action:
+            self.mouse_pos = ev.pos
+            self.mouse_aim_t = 3.0
+            if ev.button == 1:
+                self.aim_at_mouse()
+                cw.attack(pc)
+            return
+        if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
+            cw.release_draw(pc)
+            return
+        if ev.type == pygame.KEYUP and ev.key in ATTACK_KEYS:
+            cw.release_draw(pc)
+            return
         if ev.type != pygame.KEYDOWN:
             return
         k = ev.key
@@ -115,9 +224,28 @@ class LocalScene(Scene):
                 self.game.toast("Stopped.")
                 self.action = None
             return
-        if k == pygame.K_ESCAPE:
+        if k in ATTACK_KEYS:
+            cw.attack(pc)
+        elif k == pygame.K_f:
+            cw.kick(pc)
+        elif k == pygame.K_SPACE:
+            keys = pygame.key.get_pressed()
+            dx = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
+            dy = (keys[pygame.K_s] or keys[pygame.K_DOWN]) - (keys[pygame.K_w] or keys[pygame.K_UP])
+            cw.dodge(pc, (dx, dy))
+        elif k == pygame.K_q:
+            cw.switch_weapon()
+        elif pygame.K_1 <= k <= pygame.K_4:
+            i = k - pygame.K_1
+            if i < len(self.state.spellbook):
+                if self.mouse_aim_t > 0:
+                    self.aim_at_mouse()
+                ok, msg = cw.cast(pc, self.state.spellbook[i])
+                if msg:
+                    self.game.toast(msg)
+        elif k == pygame.K_ESCAPE:
             self.game.scenes.push(PauseScene(self.game))
-        elif k in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
+        elif k in (pygame.K_e, pygame.K_RETURN):
             self.interact()
         elif k == pygame.K_i:
             from .inventory import InventoryScene
@@ -294,6 +422,11 @@ class LocalScene(Scene):
         m = self.map
         keys = pygame.key.get_pressed()
         sprint = False
+        pc = self.player
+        if self.action and pc.flash > 0:
+            self.action = None
+            pc.action = False
+            self.game.toast("Interrupted!")
         if self.action:
             self.action["t"] += dt
             self.player.action = True
@@ -309,9 +442,23 @@ class LocalScene(Scene):
         else:
             dx = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
             dy = (keys[pygame.K_s] or keys[pygame.K_DOWN]) - (keys[pygame.K_w] or keys[pygame.K_UP])
-            sprint = (keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]) and (dx or dy)
-            self.player.speed = st.player.move_speed() * (SPRINT_MULT if sprint else 1.0)
-            self.player.move(m, dx, dy, dt)
+            mouse = pygame.mouse.get_pressed()
+            block = any(keys[k] for k in BLOCK_KEYS) or (mouse[2] if len(mouse) > 2 else False)
+            if block != pc.blocking:
+                self.combat.set_block(pc, block)
+            busy = pc.state not in ("idle",) or pc.blocking
+            sprint = (keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]) and (dx or dy) and not busy
+            self.mouse_aim_t = max(0.0, self.mouse_aim_t - dt)
+            if self.mouse_aim_t > 0 and pc.state in ("idle", "windup", "draw") or pc.blocking and self.mouse_aim_t > 0:
+                self.aim_at_mouse()
+            elif (dx or dy) and pc.state in ("idle", "draw") :
+                pc.aim = norm(dx, dy)
+            spd_buff = 1 + pc.buffs.get("speed", [0])[0] / 50.0
+            self.player.speed = st.player.move_speed() * (SPRINT_MULT if sprint else 1.0) * pc.move_mult() * spd_buff
+            if pc.state not in ("dodge", "stagger", "dead"):
+                self.player.move(m, dx, dy, dt)
+            if busy or self.mouse_aim_t > 0:
+                pc.facing = facing_from(pc.aim)
             if self.player.moving:
                 race = st.race_data
                 if sprint:
@@ -319,13 +466,20 @@ class LocalScene(Scene):
                     st.player.train("athletics", dt * 0.4, race)
                 else:
                     st.player.train("athletics", dt * 0.05, race)
+        self.combat.update(dt, m)
+        if self.combat.events:
+            for msg in self.combat.events:
+                self.game.toast(msg)
+                st.add_log(msg)
+            self.combat.events = []
+        self.check_groups()
         st.local_pos = (self.player.x, self.player.y)
         # time
         self.minute_acc += dt * TIME_SCALE
         if self.minute_acc >= 1.0:
             whole = int(self.minute_acc)
             self.minute_acc -= whole
-            msgs = timeflow.advance(st, whole, exertion=1.6 if sprint else 1.0)
+            msgs = timeflow.advance(st, whole, exertion=1.6 if sprint or self.combat.in_combat else 1.0)
             if msgs:
                 self.game.notify(msgs)
         if st.clock.hour != self.last_hour:
@@ -347,9 +501,39 @@ class LocalScene(Scene):
                 cx, cy = m.w * T / 2, m.h * T / 2
                 self.player.x += (cx - self.player.x) / max(1, abs(cx - self.player.x)) * 10
                 self.player.y += (cy - self.player.y) / max(1, abs(cy - self.player.y)) * 10
-                self.open_map(leaving=True, preselect=ex["to"] if ex else None)
-        if not st.player.alive or st.player.hp <= 0:
+                self.on_edge(ex)
+        if pc.state == "dead":
+            self.defeated()
+        elif not st.player.alive or st.player.hp <= 0:
             self.collapse()
+
+    def on_edge(self, ex):
+        self.open_map(leaving=True, preselect=ex["to"] if ex else None)
+
+    def strongest_foe(self):
+        foes = [c for c in self.combat.enemies(alive=False) if c.alerted] or self.combat.enemies(alive=False)
+        if not foes:
+            return None
+        return max(foes, key=lambda c: c.enemy["xp"]).enemy_id
+
+    def defeated(self):
+        """Beaten in combat: robbed (by outlaws) and left; wake at the area entrance."""
+        st = self.state
+        eid = self.strongest_foe() or "bandit_cutthroat"
+        msg = skirmish.apply_defeat(st, eid)
+        st.player.hp = max(st.player.hp, st.player.max_hp * 0.2)
+        timeflow.advance(st, 3 * 60, resting=True)
+        groups = st.location_state(self.loc_key).setdefault("groups", {})
+        for gid in self.active_groups:
+            groups.setdefault(gid, {})["remembers"] = True
+        st.local_pos = None
+        self.combat = None  # no escape record: they won
+        self.load_map(spawn=self._entry_spawn())
+        self.game.scenes.push(MessageScene(self.game, "Defeated", msg + " Hours later you drag yourself back to your feet."))
+
+    def _entry_spawn(self):
+        tx, ty = self.map.find_open_near(*self.map.entry)
+        return tx * T + T / 2, ty * T + T - 2
 
     def collapse(self):
         """Needs-driven collapse: you wake up later, weak, having lost some coin."""
@@ -382,6 +566,9 @@ class LocalScene(Scene):
         m = self.map
         c.fill((22, 20, 26))
         camx, camy = self.camera()
+        if self.combat.shake > 0:
+            camx += int(random.uniform(-1, 1) * self.combat.shake)
+            camy += int(random.uniform(-1, 1) * self.combat.shake)
         biome = m.biome
         pal = m.palette
         x0, y0 = max(0, camx // T), max(0, camy // T)
@@ -402,7 +589,8 @@ class LocalScene(Scene):
             by = (o["y"] + 1) * T - img.get_height() - camy
             sort_y = (o["y"] + 1) * T - (16 if o["kind"] in ("door", "counter", "crop", "exit_door") else 0)
             sprites.append((sort_y, img, bx, by))
-        for a in self.npcs + [self.player]:
+        sprites += combat_draw.sprite_entries(self.combat, art, camx, camy, self.t)
+        for a in self.npcs:
             img = art.character(a.look, a.facing, a.frame(), a.action)
             sh = art.shadow(12)
             sprites.append((a.y - 0.5, sh, int(a.x - 6 - camx), int(a.y - 3 - camy)))
@@ -410,9 +598,11 @@ class LocalScene(Scene):
         sprites.sort(key=lambda s: s[0])
         for _, img, bx, by in sprites:
             c.blit(img, (bx, by))
+        combat_draw.draw_fx(c, self.combat, art, camx, camy, self.t)
         self.draw_weather(c)
         self.draw_lighting(c, camx, camy)
         pygame.transform.scale(c, (W, H), screen)
+        combat_draw.draw_floaters(screen, self.combat, camx, camy)
         # NPC names (screen space)
         for a in self.npcs:
             if self.player.dist_to(a.x, a.y) < 70:
@@ -495,7 +685,7 @@ class LocalScene(Scene):
             ui.text(screen, ", ".join(c.title() for c in conds), (r.x + 12, r.bottom + 6), 22, ui.TEXT_BAD)
         # right side info
         loc = self.data.location(st.location)
-        place = loc["name"] + (f" - {self.map.name}" if self.map.kind == "interior" else "")
+        place = self.place_name()
         wid = weather.weather_for(st, self.map.biome if self.map.biome not in ("interior",) else loc["biome"])
         lines = [place, st.clock.date_str(), f"{st.clock.time_str()}   {weather.info(wid)['name']}",
                  f"{st.gold} marks"]
@@ -515,4 +705,10 @@ class LocalScene(Scene):
                 pr_r = pygame.Rect(W // 2 - w // 2, H - 64, w, 34)
                 ui.panel(screen, pr_r, alpha=210)
                 ui.text(screen, "[E] " + pr, (W // 2, H - 56), 24, ui.TEXT, center=True)
-        ui.text(screen, "I inventory   C character   M map   J journal   Esc menu", (12, H - 26), 20, ui.TEXT_DIM)
+        combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H)
+        ui.text(screen, "K/LMB attack  L/RMB block  F kick  Space dodge  1-4 spells  I inv  C char  M map  J journal",
+                (12, H - 26), 20, ui.TEXT_DIM)
+
+    def place_name(self):
+        loc = self.data.location(self.state.location)
+        return loc["name"] + (f" - {self.map.name}" if self.map.kind == "interior" else "")
