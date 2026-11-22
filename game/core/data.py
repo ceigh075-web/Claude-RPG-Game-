@@ -46,6 +46,7 @@ class GameData:
         self.schedules = {k: v for k, v in _load("schedules.json").items() if not k.startswith("_")}
         self.shops = {k: v for k, v in _load("shops.json").items() if not k.startswith("_")}
         self.recipe_list = _load("recipes.json")["recipes"]
+        self.economy = {k: v for k, v in _load("economy.json").items() if not k.startswith("_")}
         te = _load("travel_events.json")
         self.travel_events = te["events"]
         self.loot_tables = te["loot_tables"]

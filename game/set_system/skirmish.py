@@ -99,6 +99,11 @@ def resolve(state, enemy_id, count):
             factions.change_rep(state, "crown", killed, "killed Hollow outlaws")
             factions.change_rep(state, "caravans", killed, "killed Hollow outlaws")
     state.stats["kills"] = state.stats.get("kills", 0) + killed
+    from . import jobs, world_events
+    for _ in range(killed):
+        jobs.note_kill(state, enemy_id)
+    if e.get("faction") == "hollow":
+        world_events.hollow_kill(state, killed)
     return {"outcome": outcome, "messages": msgs + loot_msgs, "killed": killed, "fled": fled}
 
 

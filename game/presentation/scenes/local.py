@@ -110,10 +110,40 @@ class LocalScene(Scene):
                 hostile = st.reputation.get(fac, 0) < e["hostile_rep"]
             else:
                 hostile = factions.is_hostile(st, fac) if fac else True
+            if fac == "hollow" and st.flags.get("hollow_broken"):
+                n = max(1, n // 2)
             for _ in range(n):
                 tx, ty = m.find_open_near(sp["x"] + rng.randint(-2, 2), sp["y"] + rng.randint(-2, 2), 4)
                 c = self.combat.spawn_enemy(sp["enemy"], tx * T + 8, ty * T + 12, group=gid, hostile=hostile)
                 c.remembers = bool(g.get("remembers"))
+            self.active_groups.add(gid)
+        self.spawn_world_enemies(groups, now)
+
+    def spawn_world_enemies(self, groups, now):
+        """Enemies created by world events (raids, war patrols, named monsters) and Hollow-held territory."""
+        from ...set_system import world_events
+        st, m = self.state, self.map
+        extra = list(world_events.spawn_modifiers(st, st.location))
+        if world_events.holder(st, st.location) == "hollow":
+            extra.append({"enemy": "bandit_cutthroat", "count": 3, "event": "territory"})
+            extra.append({"enemy": "hollow_captain", "count": 1, "event": "territory2"})
+        for k, mod in enumerate(extra):
+            gid = f"{st.location}:ev:{mod['event']}:{k}"
+            if groups.get(gid, {}).get("until", 0) > now:
+                continue
+            rng = stable_rng("evspawn", gid)
+            sx, sy = rng.randint(6, m.w - 7), rng.randint(5, m.h - 6)
+            edef = None
+            if mod.get("elite"):
+                base = self.data.enemies[mod["enemy"]]
+                edef = dict(base, name=mod["elite"], hp=base["hp"] * 4, damage=round(base["damage"] * 1.5, 1),
+                            armor=base["armor"] + 4, xp=base["xp"] * 5, flee_below=0,
+                            loot=dict(base["loot"], marks=[120, 220]), elite_event=mod["event"])
+            for _ in range(mod.get("count", 1)):
+                tx, ty = m.find_open_near(sx + rng.randint(-2, 2), sy + rng.randint(-2, 2), 5)
+                c = self.combat.spawn_enemy(mod["enemy"], tx * T + 8, ty * T + 12, group=gid, hostile=True, edef=edef)
+                if edef:
+                    c.poise, c.mass = 0.9, 3.0
             self.active_groups.add(gid)
 
     def check_groups(self):
@@ -458,16 +488,8 @@ class LocalScene(Scene):
             self.game.notify("This isn't your bed.")
 
     def read_board(self):
-        lines = []
-        for n in self.game.world.neighbors(self.state.location):
-            loc = self.data.location(n)
-            if loc["kind"] != "wild":
-                continue
-            foes = sorted({self.data.enemies[e]["name"] for e in loc["enemies"]})
-            lines.append(f"- {loc['name']} (danger {loc['danger']}): {', '.join(foes)} sighted.")
-        self.game.scenes.push(MessageScene(self.game, "Notice Board",
-            "Warnings pinned to the board:\n" + "\n".join(lines) +
-            "\n\nThe Crown pays for proof of Hollow outlaws slain. Ask at the barracks."))
+        from .jobs import JobBoardScene
+        self.game.scenes.push(JobBoardScene(self.game, self.state.location))
 
     # ================================================================ update
     def update(self, dt):

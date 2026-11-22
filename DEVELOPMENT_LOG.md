@@ -13,9 +13,39 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
 | 4 Items & Magic | ✅ Done |
 | 5 NPCs & Local AI | ✅ Done |
 | 6 Companions & Relationships | ✅ Done |
-| 7 World Simulation | Factions/reputation/shops partially built (used by Phase 2) |
+| 7 World Simulation | ✅ Done |
 | 8 Base Building | — |
 | 9 Polish | — |
+
+## Session 3 — Phase 7: World Simulation
+- **World events** (`set_system/world_events.py`): one deterministic roll per day, seeded by world seed
+  and date. Each event's consequences are applied by the Set System and written to world history:
+  - caravan arrivals restock a town and cut its prices;
+  - food shortages raise food and drink prices and post a delivery job;
+  - Hollow raids halve shop cash, strengthen the Hollow and post a bounty;
+  - Crown–Thornblood skirmishes worsen relations and spawn raider patrols;
+  - **wars** raise prices in both sides' towns and spawn patrols (peace by diplomacy prevents them);
+  - **named monsters** are 4× HP elites with a bounty, and killing one is world history;
+  - fever outbreaks need salves, and if ignored the deaths are recorded;
+  - companion debts hurt the relationship if ignored;
+  - **festivals** fall on fixed dates.
+  Weights depend on season, Hollow strength, faction relations and whether you have a squad.
+- **Hollow strength** (0–100) grows daily and drops with every outlaw killed. At 75 or more the Hollow
+  **seizes Widow's Crossing** (it becomes an outlaw stronghold). Breaking the Hollow (beating Black Ren)
+  scatters it, halves outlaw spawns, frees the crossing, and cuts road ambushes.
+- **Honours:** standing 60 or more with a faction grants a title and a gift, recorded in history.
+- **Economy:** regional supply and demand by item type (`data/economy.json`) is applied to buying and
+  selling, on top of faction standing and event modifiers, so carrying goods between towns pays.
+- **Jobs** (`set_system/jobs.py`): every town square now has a job board. Boards refresh weekly with
+  bounties (kills are tracked per enemy type, including auto-resolved fights), supply runs for what the
+  town lacks, deliveries, and caravan escorts (finished on arrival; they draw more ambushes). Events add
+  hunts, food and medicine relief, and debts. At most 5 active jobs, with deadlines; failing one costs
+  standing and honesty.
+- **Travel encounters** are weighted by world state (Hollow strength, escorts, wars, caravans).
+- **UI:** job board scene; journal **News** tab (Hollow strength, titles, current events, world
+  history) and **Jobs** tab (jobs and favors with progress).
+- Tests: `tests/test_phase7.py` (a deterministic 200-day simulation, each event's consequences, prices,
+  territory, honours, all job types, failure).
 
 ## Session 3 — Phase 6: Companions & Relationships
 - **Recruiting** (`set_system/companions.py`): an NPC who meets their path (main, alt, or a free rejoin

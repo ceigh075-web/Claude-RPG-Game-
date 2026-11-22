@@ -7,7 +7,7 @@ from ..ui import widgets as ui
 from .common import is_close
 
 W, H = 1280, 720
-TABS = ["Log", "History", "Places"]
+TABS = ["Log", "News", "History", "Places", "Jobs"]
 
 
 class JournalScene(Scene):
@@ -38,6 +38,31 @@ class JournalScene(Scene):
         if self.tab == 0:
             return [f"[{e['t']}] {e['text']}" for e in reversed(st.log)]
         if self.tab == 1:
+            from ...set_system import world_events
+            w = world_events.world(st)
+            out = [f"Hollow strength: {w['hollow_strength']:.0f}/100" + ("  (broken)" if st.flags.get("hollow_broken") else ""),
+                   f"Titles: {', '.join(w['titles']) or 'none'}", ""]
+            for ev in reversed(w["active_events"]):
+                out.append(f"NOW: {ev['headline']} (until {format_stamp(ev['until'])})")
+            out.append("")
+            for rec in st.memory.world_history(40, 3):
+                out.append(f"{format_stamp(rec['day'], rec['minute'])}  {rec['description']}")
+            return out
+        if self.tab == 4:
+            from ...set_system import favors, jobs
+            out = ["ACTIVE JOBS"]
+            for j in st.jobs:
+                if j["status"] == "active":
+                    done, detail = jobs.progress(st, j)
+                    out.append(f"- {j['title']} [{self.data.location(j['town'])['name']}] {detail}; due {format_stamp(j['deadline'])}"
+                               + ("  READY" if done else ""))
+            out += ["", "FAVORS"]
+            for fid, f in st.favors.items():
+                d = favors.defs(self.data)[fid]
+                done, detail = favors.progress(st, fid) if f["status"] == "active" else (True, "done")
+                out.append(f"- {d['title']} for {self.data.npcs[f['npc']]['name']}: {f['status']} - {detail}")
+            return out
+        if self.tab == 2:
             out = []
             for rec in st.memory.recent(200):
                 stars = "*" * rec["importance"]

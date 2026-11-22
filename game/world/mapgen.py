@@ -284,8 +284,7 @@ def generate_town(data, world, loc_id):
             placed.append(b)
             break
     # town-specific details
-    if "bounty_board" in t["buildings"]:
-        m.add("bounty_board", cx + 4, cy - 3, solid=True)
+    m.add("bounty_board", cx + 4, cy - 3, solid=True)  # every town has a job board on its square
     if t["specialty"] == "farming":
         for k in range(3):
             fx, fy = rng.randint(6, m.w - 14), rng.randint(4, m.h - 10)

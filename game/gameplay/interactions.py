@@ -201,7 +201,7 @@ def for_object(state, loc_key, obj, lmap=None):
                            message=f"{obj['label']}. {loc.get('reason', '')}")
 
     if k == "bounty_board":
-        return Interaction("Read the board", kind="scene")
+        return Interaction("Read the job board", kind="scene")
 
     if k in ("door", "exit_door", "counter", "bed"):
         return Interaction(LABELS[k], kind="scene")

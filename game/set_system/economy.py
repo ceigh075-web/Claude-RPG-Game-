@@ -32,12 +32,22 @@ def _faction_of(state, location_id):
     return state.data.location(location_id).get("faction") if location_id in state.data.locations else None
 
 
+def regional(state, location_id, item_id):
+    """Regional supply/demand multiplier times active world-event modifiers (shortages, caravans, wars...)."""
+    t = state.data.item(item_id)["type"]
+    m = state.data.economy.get(location_id, {}).get(t, 1.0)
+    for mod in state.world.get("modifiers", []):
+        if mod["kind"] == "price" and mod["location"] in (location_id, "*") and mod.get("type") in (t, "*"):
+            m *= mod["mult"]
+    return m
+
+
 def buy_price(state, location_id, shop_id, item_id):
     sdef = state.data.shops[shop_id]
     value = state.data.item(item_id)["value"]
     trade = state.player.skills["trading"]
     p = value * sdef["markup"] * (1 - trade / 400) * factions.price_factor(state, _faction_of(state, location_id))
-    return max(1, math.ceil(p))
+    return max(1, math.ceil(p * regional(state, location_id, item_id)))
 
 
 def sell_price(state, location_id, shop_id, item_id):
@@ -45,7 +55,7 @@ def sell_price(state, location_id, shop_id, item_id):
     value = state.data.item(item_id)["value"]
     trade = state.player.skills["trading"]
     p = value * sdef["sell_rate"] * (1 + trade / 300) / factions.price_factor(state, _faction_of(state, location_id))
-    return max(0, math.floor(p))
+    return max(0, math.floor(p * regional(state, location_id, item_id)))
 
 
 def will_buy(state, shop_id, item_id):

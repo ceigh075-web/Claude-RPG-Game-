@@ -135,6 +135,36 @@ def main():
     push(g, party.PartyScene(g), "p6_party")
     push(g, party.TransferScene(g, "tobin"), "p6_transfer", [pygame.K_RETURN])
     push(g, party.RelationshipsScene(g), "p6_relationships")
+    # Phase 7: job board, news journal, event-spawned named monster
+    from game.presentation.scenes.jobs import JobBoardScene
+    from game.set_system import world_events
+    import random as _r
+    for _ in range(12):
+        from game.set_system import timeflow
+        timeflow.advance(st, 1440)
+    jb = JobBoardScene(g, st.location)
+    g.scenes.push(jb)
+    key(g, pygame.K_RETURN)
+    assert any(j["status"] == "active" for j in st.jobs), "job not accepted"
+    shot(g, "p7_job_board")
+    g.scenes.pop(jb)
+    j = journal.JournalScene(g)
+    g.scenes.push(j)
+    key(g, pygame.K_TAB)
+    shot(g, "p7_news")
+    g.scenes.pop(j)
+    ev = world_events.ev_creature(st, _r.Random(4))
+    st.location, st.local_pos, st.sub_location = ev["location"], None, None
+    st.discovered.add(ev["location"])
+    st.clock.minutes = st.clock.day_index * 1440 + 12 * 60
+    g.enter_world()
+    loc = g.scenes.top
+    elite = [c for c in loc.combat.enemies() if c.enemy.get("elite_event")]
+    assert elite, "elite not spawned"
+    loc.player.x, loc.player.y = elite[0].x - 70, elite[0].y
+    for _ in range(90):
+        g.step(DT, [])
+    shot(g, "p7_named_monster")
     extra = globals().get("EXTRA")
     if extra:
         extra(g, push, key, shot)

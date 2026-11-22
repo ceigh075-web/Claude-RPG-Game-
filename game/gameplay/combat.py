@@ -569,6 +569,14 @@ class CombatWorld:
         self.kills.append(tgt.enemy_id)
         st = self.state
         e = tgt.enemy
+        from ..set_system import jobs, world_events
+        jobs.note_kill(st, tgt.enemy_id)
+        if e.get("faction") == "hollow":
+            world_events.hollow_kill(st)
+        if e.get("elite_event"):
+            world_events.elite_slain(st, e["elite_event"])
+            jobs.on_elite_killed(st, e["elite_event"])
+            self.events.append(f"{e['name']} is slain!")
         # loot drops
         for item, (lo, hi) in e["loot"].items():
             n = self.rng.randint(lo, hi)

@@ -153,10 +153,11 @@ def roll_event(state, wid):
     pool = eligible_events(state, wid)
     if not pool:
         return None
-    total = sum(e["weight"] for e in pool)
+    weights = [e["weight"] * event_weight_mult(state, e) for e in pool]
+    total = sum(weights)
     roll = state.rng.uniform(0, total)
-    for e in pool:
-        roll -= e["weight"]
+    for e, wgt in zip(pool, weights):
+        roll -= wgt
         if roll <= 0:
             return e
     return pool[-1]
@@ -164,6 +165,24 @@ def roll_event(state, wid):
 
 def event_by_id(state, eid):
     return next(e for e in state.data.travel_events if e["id"] == eid)
+
+
+def event_weight_mult(state, ev):
+    """World conditions shape road encounters: Hollow strength drives outlaw ambushes; escorts draw attacks;
+    wars bring patrols."""
+    from ..set_system.world_events import world
+    w = world(state)
+    m = 1.0
+    if ev["id"] in ("hostile_travelers", "hollow_ambush"):
+        m *= 0.15 if state.flags.get("hollow_broken") else max(0.3, w["hollow_strength"] / 50.0)
+        from ..set_system import jobs
+        if jobs.escort_active(state):
+            m *= 1.8
+    if ev["id"] == "toll_patrol" and any(e["type"] == "war" for e in w["active_events"]):
+        m *= 2.0
+    if ev["id"] == "merchant_caravan" and any(e["type"] == "caravan_arrival" for e in w["active_events"]):
+        m *= 2.0
+    return m
 
 
 def choose(state, choice_index):
@@ -242,6 +261,9 @@ def arrive(state):
     state.flags["arrived_from"] = origin
     state.travel = None
     first = state.discover(state.location)
+    from ..set_system import jobs
+    for m in jobs.on_arrival(state, state.location):
+        state.add_log(m)
     from ..set_system import companions as comp_mod
     comp_mod.shared_travel(state, state.location)
     name = state.data.location(state.location)["name"]
