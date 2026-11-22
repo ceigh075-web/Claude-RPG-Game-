@@ -100,10 +100,10 @@ a distance (km) and terrain. Travel is only along routes.
 
 | Ore | Rarity | Value (raw) | Character |
 |---|---|---|---|
-| **Rustite** | Common | 4 | Heavy, cheap, low durability. Starter gear. |
-| **Greyvein Iron** | Uncommon | 12 | Balanced, durable, best armor per cost. |
-| **Sunsilver** | Rare | 35 | Light: +attack speed, mild mana conduction. |
-| **Voidglass** | Very rare | 90 | Highest damage, strong mana conduction, brittle. |
+| **Rustite** | Common | 6 | Heavy, cheap, low durability. Starter gear. |
+| **Greyvein Iron** | Uncommon | 16 | Balanced, durable, best armor per cost. |
+| **Sunsilver** | Rare | 40 | Light: +attack speed, mild mana conduction. |
+| **Voidglass** | Very rare | 100 | Highest damage, strong mana conduction, brittle. Requires knowledge (smith's notes or research). |
 
 Ore → bar at a forge (2 ore = 1 bar). Every metal weapon/armor = bars + common materials.
 Weapon items are generated as `weapon type × ore` (e.g. `longsword_greyvein`).
@@ -220,6 +220,20 @@ Currency: **marks**. Merchants have stock limits, cash limits and restock weekly
 of value, modified by Trading skill and faction rep. Early income: foraging, Rustite (4 each),
 scavenging, odd jobs. Milestones: town house (≈600 marks), outpost charter at Widow's Crossing
 (≈2500 marks + materials).
+
+## Systems added in Phases 4–9 (summary)
+- **Crafting:** 98 recipes at furnace, anvil, workbench, stove, alchemy table and campfire. Crafting
+  skill gates ore tiers. Head and body armor.
+- **Favors:** 21 personal requests (deliver, pay, duel, clear an area, world flag) that gate many
+  recruitment paths.
+- **Legendary gear:** the Starfall Blade, the Skyglass Bow and the Emberheart Hammer, plus the Spire
+  Core, found at guarded landmarks.
+- **Companions:** a squad of 4, tasks, shared supplies, an ally AI, being downed rather than killed,
+  bonds, couples and rivalries.
+- **World simulation:** daily events, Hollow strength and territory, honours, regional prices, job boards.
+- **Base:** a house in 6 towns, and an outpost at Widow's Crossing with 10 building types, workers,
+  farming, research and raids.
+- **Starting kit:** 25 marks, 3 rations, 4 water, 2 bandages, bread and an old Rustite dagger.
 
 ## Progression
 

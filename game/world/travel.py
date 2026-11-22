@@ -193,7 +193,7 @@ def choose(state, choice_index):
     if not effects.requirement_met(state, choice.get("requires")):
         return ["You can't do that."]
     log(state, f"> {choice['label']}")
-    ctx = {"location": t["to"], "reason": ev["id"], "defer_combat": True}
+    ctx = {"location": t["to"], "reason": ev["id"], "defer_combat": True, "danger": t["danger"]}
     msgs = effects.apply(state, choice["effects"], ctx)
     t["pending_event"] = None
     if ctx.get("pending_combat"):

@@ -57,6 +57,9 @@ class ShopScene(Scene):
             have = (economy.shop_state(self.state, self.loc_id, self.shop_type)["stock"].get(v, 0) if self.focus == 0
                     else self.state.player.inventory.count(v))
             ok, msg = fn(self.state, self.loc_id, self.shop_type, v, max(1, min(qty, have)))
+            if ok:
+                from .. import audio
+                audio.play("coin")
             self.game.notify(msg)
             self.refresh()
 

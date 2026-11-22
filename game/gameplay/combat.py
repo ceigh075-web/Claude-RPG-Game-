@@ -168,6 +168,11 @@ class SpellEffect:
 
 
 class CombatWorld:
+    def sfx(self, name):
+        ev = getattr(self.game, "events", None)
+        if ev is not None:
+            ev.publish("sfx", sound=name)
+
     def __init__(self, game, state, lmap, rng):
         self.game, self.state, self.data, self.map, self.rng = game, state, game.data, lmap, rng
         self.combatants = []
@@ -316,6 +321,8 @@ class CombatWorld:
         c.blocking = False
         c.dodge_cd = rules.DODGE_COOLDOWN
         c.set_state("dodge")
+        if c is self.player:
+            self.sfx("dodge")
 
     def set_block(self, c, on):
         c.blocking = bool(on) and c.guard > 5 and c.state in ("idle", "recovery", "windup")
@@ -358,6 +365,7 @@ class CombatWorld:
                 c.char.hp -= p["hp_cost"]
             c.char.train("magic", 2 + p["tier"] * 2, c.race_data)
         self.spell_cd[key] = p["cooldown"]
+        self.sfx("heal" if p["stat"] == "heal" else "spell")
         aim = aim or c.aim
         c.blocking = False
         c.set_state("cast")
@@ -463,6 +471,7 @@ class CombatWorld:
         res = rules.resolve_hit(profile, origin, tgt.defender_view(), self.rng, charge)
         self.provoke(src, tgt)
         if res["dodged"]:
+            self.sfx("dodge")
             self.floaters.append(["dodge", tgt.x, tgt.y - 26, 0.0, (200, 200, 255)])
             if tgt.char:
                 tgt.char.train("dodging", 3, tgt.race_data)
@@ -492,6 +501,7 @@ class CombatWorld:
         for name, mag, dur in res["statuses"]:
             self.add_status(tgt, name, mag, dur, origin)
         tgt.flash = 0.12
+        self.sfx("block" if res["blocked"] else ("heavy" if profile.get("knockback", 0) > 100 or res["stagger_time"] > 0.3 else "hit"))
         col = (255, 255, 255) if src and src.team == "player" else (255, 120, 100)
         if res["blocked"]:
             col = (160, 190, 255)
@@ -560,6 +570,7 @@ class CombatWorld:
         tgt.blocking = False
         self.tokens.discard(tgt.cid)
         if tgt is self.player:
+            self.sfx("death")
             return
         if getattr(tgt, "companion_id", None):
             tgt.downed = True
@@ -701,6 +712,8 @@ class CombatWorld:
         elif c.state == "windup" and p:
             if c.state_t >= p["windup"]:
                 c.set_state("active")
+                if p["class"] == "melee" and c is self.player:
+                    self.sfx("kick" if p["weapon"] == "kick" else "swing")
                 if p["class"] == "ranged":
                     self._fire(c)
         elif c.state == "active" and p:
@@ -777,6 +790,7 @@ class CombatWorld:
                             c.team, c, prof, rng_left=p["reach"], kind=kind, pierce=p.get("pierce", 0), charge=charge)
             pr.drop_item = getattr(c, "weapon_item", None) if kind == "knife" and c.char else None
             self.projectiles.append(pr)
+        self.sfx("firelock" if wt == "firelock" else "bow")
         if wt == "firelock":
             self.shake = max(self.shake, 2.5)
             self._burst(c.x + c.aim[0] * 12, c.y - 8 + c.aim[1] * 12, (255, 200, 90), 10)
@@ -882,6 +896,7 @@ class CombatWorld:
         keep = []
         for pk in self.pickups:
             if math.hypot(pk["x"] - p.x, pk["y"] - p.y) < PICKUP_RADIUS:
+                self.sfx("coin" if pk["item"] == "marks" else "pickup")
                 if pk["item"] == "marks":
                     self.state.gold += pk["qty"]
                     self.events.append(f"+{pk['qty']} marks")

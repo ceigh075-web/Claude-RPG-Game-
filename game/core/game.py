@@ -43,6 +43,9 @@ class Game:
         self.art = Art()
         self.saves = SaveManager(save_dir)
         self.events = EventBus()
+        from ..presentation import audio
+        audio.init(self.config)
+        self.events.subscribe("sfx", lambda sound: audio.play(sound))
         self.scenes = SceneManager(self)
         self.state = None
         self.running = True
@@ -87,6 +90,15 @@ class Game:
         except OSError as e:
             self.toast(f"Save failed: {e}")
             return False
+
+    def autosave(self):
+        from .save import AUTOSAVE_SLOT
+        if self.state is None:
+            return
+        try:
+            self.saves.save(self.state, AUTOSAVE_SLOT)
+        except OSError as e:
+            self.toast(f"Autosave failed: {e}")
 
     def load_game(self, slot):
         try:

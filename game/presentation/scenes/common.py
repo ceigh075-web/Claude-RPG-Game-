@@ -93,12 +93,17 @@ class SlotScene(Scene):
     def __init__(self, game, mode):
         super().__init__(game)
         self.mode = mode  # "save" | "load"
-        self.rect = pygame.Rect((W - 760) // 2, 160, 760, 330)
-        self.menu = ui.ListMenu([], (self.rect.x + 30, self.rect.y + 60, 700, 240), 24, row_h=70)
+        self.rect = pygame.Rect((W - 760) // 2, 140, 760, 400)
+        self.menu = ui.ListMenu([], (self.rect.x + 30, self.rect.y + 60, 700, 300), 24, row_h=70)
         self.refresh()
 
     def refresh(self):
         entries = []
+        if self.mode == "load":
+            info = self.game.saves.summary(0)
+            if info:
+                entries.append((f"Autosave:  {info['name']}  -  Lv {info['level']}  -  {info['location']}  -  {info['date']}",
+                                0, True, info["saved_at"].replace("T", " ")))
         for s in range(1, NUM_SLOTS + 1):
             info = self.game.saves.summary(s)
             if info:
@@ -157,9 +162,10 @@ class PauseScene(Scene):
 
     def __init__(self, game):
         super().__init__(game)
-        self.rect = pygame.Rect((W - 420) // 2, 150, 420, 400)
+        self.rect = pygame.Rect((W - 420) // 2, 130, 420, 440)
         self.menu = ui.ListMenu([("Resume", "resume"), ("Save game", "save"), ("Load game", "load"),
-                                 ("Journal", "journal"), ("Controls", "controls"), ("Quit to main menu", "menu"),
+                                 ("Journal", "journal"), ("Options", "options"), ("Controls", "controls"),
+                                 ("Quit to main menu", "menu"),
                                  ("Quit game", "quit")], (self.rect.x + 40, self.rect.y + 60, 340, 320), 30)
 
     def handle(self, ev):
@@ -176,6 +182,9 @@ class PauseScene(Scene):
             self.game.scenes.push(JournalScene(self.game))
         elif v == "controls":
             self.game.scenes.push(ControlsScene(self.game))
+        elif v == "options":
+            from .options import OptionsScene
+            self.game.scenes.push(OptionsScene(self.game))
         elif v == "menu":
             self.game.scenes.push(ConfirmScene(self.game, "Quit to menu?", "Unsaved progress will be lost.",
                                                self.game.start))

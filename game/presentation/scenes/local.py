@@ -41,6 +41,8 @@ class LocalScene(Scene):
         self.mouse_aim_t = 0.0
         self.mouse_pos = (0, 0)
         self.combat = None
+        self.last_level = game.state.player.level
+        self.hint = None
         self.load_map()
 
     # ================================================================ setup
@@ -446,6 +448,8 @@ class LocalScene(Scene):
                 self.game.scenes.push(ConfirmScene(self.game, "House for sale",
                     f"A notice on the door: 'FOR SALE - {price} marks.' Buy this house? (You have {st.gold}.)", buy))
                 return
+            from .. import audio
+            audio.play("door")
             self.outdoor_return = (o["x"] * T + T / 2, (o["y"] + 1) * T + T - 2)
             st.flags["door_return"] = list(self.outdoor_return)
             st.sub_location = b["id"]
@@ -518,6 +522,7 @@ class LocalScene(Scene):
                 st.gold -= price
                 hours, msgs = timeflow.sleep_until_morning(st)
                 self.spawn_npcs()
+                self.game.autosave()
                 self.game.scenes.push(MessageScene(self.game, "Rested",
                     f"You pay {price} marks and sleep for {hours:.0f} hours. It is now {st.clock.time_str()}, "
                     f"{st.clock.date_str()}.\n\n" + " ".join(msgs)))
@@ -536,6 +541,7 @@ class LocalScene(Scene):
         def sleep():
             hours, msgs = timeflow.sleep_until_morning(st)
             self.spawn_npcs()
+            self.game.autosave()
             self.game.scenes.push(MessageScene(self.game, "Rested", f"You sleep in {where} for {hours:.0f} hours. It is now "
                                   f"{st.clock.time_str()}, {st.clock.date_str()}.\n\n" + " ".join(msgs)))
         self.game.scenes.push(ConfirmScene(self.game, "Sleep?", f"Sleep in {where} until morning?", sleep))
@@ -672,6 +678,8 @@ class LocalScene(Scene):
             c = self.combat.spawn_enemy(eid, tx * T + 8, ty * T + 12, group="raid", hostile=True)
             c.alerted = True
         self.game.toast("The Hollow is attacking your outpost!")
+        from .. import audio
+        audio.play("alarm")
 
     def raid_over(self, fought):
         st = self.state
@@ -706,6 +714,8 @@ class LocalScene(Scene):
                 self.player.action = False
                 msgs = timeflow.advance(st, ia.minutes)
                 msgs = ia.run(st) + msgs
+                from .. import audio
+                audio.play("mine" if "Mine" in ia.label or "rock" in ia.label else ("chop" if "Chop" in ia.label else "pickup"))
                 self.game.notify(msgs)
                 self.rebuild_solid()
         else:
@@ -743,6 +753,7 @@ class LocalScene(Scene):
                 st.add_log(msg)
             self.combat.events = []
         self.check_groups()
+        self.polish_update(dt)
         if base_mod.founded(st):
             self.check_raid()
             if getattr(self, "raid_active", False) and not any(c.alive and c.group == "raid" for c in self.combat.enemies()):
@@ -784,6 +795,29 @@ class LocalScene(Scene):
             self.defeated()
         elif not st.player.alive or st.player.hp <= 0:
             self.collapse()
+
+    def polish_update(self, dt):
+        """Music mood, level-up fanfare and first-time hints."""
+        from .. import audio
+        from . import hints
+        st = self.state
+        audio.music("combat" if self.combat.in_combat else ("town" if self.map.kind in ("town", "interior") else "wild"))
+        if st.player.level > self.last_level:
+            self.last_level = st.player.level
+            audio.play("levelup")
+            from ...set_system import spells
+            self.game.toast(f"Level up! You are now level {st.player.level}. "
+                            f"Spell book capacity {spells.capacity(self.data, st.player.level)}.", 5)
+            st.memory.record("player", "accomplishment", f"{st.player.name} reached level {st.player.level}.",
+                             day=st.clock.day_index, minute=st.clock.total_minutes % 1440, importance=2)
+        if self.hint:
+            self.hint[1] -= dt
+            if self.hint[1] <= 0:
+                self.hint = None
+        if not self.hint:
+            h = hints.next_hint(self)
+            if h:
+                self.hint = [h, 9.0]
 
     def on_edge(self, ex):
         self.open_map(leaving=True, preselect=ex["to"] if ex else None)
@@ -1003,6 +1037,19 @@ class LocalScene(Scene):
                 ui.panel(screen, pr_r, alpha=210)
                 ui.text(screen, "[E] " + pr, (W // 2, H - 56), 24, ui.TEXT, center=True)
         combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H, self.hotbar())
+        if p.hp < p.max_hp * 0.3:
+            pulse = 0.5 + 0.5 * math.sin(self.t * 5)
+            v = pygame.Surface((W, H), pygame.SRCALPHA)
+            a = int(60 + 60 * pulse * (1 - p.hp / max(1, p.max_hp * 0.3)))
+            for i in range(6):
+                pygame.draw.rect(v, (150, 0, 0, max(0, a - i * 10)), (i * 8, i * 8, W - i * 16, H - i * 16), 8)
+            screen.blit(v, (0, 0))
+        if self.hint:
+            lines = ui.wrap(self.hint[0], 21, 440)
+            hr = ui.panel(screen, (12, H - 70 - len(lines) * 19, 470, 30 + len(lines) * 19), alpha=225)
+            ui.text(screen, "Tip", (hr.x + 10, hr.y + 6), 20, ui.ACCENT, bold=True)
+            for i, l in enumerate(lines):
+                ui.text(screen, l, (hr.x + 50, hr.y + 6 + i * 19), 21)
         ui.text(screen, "K/LMB attack  L/RMB block  F kick  Space dodge  1-4 spells  B book  I inv  C char  M map  J journal",
                 (12, H - 26), 20, ui.TEXT_DIM)
 

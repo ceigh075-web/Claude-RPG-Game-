@@ -371,3 +371,26 @@ class TestMigration(unittest.TestCase):
             l = sm.load(1, DATA)
             self.assertEqual(len(l.spellbook), 2)
             self.assertEqual(l.settings["weapon_mode"], "melee")
+
+
+class TestSaveReliability(unittest.TestCase):
+    def test_backup_used_when_save_corrupted(self):
+        s = new_state()
+        s.gold = 111
+        with tempfile.TemporaryDirectory() as d:
+            sm = SaveManager(d)
+            sm.save(s, 1)
+            s.gold = 222
+            sm.save(s, 1)              # previous (111) becomes the backup
+            with open(os.path.join(sm.slot_dir(1), "state.json"), "w") as f:
+                f.write("{ truncated")
+            self.assertEqual(sm.load(1, DATA).gold, 111)
+
+    def test_autosave_slot(self):
+        s = new_state()
+        with tempfile.TemporaryDirectory() as d:
+            sm = SaveManager(d)
+            sm.save(s, 0)
+            self.assertTrue(os.path.exists(os.path.join(d, "autosave", "state.json")))
+            self.assertEqual(sm.most_recent_slot(), 0)
+            self.assertEqual(sm.load(0, DATA).player.name, "Tester")

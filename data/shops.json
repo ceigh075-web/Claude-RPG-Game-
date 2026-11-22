@@ -196,7 +196,7 @@
   "name": "Assayer",
   "cash": 900,
   "markup": 1.15,
-  "sell_rate": 0.7,
+  "sell_rate": 0.8,
   "buys": [
    "ore",
    "bar",

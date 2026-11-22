@@ -101,6 +101,25 @@ exploration, travel, overlay screens). Scenes receive input, call the Set System
 plus `saves/slot_N/memory.sqlite`. Loading runs `MIGRATIONS[v]` functions to upgrade old saves.
 Writes go to a temp file then `os.replace` for atomic saves.
 
+## Module map (final)
+
+| Layer | Modules |
+|---|---|
+| core | `game`, `scene`, `save` (versioned, autosave and backups), `state`, `clock`, `rng`, `events`, `data` |
+| set_system (rules) | `stats`, `needs`, `inventory`, `items`, `economy`, `factions`, `timeflow`, `daily`, `combat`, `skirmish`, `spells`, `crafting`, `relationships`, `favors`, `recruitment`, `companions`, `world_events`, `jobs`, `base` |
+| set_ai (memory) | `memory` (append-only records and facts, prunable chatter) |
+| local_ai (dialogue) | `client`, `context`, `personality`, `actions` (whitelist bridge), `dialogue` (engine: thread does HTTP only), `fallback` |
+| world | `worldmap`, `mapgen`, `travel`, `effects`, `weather` |
+| gameplay | `entity`, `interactions`, `npcs`, `combat` (runtime), `enemy_ai`, `companion_ai` |
+| presentation | `art`, `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
+
+**Daily tick order** (`set_system/daily.py`): companion bonds → relationship neglect → world events
+(expiry, jobs, Hollow, territory, honours, festivals, a new event) → base (construction, research,
+upkeep, production, raids).
+
+**Threads:** only the local-AI HTTP call and music rendering run off the main thread. All game state,
+including Set AI (SQLite), is touched only on the main thread.
+
 ## Data flow for a location visit
 
 1. Travel arrives → `world.locations.enter(location_id)`.

@@ -138,6 +138,7 @@ class TravelScene(Scene):
             if first:
                 self.game.toast(f"Discovered {self.data.location(st.location)['name']}!")
             self.game.enter_world()
+            self.game.autosave()
             return
         if v == "auto":
             self.auto = not self.auto
@@ -209,6 +210,8 @@ class TravelScene(Scene):
 
     def update(self, dt):
         self.t += dt
+        from .. import audio
+        audio.music("travel")
         if self.auto and not self.event_menu and self.tr and not self.tr["arrived"]:
             self.scroll += dt * 40
             self.auto_t += dt

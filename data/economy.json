@@ -16,8 +16,8 @@
   "ore": 1.1
  },
  "cinderdeep": {
-  "ore": 0.75,
-  "bar": 0.85,
+  "ore": 0.95,
+  "bar": 0.95,
   "tool": 0.9,
   "food": 1.3,
   "drink": 1.2,

@@ -2,6 +2,16 @@
 
 Read this file first when resuming work in a new session. Then read GAME_DESIGN.md and ARCHITECTURE.md.
 
+**All nine phases are complete.** Future work is content, balance and polish on top of working systems
+(see "Ideas beyond scope" at the end). Before changing anything, run the checks:
+
+```bash
+python -m unittest                    # 117 unit tests
+python tools/autoplay.py out/ap       # scripted playthrough
+python tools/combat_demo.py out/cd    # bot fights
+python tools/ui_smoke.py out/ui       # opens and drives every screen
+```
+
 ## Status
 
 | Phase | Status |
@@ -15,7 +25,39 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
 | 6 Companions & Relationships | ✅ Done |
 | 7 World Simulation | ✅ Done |
 | 8 Base Building | ✅ Done |
-| 9 Polish | — |
+| 9 Polish | ✅ Done |
+
+## Session 3 — Phase 9: Polish & Testing
+- **Audio** (`presentation/audio.py`): 20 procedurally synthesized effects (swings, hits, heavy hits,
+  blocks, dodges, kicks, bow, firelock, spells, heals, pickups, coins, UI, mining, chopping, doors,
+  level-up, alarm, death) and ambient music loops per mood (menu, town, wild, combat, travel), rendered on
+  a worker thread. There are no asset files and no numpy, and the game is silent if no audio device
+  exists. Gameplay code raises sounds through the EventBus (`sfx`), so the rules layer has no
+  presentation imports.
+- **Options** (Pause or Main menu): master, music and effects volume, tips on/off, local AI on/off,
+  backend (Ollama or OpenAI-compatible), model name, and a live **AI connection test**. Saved to `config.json`.
+- **First-time tips:** 11 contextual hints (movement, talking, hunger, wilderness, combat, job boards,
+  night, ore, company, spells, property), each shown once per save.
+- **Feedback:** level-up fanfare and toast (recorded in history), a low-health red vignette, toasts
+  moved to the top of the screen.
+- **Saves:** an autosave slot (on arrival after travel and after sleeping), a backup of each slot's
+  previous save, and automatic fallback to it if the main file is damaged.
+- **Balance pass** (measured with the auto-resolver, 60 seeds each):
+  - Characters start with an old Rustite dagger. Bare fists lost every two-outlaw fight, which made the
+    most common road event a coin-flip robbery.
+  - Road ambush group size now scales with route danger (danger 1 roads send 1–2).
+  - Starting win rates: 1 outlaw 100%, 2 wolves 97%, 2 bowmen 80%, 3 wolves 55%, 2 outlaws 22%
+    (pay or run).
+  - Ore values went up (Rustite 6, Greyvein 16, Sunsilver 40, Voidglass 100) and the assayer pays 80%.
+    Cinderdeep now really is the best place to sell ore, and smelting adds value (2 ore at 4 → a bar at 12).
+- **Performance:** about 6 ms per frame headless in the busiest scenes (a town at night with 4
+  companions, the forest at night with enemies).
+- **Bugs fixed this phase:** an EventBus keyword clash.
+
+## Ideas beyond scope (not started)
+- More hand-written travel events and per-NPC quest lines beyond the favors.
+- Companion-to-companion conversations through the local model (the bond system already supplies context).
+- Gamepad support, a minimap, key rebinding.
 
 ## Session 3 — Phase 8: Base Building
 - **Town houses** (`set_system/base.py`, `data/base.json`): six towns have a house for sale (500–1200

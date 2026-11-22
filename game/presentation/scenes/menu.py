@@ -52,7 +52,8 @@ class MainMenu(Scene):
         recent = self.game.saves.most_recent_slot()
         if recent:
             entries.append(("Continue", ("continue", recent)))
-        entries += [("New Game", ("new",)), ("Load Game", ("load",)), ("Controls", ("controls",)), ("Quit", ("quit",))]
+        entries += [("New Game", ("new",)), ("Load Game", ("load",)), ("Options", ("options",)), ("Controls", ("controls",)),
+                    ("Quit", ("quit",))]
         self.menu = ui.ListMenu(entries, (W // 2 - 140, 360, 280, 300), 34, row_h=46)
 
     def on_resume(self):
@@ -70,11 +71,16 @@ class MainMenu(Scene):
             self.game.scenes.push(SlotScene(self.game, "load"))
         elif v[0] == "controls":
             self.game.scenes.push(ControlsScene(self.game))
+        elif v[0] == "options":
+            from .options import OptionsScene
+            self.game.scenes.push(OptionsScene(self.game))
         elif v[0] == "quit":
             self.game.running = False
 
     def update(self, dt):
         self.t += dt
+        from .. import audio
+        audio.music("menu")
 
     def draw(self, screen):
         draw_backdrop(self.game, screen, self.t)
@@ -85,7 +91,7 @@ class MainMenu(Scene):
         ui.panel(screen, r, alpha=200)
         self.menu.rect.height = len(self.menu.entries) * 46
         self.menu.draw(screen)
-        ui.text(screen, "v0.2 - Phase 1-2 build", (W - 16, H - 28), 20, ui.TEXT_DIM, right=True)
+        ui.text(screen, "v1.0", (W - 16, H - 28), 20, ui.TEXT_DIM, right=True)
 
 
 class NewGameScene(Scene):

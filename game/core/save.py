@@ -2,12 +2,14 @@
 import datetime
 import json
 import os
+import shutil
 
 from .state import GameState
 from ..set_ai.memory import MemoryStore
 
 SAVE_VERSION = 2
 NUM_SLOTS = 3
+AUTOSAVE_SLOT = 0
 DEFAULT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "saves")
 
 
@@ -38,7 +40,7 @@ class SaveManager:
         self.root = os.path.normpath(root or os.environ.get("KINDRED_SAVE_DIR") or DEFAULT_DIR)
 
     def slot_dir(self, slot):
-        return os.path.join(self.root, f"slot_{slot}")
+        return os.path.join(self.root, "autosave" if slot == AUTOSAVE_SLOT else f"slot_{slot}")
 
     def exists(self, slot):
         return os.path.exists(os.path.join(self.slot_dir(slot), "state.json"))
@@ -58,15 +60,35 @@ class SaveManager:
         tmp = os.path.join(d, "state.json.tmp")
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(payload, f)
+        # keep the previous save as a backup in case the new one is ever damaged
+        cur = os.path.join(d, "state.json")
+        if os.path.exists(cur):
+            shutil.copyfile(cur, cur + ".bak")
+            mem = os.path.join(d, "memory.sqlite")
+            if os.path.exists(mem):
+                shutil.copyfile(mem, mem + ".bak")
         state.memory.save_to(os.path.join(d, "memory.sqlite"))
-        os.replace(tmp, os.path.join(d, "state.json"))
+        os.replace(tmp, cur)
 
     def load(self, slot, data):
+        try:
+            return self._load(slot, data, "")
+        except SaveError as first:
+            if os.path.exists(os.path.join(self.slot_dir(slot), "state.json.bak")):
+                try:
+                    return self._load(slot, data, ".bak")
+                except SaveError:
+                    pass
+            raise first
+
+    def _load(self, slot, data, suffix):
         d = self.slot_dir(slot)
         try:
-            with open(os.path.join(d, "state.json"), encoding="utf-8") as f:
+            with open(os.path.join(d, "state.json" + suffix), encoding="utf-8") as f:
                 payload = json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
+            if "state" not in payload:
+                raise ValueError("missing state")
+        except (OSError, json.JSONDecodeError, ValueError) as e:
             raise SaveError(f"Could not read save slot {slot}: {e}") from e
         version = payload.get("version", 0)
         if version > SAVE_VERSION:
@@ -76,9 +98,14 @@ class SaveManager:
                 raise SaveError(f"No migration from save version {version}.")
             payload = MIGRATIONS[version](payload)
             version += 1
-        mem_path = os.path.join(d, "memory.sqlite")
-        memory = MemoryStore.load_from(mem_path) if os.path.exists(mem_path) else MemoryStore()
-        return GameState.from_dict(data, payload["state"], memory)
+        mem_path = os.path.join(d, "memory.sqlite" + suffix)
+        if not os.path.exists(mem_path):
+            mem_path = os.path.join(d, "memory.sqlite")
+        try:
+            memory = MemoryStore.load_from(mem_path) if os.path.exists(mem_path) else MemoryStore()
+            return GameState.from_dict(data, payload["state"], memory)
+        except Exception as e:  # damaged content: report as a save error so the backup can be tried
+            raise SaveError(f"Save slot {slot} is damaged: {e}") from e
 
     def summary(self, slot):
         if not self.exists(slot):
@@ -92,7 +119,7 @@ class SaveManager:
 
     def most_recent_slot(self):
         best, best_t = None, None
-        for s in range(1, NUM_SLOTS + 1):
+        for s in range(0, NUM_SLOTS + 1):
             p = os.path.join(self.slot_dir(s), "state.json")
             if os.path.exists(p):
                 t = os.path.getmtime(p)

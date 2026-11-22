@@ -104,6 +104,11 @@ def dim(surf, alpha=150):
     surf.blit(s, (0, 0))
 
 
+def _click(name):
+    from .. import audio
+    audio.play(name)
+
+
 class ListMenu:
     """Vertical list of selectable entries. Entries: (label, value, enabled[, right_text])."""
 
@@ -152,6 +157,7 @@ class ListMenu:
     def move(self, step):
         if not self.entries:
             return
+        _click("ui_move")
         self.index = (self.index + step) % len(self.entries)
         self._skip_disabled(step)
         self._clamp_scroll()
@@ -168,6 +174,8 @@ class ListMenu:
             elif ev.key == pygame.K_PAGEDOWN:
                 self.move(self.visible)
             elif ev.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e, pygame.K_KP_ENTER):
+                if self.selected() is not None:
+                    _click("ui_ok")
                 return self.selected()
         elif ev.type == pygame.MOUSEMOTION:
             i = self._row_at(ev.pos)

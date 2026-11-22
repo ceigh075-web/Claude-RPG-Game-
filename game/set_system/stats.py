@@ -140,8 +140,9 @@ def new_player(name, race, data, appearance=None, pronouns="they/them"):
     skills = {s: rd["skill_mods"].get(s, 0) for s in SKILLS}
     c = Character("player", name, race, attrs, skills, pronouns, appearance)
     c.inventory.bind(data)
-    for item, qty in (("ration", 3), ("water", 4), ("bandage", 2), ("bread", 1)):
+    for item, qty in (("ration", 3), ("water", 4), ("bandage", 2), ("bread", 1), ("dagger_rustite", 1)):
         c.inventory.add(item, qty)
+    c.equipment["weapon"] = "dagger_rustite"  # an old knife: better than bare fists, not by much
     c.hp = c.max_hp
     c.mana = c.max_mana
     return c

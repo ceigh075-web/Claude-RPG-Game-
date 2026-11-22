@@ -117,6 +117,8 @@ def apply(state, effects, ctx=None):
             msgs += apply(state, eff[branch], ctx)
         elif op == "combat":
             lo, hi = eff["count"]
+            if "danger" in ctx:  # quiet roads send smaller groups
+                hi = max(lo, min(hi, ctx["danger"] + 1))
             count = state.rng.randint(lo, hi)
             if ctx.get("defer_combat"):
                 # the scene lets the player fight it out in real time or auto-resolve
