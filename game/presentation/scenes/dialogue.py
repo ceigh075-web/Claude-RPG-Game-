@@ -105,6 +105,9 @@ class DialogueScene(Scene):
 
     def handle(self, ev):
         if self.waiting:
+            if is_close(ev):  # never trap the player behind a slow model
+                self.engine.pending = None
+                self.close()
             return
         if self.typing is not None:
             if ev.type == pygame.KEYDOWN:
