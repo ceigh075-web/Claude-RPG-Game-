@@ -4,7 +4,8 @@
   executable's unpack folder (sys._MEIPASS) when frozen.
 - Writable files (saves, the user's config.json) must survive between runs, so a frozen build keeps them
   in a "KindredRoads_data" folder next to the executable (falling back to the user's home folder if that
-  location is read-only). From source they stay in the project folder as before.
+  location is read-only). From source (and the portable Windows folder) they stay in the game folder,
+  again falling back to the home folder if it is read-only (e.g. unzipped into Program Files).
 """
 import os
 import sys
@@ -15,10 +16,11 @@ BUNDLE_ROOT = getattr(sys, "_MEIPASS", SOURCE_ROOT)
 
 
 def _writable_root():
-    if not FROZEN:
-        return SOURCE_ROOT
-    candidates = [os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "KindredRoads_data"),
-                  os.path.join(os.path.expanduser("~"), "KindredRoads_data")]
+    if FROZEN:
+        first = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "KindredRoads_data")
+    else:
+        first = SOURCE_ROOT  # running from source / the portable Windows folder
+    candidates = [first, os.path.join(os.path.expanduser("~"), "KindredRoads_data")]
     for c in candidates:
         try:
             os.makedirs(c, exist_ok=True)
