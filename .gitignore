@@ -6,3 +6,4 @@ build/
 dist/
 KindredRoads_data/
 *.zip
+release/
