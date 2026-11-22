@@ -23,7 +23,7 @@ DT = 1 / 60
 
 class Driver:
     def __init__(self):
-        self.game = Game(headless=True, save_dir=os.path.join(OUT, "saves"))
+        self.game = Game(headless=True, save_dir=tempfile.mkdtemp(prefix="kr_saves_"))
         self.game.start()
         self.held = set()
         self._orig = pygame.key.get_pressed
