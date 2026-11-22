@@ -36,7 +36,7 @@ class PartyScene(Scene):
             st = self.state
             k = ev.key
             if k == pygame.K_t:
-                order = ["follow", "gather", "wait", "guard", "work"]
+                order = ["follow", "gather", "wait", "home", "guard", "work"]
                 cur = st.companions[cid]["task"]
                 for i in range(1, len(order) + 1):
                     ok, msg = comp_mod.set_task(st, cid, order[(order.index(cur) + i) % len(order)])

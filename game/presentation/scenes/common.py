@@ -187,3 +187,33 @@ class PauseScene(Scene):
         ui.dim(screen, 120)
         ui.panel(screen, self.rect, "Paused")
         self.menu.draw(screen)
+
+
+class ChoiceScene(Scene):
+    """Pick one option from a list: entries are (label, value[, enabled[, right_text]])."""
+    overlay = True
+
+    def __init__(self, game, title, entries, on_choose, body=None):
+        super().__init__(game)
+        self.title, self.on_choose, self.body = title, on_choose, body
+        h = min(560, 130 + 30 * len(entries) + (60 if body else 0))
+        self.rect = pygame.Rect((W - 760) // 2, (H - h) // 2, 760, h)
+        top = self.rect.y + 56 + (60 if body else 0)
+        self.menu = ui.ListMenu(entries, (self.rect.x + 30, top, 700, self.rect.bottom - top - 40), 24, row_h=30)
+
+    def handle(self, ev):
+        if is_close(ev):
+            self.close()
+            return
+        v = self.menu.handle(ev)
+        if v is not None:
+            self.close()
+            self.on_choose(v)
+
+    def draw(self, screen):
+        ui.dim(screen, 110)
+        r = ui.panel(screen, self.rect, self.title)
+        if self.body:
+            ui.text_block(screen, self.body, (r.x + 24, r.y + 50, r.w - 48, 56), 22, ui.TEXT_DIM)
+        self.menu.draw(screen)
+        ui.text(screen, "[Enter] choose   [Esc] cancel", (r.right - 16, r.bottom - 26), 18, ui.TEXT_DIM, right=True)

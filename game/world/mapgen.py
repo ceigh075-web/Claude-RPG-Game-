@@ -453,6 +453,7 @@ STATIONS_BY_BUILDING = {
     "enchanter": ("alchemy_table", "scribing_table"), "shaman_hut": ("alchemy_table",),
     "temple": ("scribing_table",), "chapel": ("scribing_table",), "guild_hall": ("anvil", "furnace", "workbench"),
     "arena": ("training_dummy", "training_dummy"), "forge": ("workbench",),
+    "property_for_sale": ("chest", "scribing_table", "training_dummy", "workbench", "stove"),
 }
 
 

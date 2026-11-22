@@ -77,7 +77,8 @@ class TestRecruit(unittest.TestCase):
         recruit(s, "tobin")
         self.assertTrue(comp.set_task(s, "tobin", "wait")[0])
         self.assertNotIn("tobin", comp.squad(s))
-        self.assertFalse(comp.set_task(s, "tobin", "guard")[0])  # no base yet
+        self.assertFalse(comp.set_task(s, "tobin", "guard")[0])  # no outpost yet
+        self.assertFalse(comp.set_task(s, "tobin", "home")[0])   # no house yet
         self.assertTrue(comp.set_task(s, "tobin", "follow")[0])
         s.player.inventory.add("longsword_rustite")
         comp.give(s, "tobin", "longsword_rustite")

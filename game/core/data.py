@@ -47,6 +47,7 @@ class GameData:
         self.shops = {k: v for k, v in _load("shops.json").items() if not k.startswith("_")}
         self.recipe_list = _load("recipes.json")["recipes"]
         self.economy = {k: v for k, v in _load("economy.json").items() if not k.startswith("_")}
+        self.base = _load("base.json")
         te = _load("travel_events.json")
         self.travel_events = te["events"]
         self.loot_tables = te["loot_tables"]
@@ -185,6 +186,11 @@ class GameData:
             need(r["out"] in self.items, f"recipe {rid} makes unknown item {r['out']}")
             for it in r["inputs"]:
                 need(it in self.items, f"recipe {rid} needs unknown item {it}")
+        for bid, b in self.base["buildings"].items():
+            for it in b["items"]:
+                need(it in self.items, f"base building {bid} needs unknown item {it}")
+        for town in self.base["houses"]:
+            need(town in self.towns and "property_for_sale" in self.towns[town]["buildings"], f"house in {town} has no building")
         for tname, table in self.loot_tables.items():
             for row in table:
                 need(row[0] == "marks" or row[0] in self.items, f"loot {tname} unknown item {row[0]}")

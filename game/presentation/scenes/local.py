@@ -10,6 +10,7 @@ from ...gameplay import interactions as inter
 from ...gameplay import npcs as npc_mod
 from ...gameplay.combat import CombatWorld, facing_from, norm
 from ...gameplay.entity import Actor, Wanderer
+from ...set_system import base as base_mod
 from ...set_system import factions, skirmish, timeflow
 from ...world import mapgen as mg
 from ...world import weather
@@ -63,8 +64,10 @@ class LocalScene(Scene):
         st.local_pos = (self.player.x, self.player.y)
         self.last_hour = st.clock.hour
         self.active_groups = set()
+        self.apply_base()
         self.spawn_npcs()
         self.spawn_companions()
+        self.spawn_base_people()
         self.spawn_enemies()
 
     def spawn_companions(self):
@@ -77,6 +80,13 @@ class LocalScene(Scene):
             x, y = px - 14 + (i % 2) * 28, py + 10 + (i // 2) * 12
             tx, ty = self.map.find_open_near(int(x // T), int(y // T), 3)
             self.combat.add_companion(cid, ch, tx * T + 8, ty * T + 12, npc_look(self.data, self.data.npcs[cid]))
+        if self.at_home():
+            spots = list(self.map.npc_spots) or [self.map.entry]
+            for i, (cid, comp) in enumerate((c, v) for c, v in st.companions.items() if v["task"] == "home"):
+                sx, sy = self.map.find_open_near(*spots[i % len(spots)], 3)
+                spot = (sx * T + 8, sy * T + 12)
+                self.combat.add_companion(cid, comp["char"], spot[0], spot[1], npc_look(self.data, self.data.npcs[cid]),
+                                          wait_spot=spot)
         if st.sub_location is None and self.loc_key == st.location:
             for cid, comp in st.companions.items():
                 if not comp["active"] and comp["task"] == "wait" and comp.get("wait_at") == st.location:
@@ -174,6 +184,8 @@ class LocalScene(Scene):
     def note_escape(self):
         """Leaving while hostiles are hunting you: they remember (unkilled enemies keep memories)."""
         st = self.state
+        if getattr(self, "raid_active", False):
+            self.raid_over(fought=False)
         if self.combat is None or not self.combat.in_combat:
             return
         groups = st.location_state(self.loc_key).setdefault("groups", {})
@@ -344,7 +356,7 @@ class LocalScene(Scene):
         fx, fy = self.player.facing_vec()
         qx, qy = px + fx * 10, py + fy * 10
         best, best_d = None, INTERACT_RANGE
-        for a in self.npcs + [c for c in self.combat.companions() if c.alive]:
+        for a in self.npcs:
             d = math.hypot(a.x - qx, (a.y - 6) - qy)
             reach = best_d + (18 if getattr(a, "stationary", False) else 0)  # talk across a shop counter
             if d < reach:
@@ -366,6 +378,10 @@ class LocalScene(Scene):
         if self.map.kind != "interior" and inter.water_adjacent(self.map, tx, ty):
             return ("obj", {"kind": "water", "key": "water"},
                     inter.for_object(self.state, self.loc_key, {"kind": "water", "key": "water"}))
+        # companions follow you closely, so they are only targeted when nothing else is in front of you
+        for a in self.combat.companions():
+            if a.alive and math.hypot(a.x - qx, (a.y - 6) - qy) < INTERACT_RANGE:
+                return ("npc", a)
         return None
 
     def prompt(self, tgt):
@@ -419,9 +435,16 @@ class LocalScene(Scene):
         st = self.state
         if k == "door":
             b = self.map.buildings[o["building"]]
-            if b["type"] == "property_for_sale":
-                self.game.scenes.push(MessageScene(self.game, b["label"],
-                    "Locked. A notice is nailed to the door: 'FOR SALE - 600 marks. Enquire with the town steward.'"))
+            if b["type"] == "property_for_sale" and not base_mod.owns_house(st, st.location, b["id"]):
+                price = base_mod.house_price(st, st.location)
+
+                def buy():
+                    ok, msg = base_mod.buy_house(st, st.location, b["id"])
+                    self.game.notify(msg)
+                    if ok:
+                        self.scene_interaction(o)
+                self.game.scenes.push(ConfirmScene(self.game, "House for sale",
+                    f"A notice on the door: 'FOR SALE - {price} marks.' Buy this house? (You have {st.gold}.)", buy))
                 return
             self.outdoor_return = (o["x"] * T + T / 2, (o["y"] + 1) * T + T - 2)
             st.flags["door_return"] = list(self.outdoor_return)
@@ -445,14 +468,26 @@ class LocalScene(Scene):
             from ...set_system.crafting import OBJECT_STATION
             from .crafting import CraftingScene
             self.game.scenes.push(CraftingScene(self.game, OBJECT_STATION[k]))
-        elif k == "landmark":
+        elif k == "landmark" and o.get("feature") in inter.TREASURES:
             if self.combat.in_combat:
                 self.game.notify("Not while enemies are hunting you.")
                 return
             self.game.notify(inter.take_treasure(st, o["feature"]))
+        elif k == "scribing_table" and self.at_home():
+            self.study_menu()
         elif k == "scribing_table":
             from .spellbook import SpellbookScene
             self.game.scenes.push(SpellbookScene(self.game, at_table=True))
+        elif k == "chest":
+            if not self.at_home():
+                self.game.notify("Not your chest.")
+                return
+            from .base import StorageScene
+            self.game.scenes.push(StorageScene(self.game, st.property[st.location], "Your house chest"))
+        elif k == "landmark" and o.get("feature") == "outpost_site":
+            self.outpost_site()
+        elif k.startswith("base_"):
+            self.base_object(o)
         elif k == "training_dummy":
             from .practice import PracticeScene
             self.game.scenes.replace(PracticeScene(self.game))
@@ -469,6 +504,9 @@ class LocalScene(Scene):
     def use_bed(self):
         b = self.map.building
         st = self.state
+        if b and b["type"] == "property_for_sale" and self.at_home():
+            self.sleep_free("your own bed")
+            return
         if b and b["type"] == "inn":
             price = self.data.shops["inn"]["room_price"]
             keeper, at_work = npc_mod.shopkeeper(st, st.location, "inn")
@@ -486,6 +524,161 @@ class LocalScene(Scene):
             self.game.scenes.push(ConfirmScene(self.game, "Rent a bed?", f"Sleep until morning for {price} marks?", sleep))
         else:
             self.game.notify("This isn't your bed.")
+
+    # ================================================================ property & outpost
+    def at_home(self):
+        b = self.map.building
+        return bool(b) and b["type"] == "property_for_sale" and base_mod.owns_house(self.state, self.state.location, b["id"])
+
+    def sleep_free(self, where):
+        st = self.state
+
+        def sleep():
+            hours, msgs = timeflow.sleep_until_morning(st)
+            self.spawn_npcs()
+            self.game.scenes.push(MessageScene(self.game, "Rested", f"You sleep in {where} for {hours:.0f} hours. It is now "
+                                  f"{st.clock.time_str()}, {st.clock.date_str()}.\n\n" + " ".join(msgs)))
+        self.game.scenes.push(ConfirmScene(self.game, "Sleep?", f"Sleep in {where} until morning?", sleep))
+
+    def study_menu(self):
+        from .base import ResearchScene
+        from .common import ChoiceScene
+        from .spellbook import SpellbookScene
+        self.game.scenes.push(ChoiceScene(self.game, "Your desk", [("Spell book (inscribe spells)", "book"),
+                                                                   ("Research projects", "research")],
+            lambda v: self.game.scenes.push(SpellbookScene(self.game, at_table=True) if v == "book" else ResearchScene(self.game))))
+
+    def compute_plots(self):
+        site = next((o for o in self.map.objects if o.get("feature") == "outpost_site"), None)
+        cx, cy = (site["x"], site["y"]) if site else self.map.entry
+        cands = []
+        for dy in range(-9, 10, 3):
+            for dx in range(-12, 13, 3):
+                x, y = cx + dx, cy + dy
+                if (dx, dy) != (0, 0) and self.map.free_for_object(x, y) and not self.map.solid(x, y + 1):
+                    cands.append((abs(dx) + abs(dy), x, y))
+        cands.sort()
+        return [(x, y) for _, x, y in cands[:self.data.base["outpost"]["plots"]]]
+
+    def outpost_site(self):
+        st = self.state
+        if base_mod.founded(st):
+            from .base import BaseScene
+            self.game.scenes.push(BaseScene(self.game, self))
+            return
+        marks, items = base_mod.outpost_cost(st)
+        need = ", ".join(f"{q} {self.data.item(i)['name']}" for i, q in items.items())
+
+        def found():
+            ok, msg = base_mod.found_outpost(st, self.compute_plots())
+            self.game.notify(msg)
+            if ok:
+                self.apply_base()
+        self.game.scenes.push(ConfirmScene(self.game, "Found an outpost?",
+            f"Claim Widow's Crossing for your own outpost: {marks} marks and {need}. "
+            "You can then build storage, workshops, farms, bunkhouses, walls and more.", found))
+
+    def base_object(self, o):
+        st = self.state
+        k = o["kind"]
+        from .base import BaseScene, ResearchScene, StorageScene
+        from .common import ChoiceScene
+        b = base_mod.building_at(st, o["plot"]) if "plot" in o else None
+        if b and not b["done"]:
+            left = max(0, (b["ready_at"] - st.clock.total_minutes) / 60)
+            self.game.notify(f"Under construction: {left:.0f} hours left.")
+            return
+        if k == "base_storage":
+            self.game.scenes.push(StorageScene(self.game, st.base, "Outpost storage"))
+        elif k == "base_workshop":
+            from .crafting import CraftingScene
+            self.game.scenes.push(ChoiceScene(self.game, "Workshop", [("Furnace", "furnace"), ("Anvil", "anvil"),
+                                                                     ("Workbench", "workbench")],
+                                              lambda v: self.game.scenes.push(CraftingScene(self.game, v))))
+        elif k == "base_farm":
+            opts = [(f"Plant {self.data.item(sd)['name']} (2)", ("plant", sd)) for sd in self.data.base["crops"]] + \
+                   [("Harvest", ("harvest", None))]
+
+            def act(v):
+                res = base_mod.plant(st, o["plot"], v[1]) if v[0] == "plant" else base_mod.harvest(st, o["plot"])
+                self.game.notify(res[1])
+                self.apply_base()
+            crop = b.get("crop") if b else None
+            body = "Empty field." if not crop else (f"{self.data.item(crop['seed'])['name']} - ripe!" if st.clock.day_index >= crop["ready_day"]
+                                                    else f"{self.data.item(crop['seed'])['name']} - ready on day {crop['ready_day'] + 1}.")
+            self.game.scenes.push(ChoiceScene(self.game, "Farm plot", opts, act, body=body))
+        elif k == "base_research":
+            self.study_menu()
+        elif k == "base_training":
+            from .practice import PracticeScene
+            self.game.scenes.replace(PracticeScene(self.game))
+        elif k == "base_bunkhouse":
+            self.sleep_free("the outpost bunkhouse")
+        else:
+            self.game.scenes.push(BaseScene(self.game, self))
+
+    def apply_base(self):
+        """Place outpost buildings (and empty plot markers) on the Widow's Crossing map."""
+        st, m = self.state, self.map
+        if st.sub_location or not base_mod.founded(st) or st.location != st.base.get("location"):
+            return
+        m.objects = [o for o in m.objects if not o.get("base")]
+        for i, (x, y) in enumerate(st.base["plots"]):
+            b = base_mod.building_at(st, i)
+            if not b:
+                kind = "base_plot"
+            elif not b["done"]:
+                kind = "base_construction"
+            else:
+                kind = f"base_{b['type']}"
+            o = m.add(kind, x, y, solid=kind not in ("base_plot", "base_farm"), base=True, plot=i)
+            o["key"] = f"base{i}"
+        m.build_solid_grid()
+
+    def spawn_base_people(self):
+        """Workers stand by their buildings, guards by the centre; raiders arrive if a raid is under way."""
+        st = self.state
+        if st.sub_location or not base_mod.founded(st) or st.location != st.base.get("location"):
+            return
+        plots = st.base["plots"]
+        for cid, comp in st.companions.items():
+            if comp["task"] not in ("work", "guard"):
+                continue
+            if comp["task"] == "work" and comp.get("post") is not None:
+                px, py = plots[int(comp["post"])]
+                spot = ((px + 1) * T + 8, (py + 1) * T + 10)
+            else:
+                site = next((o for o in self.map.objects if o.get("feature") == "outpost_site"), None)
+                sx, sy = (site["x"], site["y"]) if site else self.map.entry
+                spot = ((sx + 1 + len(cid) % 3) * T + 8, (sy + 1) * T + 10)
+            self.combat.add_companion(cid, comp["char"], spot[0], spot[1], npc_look(self.data, self.data.npcs[cid]),
+                                      wait_spot=spot)
+        self.raid_active = False
+        self.check_raid()
+
+    def check_raid(self):
+        st = self.state
+        raid = st.base.get("raid") if base_mod.founded(st) else None
+        if not raid or getattr(self, "raid_active", False) or st.location != st.base.get("location") or st.sub_location \
+                or self.loc_key != st.location:
+            return
+        self.raid_active = True
+        n = max(2, int(raid["strength"] // 15))
+        rng = stable_rng("raid", raid["day"])
+        ex = min(self.map.exits, key=lambda e: e["x"]) if self.map.exits else {"x": 2, "y": self.map.h // 2}
+        for i in range(n):
+            eid = "hollow_captain" if i == 0 and raid["strength"] > 50 else rng.choice(["bandit_cutthroat", "bandit_cutthroat", "bandit_archer"])
+            tx, ty = self.map.find_open_near(ex["x"] + 3 + rng.randint(0, 3), ex["y"] + rng.randint(-3, 3), 5)
+            c = self.combat.spawn_enemy(eid, tx * T + 8, ty * T + 12, group="raid", hostile=True)
+            c.alerted = True
+        self.game.toast("The Hollow is attacking your outpost!")
+
+    def raid_over(self, fought):
+        st = self.state
+        if getattr(self, "raid_active", False) and st.base.get("raid"):
+            self.raid_active = False
+            msg = base_mod.resolve_raid(st, st.base["raid"]["strength"], self.combat.rng, fought=fought)
+            self.game.notify(msg)
 
     def read_board(self):
         from .jobs import JobBoardScene
@@ -550,6 +743,10 @@ class LocalScene(Scene):
                 st.add_log(msg)
             self.combat.events = []
         self.check_groups()
+        if base_mod.founded(st):
+            self.check_raid()
+            if getattr(self, "raid_active", False) and not any(c.alive and c.group == "raid" for c in self.combat.enemies()):
+                self.raid_over(fought=True)
         st.local_pos = (self.player.x, self.player.y)
         # time
         self.minute_acc += dt * TIME_SCALE
@@ -601,6 +798,8 @@ class LocalScene(Scene):
         """Beaten in combat: robbed (by outlaws) and left; wake at the area entrance."""
         st = self.state
         eid = self.strongest_foe() or "bandit_cutthroat"
+        if getattr(self, "raid_active", False):
+            self.raid_over(fought=False)
         msg = skirmish.apply_defeat(st, eid)
         st.player.hp = max(st.player.hp, st.player.max_hp * 0.2)
         timeflow.advance(st, 3 * 60, resting=True)
@@ -703,6 +902,14 @@ class LocalScene(Scene):
             return art.obj(k, 0, m.biome, "depleted" if dep else None)
         if k == "campfire":
             return art.obj("campfire", int(self.t * 6) % 2, m.biome)
+        if k.startswith("base_"):
+            b = base_mod.building_at(self.state, o["plot"])
+            extra = None
+            if b and b.get("damaged"):
+                extra = "damaged"
+            elif b and b["type"] == "farm" and b.get("crop"):
+                extra = "ripe" if self.state.clock.day_index >= b["crop"]["ready_day"] else "growing"
+            return art.obj(k, 0, m.biome, extra)
         return art.obj(k, o.get("variant", 0), m.biome)
 
     def draw_weather(self, c):

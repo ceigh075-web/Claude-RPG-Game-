@@ -8,8 +8,9 @@ def new_day(state):
     rng = state.rng.derive("day", state.clock.day_index)
     msgs += companions.daily(state, rng)
     rel.neglect(state)
-    from . import world_events
+    from . import base, world_events
     msgs += world_events.daily(state, rng)
+    msgs += base.daily(state, rng)
     for hook in EXTRA_HOOKS:
         msgs += hook(state, rng) or []
     return msgs

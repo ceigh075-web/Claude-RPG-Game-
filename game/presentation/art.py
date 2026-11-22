@@ -354,6 +354,8 @@ class Art:
         if kind == "training_dummy":
             s = self._make_creature("dummy", (170, 130, 80), "down", 0)
             return _outline(s)
+        if kind.startswith("base_"):
+            return _outline(self._make_base(kind[5:], variant, extra))
         if kind == "chest":
             s = pygame.Surface((T, T), pygame.SRCALPHA)
             pygame.draw.rect(s, (130, 86, 46), (1, 5, 14, 10))
@@ -583,6 +585,81 @@ class Art:
             return s
         s = pygame.Surface((16, 16), pygame.SRCALPHA)
         s.fill(col)
+        return s
+
+    def _make_base(self, t, variant, extra):
+        wood, dark, roof = (150, 108, 64), (96, 66, 40), (120, 60, 44)
+        if t == "plot":
+            s = pygame.Surface((T, T), pygame.SRCALPHA)
+            for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
+                pygame.draw.rect(s, dark, (x, y, 2, 3))
+            pygame.draw.rect(s, (220, 200, 140), (2, 2, 12, 12), 1)
+            return s
+        if t == "construction":
+            s = pygame.Surface((28, 24), pygame.SRCALPHA)
+            pygame.draw.line(s, wood, (2, 23), (14, 2), 2)
+            pygame.draw.line(s, wood, (26, 23), (14, 2), 2)
+            pygame.draw.line(s, wood, (6, 14), (22, 14), 2)
+            pygame.draw.rect(s, (130, 126, 120), (4, 18, 8, 5))
+            return s
+        if t == "farm":
+            s = pygame.Surface((28, 20), pygame.SRCALPHA)
+            pygame.draw.rect(s, (112, 80, 50), (0, 4, 28, 16))
+            for y in range(6, 20, 4):
+                pygame.draw.line(s, (90, 62, 40), (1, y), (26, y))
+            if extra:
+                col = (200, 180, 80) if extra == "ripe" else (90, 150, 70)
+                h = 5 if extra == "ripe" else 3
+                for x in range(3, 27, 4):
+                    for y in range(8, 20, 4):
+                        pygame.draw.line(s, col, (x, y), (x, y - h))
+            return s
+        body = {"storage": ((24, 22), (140, 100, 60)), "workshop": ((30, 26), (130, 120, 110)),
+                "bunkhouse": ((32, 24), (160, 130, 90)), "trading": ((30, 24), (170, 140, 90)),
+                "research": ((22, 34), (120, 110, 140)), "training": ((30, 20), wood),
+                "well": ((16, 22), (120, 120, 125)), "palisade": ((32, 22), wood), "watchtower": ((18, 40), wood)}
+        (w, h), col = body.get(t, ((24, 24), wood))
+        s = pygame.Surface((w, h), pygame.SRCALPHA)
+        if t == "palisade":
+            for x in range(0, w, 4):
+                pygame.draw.rect(s, wood, (x, 4, 3, h - 4))
+                pygame.draw.polygon(s, wood, [(x, 4), (x + 1, 0), (x + 3, 4)])
+            pygame.draw.line(s, dark, (0, 10), (w, 10), 2)
+            return s
+        if t == "watchtower":
+            for x in (2, w - 4):
+                pygame.draw.rect(s, dark, (x, 10, 2, h - 10))
+            pygame.draw.line(s, dark, (2, 22), (w - 3, 34), 1)
+            pygame.draw.rect(s, wood, (0, 6, w, 6))
+            pygame.draw.polygon(s, roof, [(0, 6), (w // 2, 0), (w, 6)])
+            return s
+        if t == "training":
+            pygame.draw.ellipse(s, (180, 160, 120), (0, 6, w, h - 6), 1)
+            pygame.draw.rect(s, dark, (6, 4, 2, 14))
+            pygame.draw.rect(s, (170, 130, 80), (3, 6, 8, 3))
+            pygame.draw.rect(s, dark, (20, 4, 2, 14))
+            pygame.draw.rect(s, (170, 130, 80), (17, 6, 8, 3))
+            return s
+        if t == "well":
+            return self._make_obj("well", 0, "grassland", None)
+        wall_h = h // 2
+        pygame.draw.rect(s, col, (1, h - wall_h, w - 2, wall_h))
+        pygame.draw.polygon(s, roof if t != "research" else (70, 60, 120), [(0, h - wall_h), (w // 2, 0 if t != "research" else 4), (w, h - wall_h)])
+        pygame.draw.rect(s, dark, (w // 2 - 2, h - 7, 5, 7))
+        if t == "trading":
+            for x in range(0, w, 6):
+                pygame.draw.rect(s, (200, 60, 60) if (x // 6) % 2 else (240, 230, 210), (x, h - wall_h - 2, 6, 3))
+        if t == "workshop":
+            pygame.draw.rect(s, (90, 90, 96), (w - 7, 0, 4, h - wall_h))
+            pygame.draw.circle(s, (240, 140, 50), (6, h - 5), 2)
+        if t == "storage":
+            pygame.draw.rect(s, (160, 120, 70), (3, h - 6, 6, 5))
+        if t in ("bunkhouse", "research"):
+            pygame.draw.rect(s, (240, 210, 120), (4, h - wall_h + 3, 4, 3))
+            pygame.draw.rect(s, (240, 210, 120), (w - 8, h - wall_h + 3, 4, 3))
+        if extra == "damaged":
+            pygame.draw.line(s, (30, 20, 20), (3, h - wall_h), (w - 4, h - 2), 2)
+            pygame.draw.line(s, (30, 20, 20), (w - 4, h - wall_h), (5, h - 3), 2)
         return s
 
     def white(self, img):

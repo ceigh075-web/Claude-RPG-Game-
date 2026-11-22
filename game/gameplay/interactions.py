@@ -193,6 +193,22 @@ def for_object(state, loc_key, obj, lmap=None):
     if k == "campfire":
         return Interaction("Use the campfire (cook / rest)", kind="scene")
 
+    if k == "landmark" and obj.get("feature") == "outpost_site":
+        return Interaction("Manage the outpost" if state.base.get("founded") is not None else "Found an outpost here",
+                           kind="scene")
+    if k == "chest":
+        return Interaction("Open your storage chest", kind="scene")
+    if k == "base_well":
+        def run(s):
+            s.player.water = 100.0
+            n = effects.refill_water(s)
+            return ["You drink from the outpost well." + (f" Filled {n} flasks." if n else "")]
+        return Interaction("Drink & refill flasks", minutes=5, run=run, kind="timed")
+    if k.startswith("base_"):
+        return Interaction({"base_plot": "Build here", "base_storage": "Open outpost storage", "base_workshop": "Use the workshop",
+                            "base_farm": "Tend the farm", "base_research": "Use the research hall",
+                            "base_training": "Train in the yard", "base_bunkhouse": "Sleep in the bunkhouse"}.get(k, "Manage the outpost"),
+                           kind="scene")
     if k == "landmark" and obj.get("feature") in TREASURES and not state.flags.get(f"treasure:{obj['feature']}"):
         return Interaction(f"Search the {obj['label']}", kind="scene")
     if k == "landmark":

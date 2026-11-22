@@ -5,7 +5,7 @@ from .stats import Character
 
 MAX_SQUAD = 4
 TASKS = {"follow": "Follow you and fight", "wait": "Wait at the current location", "gather": "Gather while you explore",
-         "guard": "Guard your base", "work": "Work at your base"}
+         "guard": "Guard your outpost", "work": "Work at your outpost", "home": "Rest at your house"}
 FOOD_PREF = ["ration", "cooked_meat", "bread", "fish", "meat", "mushrooms", "berries", "kelp"]
 DRINK_PREF = ["water", "ale"]
 
@@ -93,15 +93,18 @@ def set_task(state, cid, task):
     comp = state.companions[cid]
     if task not in TASKS:
         return False, "Unknown task."
-    if task in ("guard", "work") and not state.base.get("founded") and not state.property:
-        return False, "You have no home or base for them to work at."
+    if task in ("guard", "work"):
+        from . import base
+        return base.assign(state, cid, guard=(task == "guard"))
+    if task == "home" and not state.property:
+        return False, "You don't own a house yet."
     if task in ("follow", "gather") and not comp["active"]:
         if len(squad(state)) >= MAX_SQUAD:
             return False, f"Your squad is full ({MAX_SQUAD})."
         comp["active"] = True
-    if task in ("wait", "guard", "work"):
+    if task in ("wait", "home"):
         comp["active"] = False
-        comp["wait_at"] = state.location if task == "wait" else None
+        comp["wait_at"] = state.location if task == "wait" else next(iter(state.property))
     comp["task"] = task
     return True, f"{state.data.npcs[cid]['name']}: {TASKS[task].lower()}."
 

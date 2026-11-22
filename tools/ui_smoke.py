@@ -165,6 +165,73 @@ def main():
     for _ in range(90):
         g.step(DT, [])
     shot(g, "p7_named_monster")
+    # Phase 8: buy a house via its door, use the chest; found the outpost, build, defend a raid
+    while type(g.scenes.top).__name__ != "LocalScene" and len(g.scenes.stack) > 1:
+        g.scenes.pop()
+    st.location, st.local_pos, st.sub_location = "brackenford", None, None
+    st.gold = 20000
+    st.player.heal(st.player.max_hp)
+    st.player.food = st.player.water = 90
+    g.enter_world()
+    loc = g.scenes.top
+    st.clock.minutes = st.clock.day_index * 1440 + 12 * 60
+    house = next(b for b in loc.map.buildings.values() if b["type"] == "property_for_sale")
+    door = next(o for o in loc.map.objects if o["kind"] == "door" and o["building"] == house["id"])
+    loc.player.x, loc.player.y, loc.player.facing = door["x"] * 16 + 8, (door["y"] + 1) * 16 + 10, "up"
+    g.step(DT, [])
+    key(g, pygame.K_e)
+    assert type(g.scenes.top).__name__ == "ConfirmScene", g.scenes.top
+    key(g, pygame.K_RETURN)
+    assert "brackenford" in st.property and st.sub_location == house["id"], "house purchase/entry failed"
+    loc = g.scenes.top
+    chest = next(o for o in loc.map.objects if o["kind"] == "chest")
+    loc.player.x, loc.player.y = chest["x"] * 16 + 8, (chest["y"] + 1) * 16 + 12
+    loc.player.facing = "up"
+    g.step(DT, [])
+    key(g, pygame.K_e)
+    assert type(g.scenes.top).__name__ == "StorageScene", g.scenes.top
+    key(g, pygame.K_RETURN)
+    shot(g, "p8_house_chest")
+    key(g, pygame.K_ESCAPE)
+    st.location, st.local_pos, st.sub_location = "widows_crossing", None, None
+    st.discovered.add("widows_crossing")
+    for it, n in (("wood", 40), ("stone", 10), ("plank", 60), ("nails", 120), ("stone_block", 30), ("fiber", 10),
+                  ("cloth", 10), ("rustite_bar", 6)):
+        st.player.inventory.add(it, n)
+    g.enter_world()
+    loc = g.scenes.top
+    site = next(o for o in loc.map.objects if o.get("feature") == "outpost_site")
+    loc.player.x, loc.player.y, loc.player.facing = site["x"] * 16 + 8, (site["y"] + 1) * 16 + 10, "up"
+    g.step(DT, [])
+    key(g, pygame.K_e)
+    key(g, pygame.K_RETURN)
+    assert st.base.get("founded") is not None, "outpost not founded"
+    from game.set_system import base as base_mod, timeflow as tf
+    for i, bt in enumerate(("storage", "palisade", "farm", "bunkhouse", "workshop", "watchtower")):
+        ok, msg = base_mod.build(st, i, bt)
+        assert ok, msg
+    tf.advance(st, 20 * 60)
+    base_mod.update_construction(st)
+    loc.apply_base()
+    from game.presentation.scenes.base import BaseScene
+    push(g, BaseScene(g, loc), "p8_base_scene")
+    st.base["raid"] = {"strength": 45, "day": st.clock.day_index}
+    st.clock.minutes = st.clock.day_index * 1440 + 13 * 60
+    st.player.hp = st.player.max_hp
+    for _ in range(40):
+        g.step(DT, [])
+    raiders = [c for c in loc.combat.enemies() if c.group == "raid"]
+    assert raiders, "raid did not spawn"
+    loc.player.x, loc.player.y = site["x"] * 16 + 8, (site["y"] + 3) * 16
+    for _ in range(30):
+        g.step(DT, [])
+    shot(g, "p8_outpost_raid")
+    for c in raiders:
+        c.hp = 0
+        loc.combat.kill(c, loc.player)
+    for _ in range(5):
+        g.step(DT, [])
+    assert st.base.get("raid") is None, "raid not resolved"
     extra = globals().get("EXTRA")
     if extra:
         extra(g, push, key, shot)

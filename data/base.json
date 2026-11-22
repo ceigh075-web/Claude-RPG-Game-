@@ -1,0 +1,188 @@
+{
+ "_comment": "Town houses (early game) and the Widow's Crossing outpost (mid game). Costs: marks + items. hours = build time.",
+ "houses": {
+  "brackenford": 600,
+  "velmora": 1200,
+  "hammerlee": 900,
+  "saltmarket": 1000,
+  "redwater": 700,
+  "duskreach": 500
+ },
+ "outpost": {
+  "location": "widows_crossing",
+  "charter_marks": 1500,
+  "charter_items": {
+   "wood": 20,
+   "stone": 10
+  },
+  "charter_marks_with_crown": 1000,
+  "plots": 8
+ },
+ "buildings": {
+  "storage": {
+   "name": "Storage Shed",
+   "marks": 80,
+   "items": {
+    "plank": 10,
+    "nails": 20
+   },
+   "hours": 8,
+   "desc": "Secure storage for your goods. Raiders find less to steal."
+  },
+  "workshop": {
+   "name": "Workshop",
+   "marks": 200,
+   "items": {
+    "plank": 12,
+    "nails": 30,
+    "stone_block": 6,
+    "rustite_bar": 4
+   },
+   "hours": 16,
+   "desc": "Anvil, furnace and workbench. A worker smelts ore from storage each day."
+  },
+  "farm": {
+   "name": "Farm Plot",
+   "marks": 40,
+   "items": {
+    "plank": 4,
+    "fiber": 6
+   },
+   "hours": 6,
+   "desc": "Plant seeds; harvest in 3 days. A worker replants and harvests for you."
+  },
+  "well": {
+   "name": "Well",
+   "marks": 60,
+   "items": {
+    "stone_block": 8
+   },
+   "hours": 8,
+   "desc": "Fresh water: fills flasks and keeps workers watered."
+  },
+  "bunkhouse": {
+   "name": "Bunkhouse",
+   "marks": 150,
+   "items": {
+    "plank": 14,
+    "nails": 20,
+    "cloth": 6
+   },
+   "hours": 12,
+   "desc": "Beds for you and your people. Each bunkhouse houses 4 workers or guards."
+  },
+  "palisade": {
+   "name": "Palisade",
+   "marks": 120,
+   "items": {
+    "wood": 20,
+    "nails": 20
+   },
+   "hours": 10,
+   "desc": "Wooden walls. +12 defense."
+  },
+  "watchtower": {
+   "name": "Watchtower",
+   "marks": 220,
+   "items": {
+    "plank": 12,
+    "stone_block": 10,
+    "nails": 20
+   },
+   "hours": 14,
+   "desc": "Lookout and archers' post. +18 defense; raids are spotted early."
+  },
+  "training": {
+   "name": "Training Yard",
+   "marks": 120,
+   "items": {
+    "plank": 8,
+    "leather": 4
+   },
+   "hours": 8,
+   "desc": "Dummies and sparring ring. Assigned companions train combat skills daily."
+  },
+  "trading": {
+   "name": "Trading Post",
+   "marks": 300,
+   "items": {
+    "plank": 12,
+    "nails": 20,
+    "cloth": 6
+   },
+   "hours": 14,
+   "desc": "Caravans stop here. A worker earns marks daily (Trading skill, Caravan standing)."
+  },
+  "research": {
+   "name": "Research Hall",
+   "marks": 400,
+   "items": {
+    "plank": 10,
+    "stone_block": 10,
+    "old_book": 1,
+    "arcane_dust": 2
+   },
+   "hours": 20,
+   "desc": "Scribing table and research projects."
+  }
+ },
+ "defense": {
+  "palisade": 12,
+  "watchtower": 18
+ },
+ "research": {
+  "voidglass": {
+   "name": "Voidglass Smithing",
+   "items": {
+    "relic_shard": 3,
+    "voidglass_ore": 2
+   },
+   "hours": 24,
+   "unlocks": "voidglass",
+   "desc": "Learn to work Voidglass."
+  },
+  "agriculture": {
+   "name": "Crop Rotation",
+   "items": {
+    "seed_grain": 6,
+    "herbs": 6,
+    "old_book": 1
+   },
+   "hours": 16,
+   "unlocks": "agriculture",
+   "desc": "Farms yield 50% more."
+  },
+  "fortification": {
+   "name": "Fortification",
+   "items": {
+    "stone_block": 12,
+    "greyvein_bar": 4
+   },
+   "hours": 20,
+   "unlocks": "fortification",
+   "desc": "Walls and towers give 50% more defense."
+  },
+  "logistics": {
+   "name": "Caravan Logistics",
+   "items": {
+    "trinket": 3,
+    "salt": 10
+   },
+   "hours": 16,
+   "unlocks": "logistics",
+   "desc": "Trading posts earn 50% more."
+  }
+ },
+ "crops": {
+  "seed_grain": {
+   "yields": "grain",
+   "qty": 5,
+   "days": 3
+  },
+  "seed_herb": {
+   "yields": "herbs",
+   "qty": 4,
+   "days": 3
+  }
+ }
+}

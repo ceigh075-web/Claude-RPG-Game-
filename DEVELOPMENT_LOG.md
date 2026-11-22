@@ -14,8 +14,42 @@ Read this file first when resuming work in a new session. Then read GAME_DESIGN.
 | 5 NPCs & Local AI | ✅ Done |
 | 6 Companions & Relationships | ✅ Done |
 | 7 World Simulation | ✅ Done |
-| 8 Base Building | — |
+| 8 Base Building | ✅ Done |
 | 9 Polish | — |
+
+## Session 3 — Phase 8: Base Building
+- **Town houses** (`set_system/base.py`, `data/base.json`): six towns have a house for sale (500–1200
+  marks), bought at its door. Inside: your own bed (free sleep), a storage chest, a workbench, a stove, a
+  desk (spell book or research) and a training dummy. Companions told to rest at home are fully restored
+  each day.
+- **Outpost at Widow's Crossing:** found it at the outpost site (1500 marks, or 1000 with Crown standing
+  20 or more, plus wood and stone). You can't while the Hollow holds the crossing. It sets the
+  `outpost_founded` flag, which completes Sir Corin's favor, and is importance-5 history. There are 8
+  plots, chosen around the site and stored in the save.
+- **Buildings** (10 types): storage shed, workshop (furnace, anvil and workbench; a worker smelts ore
+  daily), farm (plant seeds, harvest after 3 days; a worker replants and harvests into storage), well,
+  bunkhouse (4 beds each, needed for workers and guards; free sleep; heals workers), palisade and
+  watchtower (defense), training yard (assigned companions train combat daily), trading post (a worker
+  earns marks from Trading skill and Caravan standing), research hall.
+  Construction costs marks plus materials from your pack or outpost storage and takes in-game hours
+  (faster with more workers). Buildings can be repaired after raids or torn down.
+- **People:** companions with work or guard tasks live at the outpost, with food upkeep from storage.
+  Hungry workers lose friendship; a well covers water. Workers stand by their building and guards by the
+  centre, and they fight if raiders come.
+- **Research** (hall or house desk): Voidglass Smithing (a second route to Voidglass besides the smith's
+  notes), Crop Rotation (+50% harvests), Fortification (+50% walls), Caravan Logistics (+50% trade).
+- **Raids:** a daily chance that grows with Hollow strength. If you're at the outpost, raiders spawn
+  for a **real-time defense**. Winning helps Crown standing and weakens the Hollow; leaving or losing
+  counts as a loss. If you're away, defense rating (walls, towers, guards' stats) is compared with raid
+  strength. A loss means 30% of storage is stolen and a building is damaged. Every raid is in world
+  history and the outpost log.
+- **UI:** outpost management (plots, building with costs, assigning, planting and harvesting, repair,
+  demolish, guards, log), storage transfer, research, a generic choice dialog, and base building sprites
+  (including damaged and crop states).
+- **Bugs fixed:** a following companion hijacked E over doors and objects (companions are now the last
+  target); healing didn't clear the "down" flag; the treasure branch swallowed the outpost-site landmark.
+- Tests: `tests/test_phase8.py`. The smoke tool buys a house through its door, opens the chest, founds
+  the outpost, builds six buildings and defends a raid in real time.
 
 ## Session 3 — Phase 7: World Simulation
 - **World events** (`set_system/world_events.py`): one deterministic roll per day, seeded by world seed

@@ -107,6 +107,8 @@ class Character:
 
     def heal(self, amount):
         self.hp = min(self.max_hp, self.hp + amount)
+        if self.hp > 0:
+            self.alive = True
 
     # ------------------------------------------------------------ persistence
     def to_dict(self):
