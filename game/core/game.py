@@ -137,8 +137,8 @@ class Game:
 
     def _draw_toasts(self):
         from ..presentation.ui import widgets as ui
-        y = WINDOW[1] - 150
-        for text, left in reversed(self.toasts[-4:]):
+        y = 140
+        for text, left in self.toasts[-4:]:
             alpha = min(1.0, left / 0.6)
             w = ui.font(22).size(text)[0] + 24
             s = pygame.Surface((w, 28), pygame.SRCALPHA)
@@ -146,4 +146,4 @@ class Game:
             self.screen.blit(s, (WINDOW[0] // 2 - w // 2, y))
             ui.text(self.screen, text, (WINDOW[0] // 2, y + 6), 22,
                     tuple(int(c * alpha) for c in ui.TEXT), center=True, shadow=False)
-            y -= 32
+            y += 32

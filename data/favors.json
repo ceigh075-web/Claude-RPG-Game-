@@ -1,0 +1,148 @@
+{
+ "hessa_minder": {
+  "type": "pay",
+  "gold": 100,
+  "title": "A hand for the shop",
+  "desc": "Pay 100 marks so Hessa can hire help while she's away."
+ },
+ "garrow_spar": {
+  "type": "duel",
+  "npc": "garrow",
+  "title": "Old Garrow's test",
+  "desc": "Beat Old Garrow in a sparring match."
+ },
+ "wren_mirelight": {
+  "type": "deliver",
+  "items": {
+   "mirelight_herb": 3
+  },
+  "title": "Glowing herbs",
+  "desc": "Bring Wren 3 Mirelight Herbs."
+ },
+ "marta_relic": {
+  "type": "deliver",
+  "items": {
+   "relic_shard": 1
+  },
+  "title": "A piece of history",
+  "desc": "Bring Marta a Relic Shard."
+ },
+ "grint_brawl": {
+  "type": "duel",
+  "npc": "grint",
+  "title": "Fists only",
+  "desc": "Beat Grint in a brawl."
+ },
+ "halvard_voidglass": {
+  "type": "deliver",
+  "items": {
+   "voidglass_ore": 3
+  },
+  "title": "The black glass",
+  "desc": "Bring Halvard 3 Voidglass Ore."
+ },
+ "nessa_powder": {
+  "type": "deliver",
+  "items": {
+   "salt": 5,
+   "sunsilver_ore": 2
+  },
+  "title": "Better powder",
+  "desc": "Bring Nessa 5 Salt and 2 Sunsilver Ore."
+ },
+ "isk_secret": {
+  "type": "deliver",
+  "items": {
+   "relic_shard": 1
+  },
+  "title": "A secret for a secret",
+  "desc": "Bring Isk a Relic Shard from the Sunken Abbey."
+ },
+ "lio_pit": {
+  "type": "duel",
+  "npc": "lio",
+  "title": "The champion",
+  "desc": "Beat Lio in the fighting pit."
+ },
+ "brakka_hunt": {
+  "type": "clear",
+  "location": "thornwild",
+  "title": "The hunting trial",
+  "desc": "Clear the beasts and raiders of the Thornwild."
+ },
+ "aubric_husks": {
+  "type": "clear",
+  "location": "duskmoor",
+  "title": "Rest for the dead",
+  "desc": "Clear the husks from Duskmoor."
+ },
+ "ysolde_hides": {
+  "type": "deliver",
+  "items": {
+   "hide": 4
+  },
+  "title": "Winter pelts",
+  "desc": "Bring Ysolde 4 Raw Hides."
+ },
+ "margit_crystals": {
+  "type": "deliver",
+  "items": {
+   "mana_crystal": 3
+  },
+  "title": "Crystal tithe",
+  "desc": "Bring Margit 3 Mana Crystals."
+ },
+ "corin_settle": {
+  "type": "flag",
+  "flag": "outpost_founded",
+  "title": "Living walls",
+  "desc": "Found an outpost at Widow's Crossing."
+ },
+ "nix_rescue": {
+  "type": "clear",
+  "location": "redrock_canyon",
+  "title": "Out of the cage",
+  "desc": "Defeat the Hollow guards at Redrock Canyon to free Nix."
+ },
+ "ren_spared": {
+  "type": "duel",
+  "npc": "black_ren",
+  "title": "The Hollow chief",
+  "desc": "Defeat Black Ren in single combat and spare him.",
+  "sets_flag": "hollow_broken"
+ },
+ "aldra_succession": {
+  "type": "flag",
+  "flag": "hollow_broken",
+  "title": "End the Hollow",
+  "desc": "Break the Hollow so the Queen can step down safely."
+ },
+ "kett_succession": {
+  "type": "deliver",
+  "items": {
+   "sunsilver_bar": 20
+  },
+  "title": "The guild's future",
+  "desc": "Deliver 20 Sunsilver Bars to secure Kett's successor."
+ },
+ "marrow_succession": {
+  "type": "flag",
+  "flag": "hollow_broken",
+  "title": "Safe roads",
+  "desc": "Break the Hollow so the caravans are safe without Sela."
+ },
+ "thale_spire": {
+  "type": "deliver",
+  "items": {
+   "spire_core": 1
+  },
+  "title": "The Spire's heart",
+  "desc": "Bring Archmage Thale the Spire Core."
+ },
+ "gruka_peace": {
+  "type": "flag",
+  "flag": "peace_crown_thornblood",
+  "title": "Peace in the east",
+  "desc": "Broker peace between the Crown and the Thornblood Clans."
+ }
+}

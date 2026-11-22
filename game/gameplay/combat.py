@@ -196,10 +196,10 @@ class CombatWorld:
         self.combatants.append(c)
         return c
 
-    def spawn_enemy(self, enemy_id, x, y, group=None, hostile=True):
+    def spawn_enemy(self, enemy_id, x, y, group=None, hostile=True, edef=None, look=None):
         from .enemy_ai import EnemyAI
-        e = self.data.enemies[enemy_id]
-        look = enemy_look(e)
+        e = edef or self.data.enemies[enemy_id]
+        look = look or enemy_look(e)
         c = Combatant(x, y, look, e["speed"], e["name"], team="enemy", enemy=e)
         c.enemy_id = enemy_id
         c.group = group
@@ -888,3 +888,35 @@ def enemy_look(e):
     return {"race": "human" if e["shape"] == "humanoid" else e["shape"], "shape": e["shape"],
             "skin": [190, 170, 150] if e["shape"] == "humanoid" else col, "hair": dark, "shirt": col, "pants": dark,
             "hair_style": 2, "hood": e.get("faction") == "hollow"}
+
+
+def npc_fighter(data, npc):
+    """An enemy-style combat definition built from a named NPC's character sheet (duels, Phase 6 foes)."""
+    a = npc["attributes"]
+    sk = npc["skills"]
+    weapon, dmg = "fists", 4.0
+    for item in npc["equipment"]:
+        it = data.items.get(item)
+        if it and it["type"] == "weapon" and data.weapons[it["weapon"]]["class"] == "melee":
+            weapon, dmg = it["weapon"], it["damage"]
+            break
+    p = npc["personality"]
+    if p["intelligence"] >= 8 and p["confidence"] >= 7:
+        arch = "intelligent"
+    elif p["aggression"] >= 7:
+        arch = "aggressive"
+    elif sk.get("blocking", 0) >= 35 or p["loyalty"] >= 9:
+        arch = "defensive"
+    elif a["speed"] >= 15:
+        arch = "fast"
+    elif a["strength"] >= 24:
+        arch = "heavy"
+    else:
+        arch = "aggressive"
+    skill = sk.get(data.weapons[weapon]["skill"], 0)
+    return {"name": npc["name"], "archetype": arch, "faction": None, "hp": 40 + a["health"] * 3,
+            "damage": round(dmg * (0.6 + a["strength"] / 30) * (1 + skill / 150), 1), "weapon": weapon,
+            "speed": 55 + a["speed"] * 1.5, "armor": 2 + sk.get("blocking", 0) / 20,
+            "attack_range": max(14, data.weapons[weapon]["reach"]), "aggro": 600, "flee_below": 0, "pack": [1, 1],
+            "loot": {}, "xp": 30, "color": [120, 120, 120], "shape": "humanoid",
+            "blocks": sk.get("blocking", 0) >= 20 or arch == "defensive", "npc": npc["id"]}

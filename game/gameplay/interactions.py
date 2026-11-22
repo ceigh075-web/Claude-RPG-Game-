@@ -14,6 +14,28 @@ LABELS = {
     "bounty_board": "Read", "water": "Drink & refill", "rock": "Break rock",
 }
 CHOP_KINDS = ("tree", "pine", "dead_tree")
+# one-time treasures at landmarks: feature -> items (guarded: only lootable when no hostiles are hunting you)
+TREASURES = {
+    "spire_vault": {"spire_core": 1, "starfall_blade": 1, "voidglass_manual": 1},
+    "crystal_spires": {"skyglass_bow": 1, "mana_crystal": 3},
+    "vents": {"emberheart_hammer": 1, "voidglass_ore": 2},
+    "smuggler_cache": {"powder_shot": 6, "trinket": 2, "old_book": 1},
+    "relic_altar": {"relic_shard": 2, "enchanted_ink": 1},
+}
+
+
+def take_treasure(state, feature):
+    state.flags[f"treasure:{feature}"] = True
+    msgs = []
+    for item, n in TREASURES[feature].items():
+        state.player.inventory.add(item, n)
+        msgs.append(f"Found {n}x {state.data.item(item)['name']}!")
+    legendary = [i for i in TREASURES[feature] if state.data.item(i).get("legendary") or i == "spire_core"]
+    state.memory.record("player", "accomplishment" if legendary else "discovery",
+                        f"{state.player.name} recovered " + ", ".join(state.data.item(i)["name"] for i in TREASURES[feature])
+                        + f" at {state.data.location(state.location)['name']}.", day=state.clock.day_index,
+                        minute=state.clock.total_minutes % 1440, importance=5 if legendary else 2, location=state.location)
+    return msgs
 
 
 class Interaction:
@@ -171,6 +193,8 @@ def for_object(state, loc_key, obj, lmap=None):
     if k == "campfire":
         return Interaction("Use the campfire (cook / rest)", kind="scene")
 
+    if k == "landmark" and obj.get("feature") in TREASURES and not state.flags.get(f"treasure:{obj['feature']}"):
+        return Interaction(f"Search the {obj['label']}", kind="scene")
     if k == "landmark":
         loc = data.location(loc_key) if loc_key in data.locations else {}
         return Interaction("Examine", kind="refuse",

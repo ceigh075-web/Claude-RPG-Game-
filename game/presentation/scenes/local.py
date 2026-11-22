@@ -73,6 +73,7 @@ class LocalScene(Scene):
         if m.kind != "wild" or st.sub_location:
             return
         groups = st.location_state(self.loc_key).setdefault("groups", {})
+        st.location_state(self.loc_key)["group_count"] = len(m.spawns)
         now = st.clock.total_minutes
         for i, sp in enumerate(m.spawns):
             gid = f"{st.location}:{i}"
@@ -107,7 +108,8 @@ class LocalScene(Scene):
             if any(c.alive for c in members):
                 continue
             self.active_groups.discard(gid)
-            groups[gid] = {"until": st.clock.total_minutes + GROUP_RESPAWN_DAYS * 1440}
+            groups[gid] = {"until": st.clock.total_minutes + GROUP_RESPAWN_DAYS * 1440,
+                           "defeated_at": st.clock.total_minutes}
             eid = next((sp["enemy"] for i, sp in enumerate(self.map.spawns) if f"{st.location}:{i}" == gid), None)
             if eid:
                 e = self.data.enemies[eid]
@@ -383,6 +385,11 @@ class LocalScene(Scene):
             from ...set_system.crafting import OBJECT_STATION
             from .crafting import CraftingScene
             self.game.scenes.push(CraftingScene(self.game, OBJECT_STATION[k]))
+        elif k == "landmark":
+            if self.combat.in_combat:
+                self.game.notify("Not while enemies are hunting you.")
+                return
+            self.game.notify(inter.take_treasure(st, o["feature"]))
         elif k == "scribing_table":
             from .spellbook import SpellbookScene
             self.game.scenes.push(SpellbookScene(self.game, at_table=True))

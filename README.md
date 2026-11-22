@@ -40,8 +40,25 @@ python tools/build_npcs.py    # regenerate data/npcs.json from the roster table
 
 Docs: [GAME_DESIGN.md](GAME_DESIGN.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md).
 
-## Local AI (optional, Phase 5)
+## Local AI (optional)
 
-NPC dialogue will use a local model via [Ollama](https://ollama.com) or any OpenAI-compatible server,
-configured in `config.json`. The game is fully playable without it: NPCs fall back to
-personality-driven template dialogue.
+NPC dialogue uses a local model through [Ollama](https://ollama.com) or any OpenAI-compatible server
+(llama.cpp `llama-server`, LM Studio, KoboldCpp). Set it up in `config.json`:
+
+```json
+"ai": {"enabled": true, "backend": "ollama", "endpoint": "http://localhost:11434", "model": "llama3.2:3b"}
+```
+
+To use Ollama:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+For an OpenAI-compatible server, set `"backend": "openai"` and its endpoint (for example `http://localhost:8080`).
+A 3–8B model is enough.
+
+The model only writes dialogue. It can *request* whitelisted actions (trade, favors, recruiting,
+promises, tone), and the game validates and runs them. It never changes stats, items, money or history.
+If the model is off, missing or slow, NPCs use personality-driven template dialogue and everything
+still works.

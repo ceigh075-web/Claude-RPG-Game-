@@ -79,6 +79,38 @@ def main():
     push(g, inventory.InventoryScene(g), "inventory")
     push(g, character.CharacterScene(g), "character")
     push(g, journal.JournalScene(g), "journal")
+    # Phase 5: dialogue (offline fallback), free text, gift, requirements, duel
+    from game.presentation.scenes.dialogue import DialogueScene
+    g.config.setdefault("ai", {})["enabled"] = False
+    npc = g.data.npcs["garrow"]
+    d = DialogueScene(g, npc)
+    g.scenes.push(d)
+    key(g, pygame.K_RETURN)                    # say something...
+    for ch in "hello friend":
+        key(g, ord(ch) if ch != " " else pygame.K_SPACE, ch)
+    key(g, pygame.K_RETURN)
+    for _ in range(30):
+        g.step(DT, [])
+    assert not d.waiting and len(d.log) >= 3, d.log
+    d.menu.index = [e[1] for e in d.menu.entries].index("favor")
+    key(g, pygame.K_RETURN)
+    for _ in range(30):
+        g.step(DT, [])
+    assert st.favors.get("garrow_spar"), "favor not started"
+    shot(g, "p5_dialogue")
+    d.build()
+    d.menu.index = [e[1] for e in d.menu.entries].index("duel")
+    key(g, pygame.K_RETURN)
+    assert type(g.scenes.top).__name__ == "DuelScene", g.scenes.top
+    duel = g.scenes.top
+    for _ in range(90):
+        g.step(DT, [])
+    shot(g, "p5_duel")
+    duel.foe.hp = 1
+    g.step(DT, [])
+    key(g, pygame.K_RETURN)
+    assert st.flags.get("duel_won:garrow")
+    assert type(g.scenes.top).__name__ == "LocalScene"
     extra = globals().get("EXTRA")
     if extra:
         extra(g, push, key, shot)

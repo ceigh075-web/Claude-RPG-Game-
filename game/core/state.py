@@ -32,6 +32,8 @@ class GameState:
         self.spellbook = starter_spellbook()   # permanently inscribed spells (first 4 are hotkeyed)
         self.spell_drafts = []                 # created but not yet inscribed spells
         self.known_recipes = []                # gated recipe families learned (e.g. "voidglass")
+        self.relationships = {}                # npc_id -> relationship record (set_system/relationships.py)
+        self.favors = {}                       # favor_id -> {"status", "started", "npc"}
         self.stats = {"km_travelled": 0.0, "days": 0}
         self.log = []
         self.memory = MemoryStore()
@@ -82,6 +84,7 @@ class GameState:
             "reputation": self.reputation, "faction_relations": self.faction_relations,
             "flags": self.flags, "settings": self.settings, "stats": self.stats, "log": self.log,
             "spellbook": self.spellbook, "spell_drafts": self.spell_drafts, "known_recipes": self.known_recipes,
+            "relationships": self.relationships, "favors": self.favors,
         }
 
     @classmethod
@@ -107,6 +110,8 @@ class GameState:
         s.spellbook = d.get("spellbook", starter_spellbook())
         s.spell_drafts = d.get("spell_drafts", [])
         s.known_recipes = d.get("known_recipes", [])
+        s.relationships = d.get("relationships", {})
+        s.favors = d.get("favors", {})
         s.settings.setdefault("weapon_mode", "melee")
         if memory is not None:
             s.memory = memory

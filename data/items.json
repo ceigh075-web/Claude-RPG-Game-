@@ -345,5 +345,41 @@
   "value": 30,
   "weight": 2.5,
   "desc": "Stitched hide armor. Light and quiet."
+ },
+ "starfall_blade": {
+  "name": "Starfall Blade",
+  "type": "weapon",
+  "weapon": "longsword",
+  "ore": "voidglass",
+  "legendary": true,
+  "value": 3000,
+  "weight": 1.6,
+  "damage": 44.0,
+  "speed": 1.35,
+  "desc": "A sword of star-metal from the Shattered Spire. It hums before it strikes."
+ },
+ "skyglass_bow": {
+  "name": "Skyglass Bow",
+  "type": "weapon",
+  "weapon": "bow",
+  "ore": "sunsilver",
+  "legendary": true,
+  "value": 2400,
+  "weight": 1.0,
+  "damage": 30.0,
+  "speed": 1.4,
+  "desc": "A crystal bow grown in Starfall Basin. Arrows leave trails of light."
+ },
+ "emberheart_hammer": {
+  "name": "Emberheart Hammer",
+  "type": "weapon",
+  "weapon": "hammer",
+  "ore": "voidglass",
+  "legendary": true,
+  "value": 2800,
+  "weight": 4.0,
+  "damage": 52.0,
+  "speed": 0.85,
+  "desc": "Forged in the Ashfall vents by no living smith. Still warm."
  }
 }
