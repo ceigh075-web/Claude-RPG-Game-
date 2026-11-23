@@ -162,6 +162,23 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## RPG overhaul (spells, people, looting, prisons, appearance)
+
+- **Spell customization:** besides element, sub-element, movement, effect, focus, size and tier, every spell has
+  Duration (0.5–3), Potency (0.5–2), Speed (0.5–2) and Range (0.5–2) sliders, a Behaviour (Piercing, Volley,
+  Lingering for missiles/impacts, Quickcast for anything) and a look (6 colour variants, intensity). Mana =
+  base × element × movement × effect × tier × size^k × duration^0.75 × potency^1.35 × speed^0.4 × range^0.6 ×
+  behaviour × focus × skill discount; sliders that do nothing for a spell cost nothing; looks are free. The
+  designer lists each factor.
+- **Attacking anyone:** every conversation has an Attack option; strangers and shopkeepers get Chat/Trade or
+  Attack. Consequences are the usual ones (memory, relationships, faction, witnesses, bounty, guards), plus
+  nearby townsfolk turn wary.
+- **Looting:** coin and materials scatter from the fallen; gear stays on bodies; bodies and containers open a
+  sorted loot list. Containers keep what you leave and refill every 3 days.
+- **Prisons:** captives need a cell (house cellar 1, outpost Stockade 4), retainers need a bed (house 1, outpost
+  2, bunkhouse 4). Stockades are decent (+loyalty, less resentment); cellars are cramped (resentment grows).
+- **Appearance:** a full creator at the start and any time from the Tab menu. Purely visual.
+
 ## Combat overhaul (magic, enemies, towns, morale)
 
 - **Tempo:** attack cycles run 30% faster, ranged weapons reload in about half the time, recoveries can be cut

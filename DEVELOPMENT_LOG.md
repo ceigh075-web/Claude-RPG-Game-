@@ -31,6 +31,40 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | NPC & enemy visual variety | ✅ Done |
 | Quality of life update | ✅ Done |
 | Major combat overhaul | ✅ Done |
+| Major RPG overhaul (spells, creator, visuals, looting, prisons) | ✅ Done |
+
+## Session 9 — Major RPG overhaul: spell customization, character creator, visuals, looting, prisons
+
+- Spell designer: duration, potency, speed and range sliders beside size; behaviours (Standard, Piercing,
+  Volley, Lingering, Quickcast) limited by movement class; colour variants and effect intensity (visual, free).
+  Every option feeds the mana formula and the designer shows a cost breakdown (each factor, more/less). Runtime:
+  volleys fire 3 weaker missiles, piercing missiles pass through 2 more foes, lingering spells leave a short
+  field, quickcast halves recast. VFX variants are generated per colour/intensity (`vfx._variant`). Spell book:
+  copy (C), delete (X) with confirmation, rename by editing. Old spells load with neutral defaults.
+- Attack from conversation: an Attack option in every NPC dialogue and a Chat/Trade/Attack menu for anonymous
+  townsfolk and shopkeepers, with a warning that names the consequences. It uses the normal assault path
+  (aggression, witnesses, bounty, guards) and a settlement alarm makes townsfolk nearby wary.
+- Looting (`set_system/loot.py`, `scenes/loot.py`): coins and materials burst out of the fallen and bounce
+  (pick up by walking over them); gear stays on the body (a bag marks it; E to search). Bodies and containers
+  open a loot panel sorted by kind (money, equipment, food, materials, valuables) with take one / take all /
+  money only. Contents are seeded and removed on taking (no duplication); container contents persist in the
+  location save and refill after 3 days. Taking from townsfolk or their containers is reported if seen.
+  Quick-deposit of materials (Q) at storage. Item icons (`presentation/icons.py`): pack weapon sprites plus
+  hand-made 12 px pixel art replace the old coloured dots.
+- Prisons: house cellar (1 cramped cell) and the new outpost Stockade (4 decent cells); retainer beds (1 per
+  house, 2 at the outpost, 4 per bunkhouse). Capture and recruitment are blocked without room and say why.
+  Conditions change loyalty/resentment daily; captives can be moved between cells. Old prisoners get a cell.
+- Character creator (`scenes/creator.py`): skin tones per race (plus lighter/darker), build, height, eye colour
+  and style, face marks (freckles, blush, scar, beauty mark, tattoo), face paint, facial hair, 10 hairstyles,
+  hair colours incl. vivid ones, outfit and colours, trousers, boots, belt, cape, hats, 9 accessories, randomize,
+  undo; live preview idle/walk/attack in four directions. Reachable from new game and the Tab menu.
+- Visual pass: eye catch-lights and iris colours, hair sheen, NPC eye colours and occasional face details;
+  buildings get type-specific architecture (pictogram shop signs, awnings, steeples, mage spire, battlements,
+  flags, hipped roofs, forge glow and smoke, barn doors, hides, laundry, for-sale signs) and wealth cues (gilded
+  trim, patched roofs); regional colour grading per biome and town; a pulsing outline on the current
+  interactable; outpost buildings use the town textures.
+- Tests: `tests/test_rpg_overhaul.py` (24) incl. old-save migration. 211 tests in total. Frame time in towns
+  ~6.5 ms headless.
 
 ## Session 8 — Major combat overhaul
 

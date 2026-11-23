@@ -15,7 +15,7 @@ folder to keep your progress.
 | Key | Action |
 |---|---|
 | WASD / arrows | Move (8 directions); Shift to sprint |
-| E / Enter | Interact, talk, confirm |
+| E / Enter | Interact, talk, search bodies and containers, confirm |
 | K / left mouse | Attack (repeat for combos; hold to draw a bow) |
 | L / right mouse | Block (hold) |
 | Space | Dodge roll |
@@ -23,7 +23,7 @@ folder to keep your progress.
 | Q | Switch melee / ranged weapon |
 | G | Hostile intent on/off: your attacks hit anyone (townsfolk, companions), and finish off the fallen |
 | H | Adventurer's Guide: tutorials, where to find resources, how to earn money, your objectives |
-| Tab | Quick menu (every screen in one place) |
+| Tab | Quick menu (every screen in one place, incl. Appearance and Prisoners) |
 | F11 | Full screen (the window can also be resized) |
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |

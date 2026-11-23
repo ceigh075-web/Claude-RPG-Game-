@@ -278,3 +278,31 @@ class TestCharacterCreator(unittest.TestCase):
         plain = charsprites.compose(dict(base, face="none"), "idle", "down", 0)[0]
         blush = charsprites.compose(dict(base, face="blush"), "idle", "down", 0)[0]
         self.assertNotEqual(pygame.image.tobytes(plain, "RGBA"), pygame.image.tobytes(blush, "RGBA"))
+
+
+class TestSaveMigration(unittest.TestCase):
+    def test_v104_save_loads_with_new_systems(self):
+        """A save from before this update: spells without sliders, prisoners without cells, looks without faces."""
+        import json
+        from game.core.state import GameState
+        from game.set_system import loot, morale
+        from tests.test_combat import new_state
+        st = new_state()
+        st.property["brackenford"] = {"building": "b5", "bought": 0, "storage": {}}
+        d = json.loads(json.dumps(st.to_dict()))
+        d["spellbook"] = [{"name": "Old Bolt", "element": "fire", "move": "projectile", "stat": "damage", "tier": 1}]
+        d.setdefault("stats", {})["prisoners"] = [{"id": "pr1", "enemy": "bandit_cutthroat", "name": "Cutthroat",
+                                                  "loyalty": 30.0, "resentment": 10.0, "kind": True, "since": 0,
+                                                  "talked": -1}]
+        st2 = GameState.from_dict(DATA, d)
+        p = spells.compute(DATA, st2.spellbook[0])
+        self.assertGreater(p["mana"], 0)
+        self.assertEqual(st2.spellbook[0].get("behavior", "standard"), "standard")
+        morale.daily(st2)
+        self.assertEqual(morale.prisoners(st2)[0]["held_at"], "house:brackenford")
+        self.assertEqual(morale.prison_capacity(st2), (1, 1))
+        self.assertIsInstance(loot.container(st2, "brackenford", "c1"), list)
+        st3 = GameState.from_dict(DATA, json.loads(json.dumps(st2.to_dict())))    # and round-trips
+        self.assertEqual(morale.prisoners(st3)[0]["held_at"], "house:brackenford")
+        self.assertEqual(st3.location_state("brackenford")["containers"]["c1"]["items"],
+                         st2.location_state("brackenford")["containers"]["c1"]["items"])
