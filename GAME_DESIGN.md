@@ -162,6 +162,24 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## Quality of life (mana, feel, guidance)
+
+- **Mana:** capacity is 40 + 1.2 × Magic skill + 3 per level. Mana regenerates in real time (3% of max per
+  second out of combat, 1.2% in combat) and every weapon hit restores 30% of the damage dealt (max 8 per hit;
+  spells and blocked hits give none). Costs still outpace combat regeneration, so magic stays limited.
+- **Spells anywhere:** design (N), edit (E) and inscribe spells from the spell book (B) anywhere, for free.
+  The book's size still grows with level.
+- **Guidance:** the Adventurer's Guide (H) generates its chapters from game data and your progress: getting
+  started, earning money, where every key resource comes from, magic, combat, crafting stations by town,
+  companions, travel, home/outpost, places you know, current objectives with next steps, tips seen and controls.
+  Item cards, crafting screens, shops and the world map show where things come from and what they're for.
+- **Feel:** player movement accelerates and decelerates smoothly, slides around wall corners and is 15% faster;
+  the camera follows smoothly with a little look-ahead. Footsteps, page turns, coin, save and warning sounds;
+  floating "+marks / +item / +xp" pop-ups; notifications for relationship and faction standing changes.
+- **Interface:** wood-and-parchment theme across every screen, keycap prompts, a Tab quick menu, a scalable
+  window (F11 full screen), inventory filters/sorting/comparison, and confirmation before quick-loading over
+  unsaved progress.
+
 ## Character looks
 
 - **Named NPCs** each have an identity built from their occupation (smith's apron, miner's lamp-helmet,

@@ -501,6 +501,11 @@ STATUS_FX = {"burn": ("ember", (255, 140, 40)), "bleed": ("drop", (190, 20, 30))
 def _on_event(fx, ev):
     x, y = ev["x"], ev["y"] - 10
     src = ev["src"]
+    if ev["kind"] == "mana":           # weapon hit fed the attacker's mana: blue motes rise into them
+        for _ in range(3 + int(ev["dmg"] // 3)):
+            fx.add(P(x + _rng.uniform(-6, 6), y + _rng.uniform(0, 8), 0, -_rng.uniform(15, 35), 0.5, "glint",
+                     _rng.choice(((120, 170, 255), (180, 210, 255)))))
+        return
     if ev["kind"] == "dodge":
         for k in range(6):
             fx.add(P(x + _rng.uniform(-5, 5), y + 9, _rng.uniform(-30, 30), _rng.uniform(-10, 0), 0.4, "dust", (190, 175, 150), 2.5))

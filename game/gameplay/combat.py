@@ -411,7 +411,7 @@ class CombatWorld:
         st = self.state
         key = (c.cid, spell["name"])
         if self.spell_cd.get(key, 0) > 0:
-            return False, f"{spell['name']} is not ready."
+            return False, f"{spell['name']} is recharging ({self.spell_cd[key]:.1f}s)."
         if not c.alive or c.state in ("stagger", "dodge", "windup", "active", "draw"):
             return False, None
         conduct = 0.0
@@ -422,7 +422,8 @@ class CombatWorld:
         p = spell_rules.compute(self.data, spell, c.skills().get("magic", 0), conduct)
         if c.char:
             if c.char.mana < p["mana"]:
-                return False, "Not enough mana."
+                return False, (f"Not enough mana for {spell['name']}: needs {p['mana']}, you have "
+                               f"{c.char.mana:.0f}. Mana refills over time and when your weapon hits.")
             if p["hp_cost"] and c.char.hp <= p["hp_cost"]:
                 return False, "Too weak to pay the blood price."
             c.char.mana -= p["mana"]
@@ -569,6 +570,12 @@ class CombatWorld:
             self.add_status(tgt, name, mag, dur, origin)
         tgt.flash = 0.12
         self._vfx("hit", src, tgt, profile, res, origin, dmg)
+        # weapon hits feed the attacker's mana (Set System rule in spells.mana_from_hit)
+        if src is not None and src.char is not None and not res["blocked"] and src is not tgt:
+            gain = spell_rules.mana_from_hit(dmg, profile.get("skill"))
+            if gain > 0 and src.char.mana < src.char.max_mana:
+                src.char.mana = min(src.char.max_mana, src.char.mana + gain)
+                self._vfx("mana", src, src, profile, res, origin, gain)
         self.sfx("block" if res["blocked"] else ("heavy" if profile.get("knockback", 0) > 100 or res["stagger_time"] > 0.3 else "hit"))
         col = (255, 255, 255) if src and src.team == "player" else (255, 120, 100)
         if res["blocked"]:
@@ -780,6 +787,10 @@ class CombatWorld:
             self.hitstop -= dt
             return
         self.shake = max(0.0, self.shake - dt * 12)
+        fighting = self.in_combat
+        for c in self.combatants:
+            if c.char is not None and c.alive and c.char.mana < c.char.max_mana:
+                c.char.mana = min(c.char.max_mana, c.char.mana + spell_rules.regen_per_second(c.char, fighting) * dt)
         for c in self.combatants:
             self._update_combatant(c, dt, lmap)
         for c in self.combatants:

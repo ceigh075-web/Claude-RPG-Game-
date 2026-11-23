@@ -23,8 +23,8 @@ HINTS = [
     ("company", lambda sc: bool(sc.state.companions),
      "You have company! P manages your squad (tasks, gear), R shows relationships. Companions eat from your packs."),
     ("spells", lambda sc: sc.state.player.level >= 3,
-     "Spell book (B): design spells from element, movement and effect, test them in the practice yard, and inscribe "
-     "them at a scribing table."),
+     "Spell book (B): design, edit and inscribe spells anywhere, any time. Test drafts in a practice yard. Mana refills "
+     "on its own (faster out of combat) and every weapon hit you land restores some."),
     ("outpost", lambda sc: sc.state.gold >= 900,
      "With enough marks you could buy a house in town - or found your own outpost at Widow's Crossing."),
 ]

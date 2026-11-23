@@ -102,6 +102,11 @@ SFX = {
     "levelup": lambda: _mix(*[_pad(f, 0.18 * (k + 1)) for k, f in enumerate((523, 659, 784, 1046))]),
     "alarm":   lambda: _mix(_tone(330, 0.9, "saw", 0.25, attack=0.15, release=0.4), _tone(220, 0.9, "saw", 0.2, attack=0.15)),
     "death":   lambda: _tone(200, 0.6, "square", 0.25, slide=-0.7, noise=0.3, seed=11),
+    "step":    lambda: _tone(110, 0.05, "sine", 0.05, noise=0.9, release=0.04, seed=12),
+    "page":    lambda: _tone(1800, 0.09, "saw", 0.035, noise=0.95, slide=-0.5, seed=13),
+    "fail":    lambda: _mix(_tone(180, 0.14, "square", 0.08, slide=-0.3), _tone(120, 0.14, "sine", 0.1)),
+    "discover": lambda: _mix(*[_pad(f, 0.1 * (k + 1)) for k, f in enumerate((784, 988, 1318))]),
+    "save":    lambda: _mix(_tone(523, 0.12, "sine", 0.12), _tone(784, 0.2, "sine", 0.1)),
 }
 
 

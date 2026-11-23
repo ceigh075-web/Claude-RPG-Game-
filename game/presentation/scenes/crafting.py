@@ -3,6 +3,7 @@ import pygame
 
 from ...core.scene import Scene
 from ...set_system import crafting, timeflow
+from .. import knowledge
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -69,11 +70,26 @@ class CraftingScene(Scene):
             y = ui.text_block(screen, it.get("desc", ""), (x, y + 36, 500, 90), 22, ui.TEXT_DIM) + 10
             ui.text(screen, "Ingredients", (x, y), 24, ui.ACCENT)
             y += 28
+            missing = []
             for item, qty in rec["inputs"].items():
                 have = p.inventory.count(item)
-                ui.text(screen, f"{self.data.item(item)['name']}", (x + 10, y), 22, ui.TEXT if have >= qty else ui.TEXT_BAD)
-                ui.text(screen, f"{have}/{qty}", (x + 480, y), 22, ui.TEXT if have >= qty else ui.TEXT_BAD, right=True)
+                ok_ = have >= qty
+                ui.text(screen, ("" if ok_ else "! ") + f"{self.data.item(item)['name']}", (x + 10, y), 22,
+                        ui.TEXT_GOOD if ok_ else ui.TEXT_BAD)
+                ui.text(screen, f"{have}/{qty}", (x + 480, y), 22, ui.TEXT_GOOD if ok_ else ui.TEXT_BAD, right=True)
                 y += 24
+                if not ok_:
+                    missing.append(item)
+            if missing:      # where to get what's missing
+                box = pygame.Rect(x, y + 4, 500, 26 + 40 * min(3, len(missing)))
+                ui.parchment(screen, box)
+                ui.ink(screen, "Where to find what you're missing", (box.x + 10, box.y + 6), 20, ui.INK_RED, bold=True)
+                yy = box.y + 26
+                for item in missing[:3]:
+                    src = knowledge.sources(st, item)[0]
+                    yy = ui.ink_block(screen, f"{self.data.item(item)['name']}: {src}", (box.x + 10, yy, box.w - 20, 40),
+                                      18, ui.INK) + 2
+                y = box.bottom + 4
             y += 10
             ui.text(screen, f"Time: {crafting.craft_minutes(st, rec)} min    Crafting needed: {rec.get('skill', 0)}", (x, y), 22)
             ok, why = crafting.check(st, rec)

@@ -1,4 +1,4 @@
-"""Spell book (inscribed spells + drafts), spell creation, and inscribing at a scribing table."""
+"""Spell book (inscribed spells + drafts), spell creation and editing - all usable anywhere, any time."""
 import pygame
 
 from ...core.scene import Scene
@@ -52,6 +52,12 @@ class SpellbookScene(Scene):
             if k == pygame.K_n:
                 self.game.scenes.push(SpellCraftScene(self.game, self))
                 return
+            if k == pygame.K_e:
+                menu = self.book if self.focus == 0 else self.drafts
+                i = menu.selected()
+                if i is not None:
+                    self.game.scenes.push(SpellCraftScene(self.game, self, edit=("book" if self.focus == 0 else "draft", i)))
+                return
             if k == pygame.K_t:
                 sp = self.selected_spell()
                 if sp and self.state.mode == "local":
@@ -82,13 +88,10 @@ class SpellbookScene(Scene):
             d, self.replace_for = self.replace_for, None
             old = st.spellbook[v]["name"]
             self.game.scenes.push(ConfirmScene(self.game, "Replace spell?",
-                f"Erase '{old}' and inscribe '{st.spell_drafts[d]['name']}'? Costs 1 Enchanted Ink and 1 Mana Crystal.",
+                f"Erase '{old}' and inscribe '{st.spell_drafts[d]['name']}' in its place?",
                 lambda: self._inscribe(d, v)))
             return
         if self.focus == 1:
-            if not self.at_table:
-                self.game.toast("Spells can only be inscribed at a scribing table (mage towers, temples, your home).")
-                return
             cap = spells.capacity(self.data, st.player.level)
             if len(st.spellbook) >= cap:
                 self.replace_for = v
@@ -96,7 +99,8 @@ class SpellbookScene(Scene):
                 self.game.toast(f"Spell book full ({cap}). Choose a spell to replace.")
                 return
             self.game.scenes.push(ConfirmScene(self.game, "Inscribe?",
-                f"Inscribe '{st.spell_drafts[v]['name']}' permanently? Costs 1 Enchanted Ink.", lambda: self._inscribe(v, None)))
+                f"Inscribe '{st.spell_drafts[v]['name']}' into your spell book? Inscribed spells go on the 1-4 hotbar.",
+                lambda: self._inscribe(v, None)))
 
     def _inscribe(self, d, replace):
         ok, msg = spells.inscribe(self.state, d, replace, self.at_table)
@@ -106,7 +110,7 @@ class SpellbookScene(Scene):
     def draw(self, screen):
         st = self.state
         ui.dim(screen, 150)
-        r = ui.panel(screen, (40, 40, W - 80, H - 80), "Spell Book" + ("  (at a scribing table)" if self.at_table else ""))
+        r = ui.panel(screen, (40, 40, W - 80, H - 80), "Spell Book")
         cap = spells.capacity(self.data, st.player.level)
         for i, (label, x) in enumerate(((f"Inscribed {len(st.spellbook)}/{cap}", 70),
                                         (f"Drafts {len(st.spell_drafts)}/{spells.MAX_DRAFTS}", 690))):
@@ -130,7 +134,7 @@ class SpellbookScene(Scene):
             ui.text(screen, stats, (70, y + 120), 22, ui.TEXT)
         if self.replace_for is not None:
             ui.text(screen, "Choose the spell to replace (Esc cancels)", (W // 2, r.bottom - 64), 24, ui.TEXT_BAD, center=True)
-        ui.text(screen, "[N] new spell  [T] test  [Enter] inscribe draft  [X] discard draft  [U] move up  [Tab] switch  [Esc] close",
+        ui.text(screen, "[N] new  [E] edit  [T] test  [Enter] inscribe draft  [X] discard  [U] move up  [Tab] switch  [Esc] close",
                 (W // 2, r.bottom - 32), 21, ui.TEXT_DIM, center=True)
 
 
@@ -139,15 +143,25 @@ class SpellCraftScene(Scene):
     overlay = True
     FIELDS = ["Element", "Sub-element", "Movement", "Effect", "Tier", "Name", "Save draft"]
 
-    def __init__(self, game, book_scene):
+    def __init__(self, game, book_scene, edit=None):
         super().__init__(game)
         self.book_scene = book_scene
+        self.edit = edit            # ("book" | "draft", index) when rewriting an existing spell
         m = self.data.magic
         self.elements = list(m["elements"])
         self.moves = list(m["movements"])
         self.el, self.sub, self.mv, self.eff, self.tier = 0, 0, 0, 0, 1
         self.field = 0
         self.custom_name = None
+        if edit:
+            sp = (self.state.spellbook if edit[0] == "book" else self.state.spell_drafts)[edit[1]]
+            el = m["subelements"][sp["sub"]]["element"]
+            self.el = self.elements.index(el)
+            self.sub = self.subs().index(sp["sub"])
+            self.mv = self.moves.index(sp["move"])
+            self.eff = self.effects().index(sp["stat"]) if sp["stat"] in self.effects() else 0
+            self.tier = min(sp["tier"], self.max_tier())
+            self.custom_name = sp["name"]
 
     def subs(self):
         return self.data.magic["elements"][self.elements[self.el]]["subs"]
@@ -205,23 +219,26 @@ class SpellCraftScene(Scene):
             return
         if k in (pygame.K_RETURN, pygame.K_SPACE) and self.field == 6:
             try:
-                ok, msg = spells.save_draft(self.state, self.spell())
+                if self.edit:
+                    ok, msg = spells.revise(self.state, self.edit[0], self.edit[1], self.spell())
+                else:
+                    ok, msg = spells.save_draft(self.state, self.spell())
             except spells.SpellError as e:
                 ok, msg = False, str(e)
             self.game.notify(msg)
             if ok:
                 self.book_scene.refresh()
-                self.book_scene.focus = 1
+                self.book_scene.focus = 0 if self.edit and self.edit[0] == "book" else 1
                 self.close()
 
     def draw(self, screen):
         m = self.data.magic
         ui.dim(screen, 120)
-        r = ui.panel(screen, (140, 60, 1000, 600), "Design a Spell")
+        r = ui.panel(screen, (140, 60, 1000, 600), "Edit Spell" if self.edit else "Design a Spell")
         sp = self.spell()
         vals = [m["elements"][self.elements[self.el]]["name"], m["subelements"][sp["sub"]]["name"],
                 m["movements"][sp["move"]]["name"], m["stats"][sp["stat"]]["name"], f"Tier {self.tier} (max {self.max_tier()})",
-                sp["name"] + ("_" if self.field == 5 else ""), "Save as draft (free)"]
+                sp["name"] + ("_" if self.field == 5 else ""), "Save changes" if self.edit else "Save as draft (free)"]
         y = r.y + 64
         for i, (f, v) in enumerate(zip(self.FIELDS, vals)):
             sel = i == self.field

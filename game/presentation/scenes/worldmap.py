@@ -43,9 +43,9 @@ class WorldMapScene(Scene):
             loc = self.data.location(n)
             hrs = r["km"] / (travel.BASE_KMH * TERRAIN_SPEED.get(r["terrain"], 1))
             known = n in st.discovered or loc["kind"] == "town"
-            name = loc["name"] if known else f"{loc['name']} (unexplored)"
-            entries.append((name, n, True, f"{r['km']:.0f} km ~{hrs:.0f}h"))
-        self.menu = ui.ListMenu(entries, (900, 150, 340, 300), 24)
+            name = loc["name"] if known else f"{loc['name']} (new)"
+            entries.append((name, n, True, f"{r['km']:.0f}km {hrs:.0f}h"))
+        self.menu = ui.ListMenu(entries, (900, 150, 340, 260), 22)
         if preselect in self.options:
             self.menu.index = self.options.index(preselect)
 
@@ -119,11 +119,15 @@ class WorldMapScene(Scene):
             if sel:
                 loc = data.location(sel)
                 r = world.route(st.location, sel)
-                y = 470
-                ui.text(screen, f"Terrain: {r['terrain']}   Danger: {loc.get('danger', 0) or 'town'}", (900, y), 22)
-                y = ui.text_block(screen, loc["description"], (900, y + 26, 340, 110), 21, ui.TEXT_DIM)
-                if loc["kind"] == "wild":
-                    ui.text_block(screen, "Why go: " + loc["reason"], (900, y + 6, 340, 70), 21, ui.TEXT_GOOD)
+                from .. import knowledge
+                box = pygame.Rect(890, 420, 356, 186)
+                ui.parchment(screen, box)
+                ui.ink(screen, loc["name"], (box.x + 10, box.y + 6), 22, ui.INK, bold=True)
+                ui.ink(screen, f"{r['terrain']}, " + (f"danger {loc['danger']}/5" if loc.get("danger") else "town"),
+                       (box.right - 10, box.y + 9), 18, ui.INK_DIM, right=True)
+                yy = ui.ink_block(screen, loc["description"], (box.x + 10, box.y + 30, box.w - 20, 54), 18, ui.INK_DIM)
+                ui.ink_block(screen, knowledge.place_summary(st, sel), (box.x + 10, yy + 4, box.w - 20, box.bottom - yy - 8),
+                             18, ui.INK_GREEN if loc["kind"] == "wild" else ui.INK)
             ui.text(screen, "[Enter] set out   [Esc] stay", (W - 40, H - 54), 20, ui.TEXT_DIM, right=True)
         else:
             ui.text_block(screen, "Walk to a road at the edge of the map (or press M outdoors) to choose a destination.",

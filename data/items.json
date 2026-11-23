@@ -297,7 +297,7 @@
   "type": "magic",
   "value": 35,
   "weight": 0.1,
-  "desc": "Glowing ink used to inscribe a spell permanently in a spell book."
+  "desc": "Glowing ink prized by scribes and enchanters. Spells no longer need it to be inscribed, but alchemists and mage shops pay well for it."
  },
  "voidglass_manual": {
   "name": "Voidglass Smithing Notes",

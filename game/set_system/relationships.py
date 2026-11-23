@@ -30,6 +30,16 @@ def change(state, npc_id, reason=None, **deltas):
     return r
 
 
+def bond_label(r):
+    """Plain-language standing from friendship and trust (used for notifications and the UI)."""
+    v = r["friendship"] + r["trust"]
+    for limit, name in ((-80, "Enemy"), (-30, "Hostile"), (-8, "Wary"), (12, "Acquaintance"), (45, "Friendly"),
+                        (90, "Friend"), (150, "Close friend")):
+        if v < limit:
+            return name
+    return "Devoted"
+
+
 # ------------------------------------------------------------------ player profile & compatibility
 def profile(state):
     return state.stats.setdefault("profile", {"kindness": 0, "cruelty": 0, "bravery": 0, "greed": 0, "honesty": 0})

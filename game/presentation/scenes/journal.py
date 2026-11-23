@@ -21,6 +21,9 @@ class JournalScene(Scene):
     def handle(self, ev):
         if is_close(ev) or (ev.type == pygame.KEYDOWN and ev.key == pygame.K_j):
             self.close()
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_h:
+            from .guide import GuideScene
+            self.game.scenes.replace(GuideScene(self.game))
         elif ev.type == pygame.KEYDOWN:
             if ev.key in (pygame.K_TAB, pygame.K_RIGHT, pygame.K_d):
                 self.tab, self.scroll = (self.tab + 1) % len(TABS), 0
@@ -50,12 +53,16 @@ class JournalScene(Scene):
             return out
         if self.tab == 4:
             from ...set_system import favors, jobs
-            out = ["ACTIVE JOBS"]
+            out = ["ACTIVE JOBS" + ("" if any(j["status"] == "active" for j in st.jobs)
+                                    else "  (none - read a job board on any town square)")]
             for j in st.jobs:
                 if j["status"] == "active":
                     done, detail = jobs.progress(st, j)
                     out.append(f"- {j['title']} [{self.data.location(j['town'])['name']}] {detail}; due {format_stamp(j['deadline'])}"
                                + ("  READY" if done else ""))
+                    from .. import knowledge
+                    out.append("    Next: " + ("Return to the job board in " + self.data.location(j["town"])["name"]
+                                              + " to collect your reward." if done else knowledge.job_next_step(st, j)))
             out += ["", "FAVORS"]
             for fid, f in st.favors.items():
                 d = favors.defs(self.data)[fid]
@@ -90,5 +97,5 @@ class JournalScene(Scene):
         for l in wrapped[self.scroll:self.scroll + 26]:
             ui.text(screen, l, (r.x + 30, y), 22)
             y += 21
-        ui.text(screen, "[Tab] switch tab   [Up/Down] scroll   [Esc] close", (r.centerx, r.bottom - 28), 20,
+        ui.text(screen, "[Tab] switch tab   [Up/Down] scroll   [H] Adventurer's Guide   [Esc] close", (r.centerx, r.bottom - 28), 20,
                 ui.TEXT_DIM, center=True)

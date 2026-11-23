@@ -50,6 +50,9 @@ class SceneManager:
 
     def push(self, scene):
         self.stack.append(scene)
+        if getattr(scene, "overlay", False):
+            from ..presentation import audio
+            audio.play("page")          # menus open with a soft page turn
         scene.on_enter()
         return scene
 

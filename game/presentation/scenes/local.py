@@ -24,6 +24,9 @@ CW, CH = 640, 360
 W, H = 1280, 720
 TIME_SCALE = 1.0          # game minutes per real second while exploring
 SPRINT_MULT = 1.6
+WALK_FEEL = 1.15      # QoL: the player walks 15% faster than the base stat (enemies unchanged)
+ACCEL, DECEL = 16.0, 20.0   # per-second approach rates for the player's velocity
+CAM_FOLLOW = 9.0      # camera smoothing (higher = tighter)
 INTERACT_RANGE = 22
 LIGHT_KINDS = {"campfire": 70, "lantern": 54, "furnace": 60, "well": 0}
 GROUP_RESPAWN_DAYS = 4
@@ -65,6 +68,8 @@ class LocalScene(Scene):
         actor = Actor(spawn[0], spawn[1], p.appearance, p.move_speed(), name=p.name)
         self.combat = CombatWorld(self.game, st, self.map, random.Random(st.rng.random()))
         self.player = self.combat.add_player(actor)
+        self.pvel = (0.0, 0.0)
+        self.cam = None
         st.local_pos = (self.player.x, self.player.y)
         self.last_hour = st.clock.hour
         self.active_groups = set()
@@ -368,6 +373,11 @@ class LocalScene(Scene):
             cw.dodge(pc, (dx, dy))
         elif k == pygame.K_q:
             cw.switch_weapon()
+        elif k == pygame.K_h:
+            from .guide import GuideScene
+            self.game.scenes.push(GuideScene(self.game))
+        elif k == pygame.K_TAB:
+            self.quick_menu()
         elif k == pygame.K_g:
             cw.intent = not cw.intent
             self.state.settings["hostile_intent"] = cw.intent
@@ -410,7 +420,38 @@ class LocalScene(Scene):
             self.game.save_game(1)
         elif k == pygame.K_F9:
             if self.game.saves.exists(1):
-                self.game.load_game(1)
+                mins = self.state.clock.total_minutes - getattr(self.game, "last_save_minutes", 0)
+                body = ("Load quick save (slot 1)? " +
+                        (f"About {mins // 60}h {mins % 60}m of in-game progress since your last save will be lost."
+                         if mins > 0 else "Nothing new since your last save."))
+                self.game.scenes.push(ConfirmScene(self.game, "Quick load?", body, lambda: self.game.load_game(1)))
+            else:
+                self.game.toast("No quick save yet: press F5 to save to slot 1.")
+
+    def quick_menu(self):
+        """Tab: every menu in one place, with its shortcut."""
+        from .common import ChoiceScene
+        opts = [("Inventory", "inv", True, "I"), ("Character & factions", "char", True, "C"),
+                ("Spell book", "book", True, "B"), ("Company (squad)", "party", True, "P"),
+                ("Relationships", "rel", True, "R"), ("Journal", "journal", True, "J"),
+                ("Adventurer's Guide", "guide", True, "H"), ("World map", "map", True, "M"),
+                ("Quick save", "save", True, "F5"), ("Pause menu (options, load, quit)", "pause", True, "Esc")]
+
+        def go(v):
+            from .character import CharacterScene
+            from .guide import GuideScene
+            from .inventory import InventoryScene
+            from .journal import JournalScene
+            from .party import PartyScene, RelationshipsScene
+            from .spellbook import SpellbookScene
+            push = self.game.scenes.push
+            {"inv": lambda: push(InventoryScene(self.game)), "char": lambda: push(CharacterScene(self.game)),
+             "book": lambda: push(SpellbookScene(self.game)), "party": lambda: push(PartyScene(self.game)),
+             "rel": lambda: push(RelationshipsScene(self.game)), "journal": lambda: push(JournalScene(self.game)),
+             "guide": lambda: push(GuideScene(self.game)),
+             "map": lambda: self.open_map(leaving=self.map.kind != "interior"),
+             "save": lambda: self.game.save_game(1), "pause": lambda: push(PauseScene(self.game))}[v]()
+        self.game.scenes.push(ChoiceScene(self.game, "Menu", opts, go))
 
     def hotbar(self):
         return self.state.spellbook[:4]
@@ -469,6 +510,8 @@ class LocalScene(Scene):
                 return "Trade with the Shopkeeper"
             return f"Talk to {a.npc['name']}"
         o, ia = tgt[1], tgt[2]
+        if ia is not None and ia.kind == "refuse" and ia.message:
+            return f"{ia.label} - {ia.message}"
         if o["kind"] == "door":
             return f"Enter {self.map.buildings[o['building']]['label']}"
         if o["kind"] == "exit_door":
@@ -481,6 +524,8 @@ class LocalScene(Scene):
             return ia.label
         if o["kind"] == "bush":
             return f"Forage {self.data.item(o['yields'])['name']}"
+        if ia is not None and ia.kind == "timed" and ia.minutes:
+            return f"{ia.label}  ({ia.minutes} min)"
         return ia.label
 
     def interact(self):
@@ -814,9 +859,29 @@ class LocalScene(Scene):
             elif (dx or dy) and pc.state in ("idle", "draw") :
                 pc.aim = norm(dx, dy)
             spd_buff = 1 + pc.buffs.get("speed", [0])[0] / 50.0
-            self.player.speed = st.player.move_speed() * (SPRINT_MULT if sprint else 1.0) * pc.move_mult() * spd_buff
-            if pc.state not in ("dodge", "stagger", "dead"):
-                self.player.move(m, dx, dy, dt)
+            top = st.player.move_speed() * WALK_FEEL * (SPRINT_MULT if sprint else 1.0) * pc.move_mult() * spd_buff
+            # velocity with quick acceleration / deceleration: responsive but never a dead stop or a lurch
+            tx, ty = (norm(dx, dy)[0] * top, norm(dx, dy)[1] * top) if (dx or dy) else (0.0, 0.0)
+            vx, vy = getattr(self, "pvel", (0.0, 0.0))
+            k = min(1.0, (ACCEL if (dx or dy) else DECEL) * dt)
+            vx += (tx - vx) * k
+            vy += (ty - vy) * k
+            if abs(vx) < 2 and abs(vy) < 2 and not (dx or dy):
+                vx = vy = 0.0
+            self.pvel = (vx, vy)
+            if pc.state not in ("dodge", "stagger", "dead") and (vx or vy):
+                self.player.speed = math.hypot(vx, vy)
+                face = pc.facing
+                self.player.move(m, vx, vy, dt, slide=True)
+                if dx or dy:            # face where the player is steering, not where momentum carries them
+                    pc.facing = facing_from((dx, dy))
+                else:
+                    pc.facing = face
+                    self.player.moving = math.hypot(vx, vy) > 12
+            else:
+                self.player.moving = False
+                if pc.state in ("dodge", "stagger", "dead"):
+                    self.pvel = (0.0, 0.0)
             if busy or self.mouse_aim_t > 0:
                 pc.facing = facing_from(pc.aim)
             if self.player.moving:
@@ -828,6 +893,7 @@ class LocalScene(Scene):
                     st.player.train("athletics", dt * 0.05, race)
         pc.armor = st.player.armor_value(self.data)
         self.combat.update(dt, m)
+        self.update_camera(dt)
         if self.combat.events:
             for msg in self.combat.events:
                 self.game.toast(msg)
@@ -888,6 +954,7 @@ class LocalScene(Scene):
                             f"Spell book capacity {spells.capacity(self.data, st.player.level)}.", 5)
             st.memory.record("player", "accomplishment", f"{st.player.name} reached level {st.player.level}.",
                              day=st.clock.day_index, minute=st.clock.total_minutes % 1440, importance=2)
+        self.gain_feedback(dt)
         if self.hint:
             self.hint[1] -= dt
             if self.hint[1] <= 0:
@@ -896,6 +963,62 @@ class LocalScene(Scene):
             h = hints.next_hint(self)
             if h:
                 self.hint = [h, 9.0]
+
+    def gain_feedback(self, dt):
+        """Floating '+12 marks', '+2 Rustite Ore', '+xp' over the player, and soft footsteps."""
+        from .. import audio
+        st = self.state
+        pc = self.player
+        snap = getattr(self, "_gain_snap", None)
+        self._gain_t = getattr(self, "_gain_t", 0.0) + dt
+        if snap is None:
+            self._gain_snap = (st.gold, dict(st.player.inventory.items), st.player.xp_total)
+        elif self._gain_t >= 0.25:
+            self._gain_t = 0.0
+            gold, items, xp = snap
+            now = dict(st.player.inventory.items)
+            pops = []
+            if st.gold != gold:
+                pops.append((f"{st.gold - gold:+d} marks", (240, 205, 90) if st.gold > gold else (220, 130, 110)))
+            for item, n in now.items():
+                d = n - items.get(item, 0)
+                if d > 0 and item in self.data.items:
+                    pops.append((f"+{d} {self.data.items[item]['name']}", (220, 230, 210)))
+            if st.player.xp_total - xp >= 1:
+                pops.append((f"+{st.player.xp_total - xp:.0f} xp", (200, 180, 255)))
+            for i, (txt, col) in enumerate(pops[:4]):
+                self.combat.floaters.append([txt, pc.x, pc.y - 36 - i * 9, -0.25 * i, col])
+            if pops and any("marks" in p[0] for p in pops):
+                audio.play("coin")
+            elif pops:
+                audio.play("pickup")
+            self._gain_snap = (st.gold, now, st.player.xp_total)
+        # standing changes with people and factions
+        self._rel_t = getattr(self, "_rel_t", 0.0) + dt
+        if self._rel_t >= 1.0:
+            self._rel_t = 0.0
+            from ...set_system import factions, relationships as rel
+            now = {nid: (rel.bond_label(r), r.get("romance")) for nid, r in st.relationships.items()}
+            fac = {f: factions.standing_label(v) for f, v in st.reputation.items()}
+            old = getattr(self, "_rel_snap", None)
+            if old is not None:
+                for nid, (lab, rom) in now.items():
+                    was = old[0].get(nid)
+                    name = self.data.npcs[nid]["name"] if nid in self.data.npcs else nid
+                    if was and was[0] != lab:
+                        self.game.notify(f"{name} now sees you as: {lab}.")
+                    if was and was[1] != rom and rom not in (None, "none"):
+                        self.game.notify(f"You and {name}: {rom}.")
+                for f, lab in fac.items():
+                    if old[1].get(f) and old[1][f] != lab:
+                        self.game.notify(f"Standing with {self.data.factions[f]['name']}: {lab}.")
+            self._rel_snap = (now, fac)
+        # footsteps
+        if pc.moving and pc.state == "idle":
+            self._step_d = getattr(self, "_step_d", 0.0) + math.hypot(*getattr(self, "pvel", (0, 0))) * dt
+            if self._step_d > 26:
+                self._step_d = 0.0
+                audio.play("step")
 
     def on_edge(self, ex):
         self.open_map(leaving=True, preselect=ex["to"] if ex else None)
@@ -943,16 +1066,46 @@ class LocalScene(Scene):
             f"Your body gives out. You wake hours later, weak and aching. Someone has lightened your purse by {lost} marks."))
 
     # ================================================================ drawing
-    def camera(self):
+    def camera_target(self):
         m = self.map
         mw, mh = m.w * T, m.h * T
-        cx = self.player.x - CW / 2
-        cy = self.player.y - 8 - CH / 2
+        vx, vy = getattr(self, "pvel", (0.0, 0.0))
+        cx = self.player.x - CW / 2 + vx * 0.12      # a little look-ahead in the direction of travel
+        cy = self.player.y - 8 - CH / 2 + vy * 0.10
         cx = (mw - CW) / 2 if mw <= CW else max(0, min(mw - CW, cx))
         cy = (mh - CH) / 2 if mh <= CH else max(0, min(mh - CH, cy))
-        return int(cx), int(cy)
+        return cx, cy
+
+    def camera(self):
+        cam = getattr(self, "cam", None)
+        if cam is None:
+            cam = self.camera_target()
+        return int(round(cam[0])), int(round(cam[1]))
+
+    def update_camera(self, dt):
+        tx, ty = self.camera_target()
+        cam = getattr(self, "cam", None)
+        if cam is None or abs(cam[0] - tx) > CW or abs(cam[1] - ty) > CH:
+            self.cam = (tx, ty)                         # snap after teleports / map changes
+            return
+        k = min(1.0, CAM_FOLLOW * dt)
+        self.cam = (cam[0] + (tx - cam[0]) * k, cam[1] + (ty - cam[1]) * k)
 
     def draw(self, screen):
+        # under a menu that pauses the world nothing moves: reuse the last frame instead of redrawing it
+        top = self.game.scenes.top
+        covered = top is not self and getattr(top, "overlay", False)
+        snap = getattr(self, "_snap", None)
+        if covered and snap is not None and snap[0] == self.t:
+            screen.blit(snap[1], (0, 0))
+            return
+        self._draw_world(screen)
+        if covered:
+            self._snap = (self.t, screen.copy())
+        else:
+            self._snap = None
+
+    def _draw_world(self, screen):
         c = self.game.canvas
         art = self.game.art
         m = self.map
@@ -1097,7 +1250,16 @@ class LocalScene(Scene):
         ui.bar(screen, (r.x + 12, r.y + 34, 276, 16), p.hp / p.max_hp, ui.HP, f"Health {p.hp:.0f}/{p.max_hp}")
         ui.bar(screen, (r.x + 12, r.y + 56, 276, 16), p.food / 100, ui.FOOD, f"Food {p.food:.0f}")
         ui.bar(screen, (r.x + 12, r.y + 78, 276, 16), p.water / 100, ui.WATER, f"Water {p.water:.0f}")
-        ui.bar(screen, (r.x + 12, r.y + 100, 276, 16), p.mana / max(1, p.max_mana), ui.MANA, f"Mana {p.mana:.0f}/{p.max_mana}")
+        from ...set_system import spells as spell_rules
+        rate = spell_rules.regen_per_second(p, self.combat.in_combat)
+        ui.bar(screen, (r.x + 12, r.y + 100, 276, 16), p.mana / max(1, p.max_mana), ui.MANA,
+               f"Mana {p.mana:.0f}/{p.max_mana}   +{rate:.1f}/s")
+        # cost markers: where each hotbar spell's price sits on the bar
+        for i, sp in enumerate(self.hotbar()):
+            cost = spell_rules.compute(self.data, sp, p.skills["magic"])["mana"]
+            mx = r.x + 12 + int(276 * min(1.0, cost / max(1, p.max_mana)))
+            pygame.draw.line(screen, (255, 255, 255) if p.mana >= cost else (40, 30, 60), (mx, r.y + 98), (mx, r.y + 117), 1)
+            ui.text(screen, str(i + 1), (mx, r.y + 118), 14, ui.TEXT_DIM, center=True)
         from ...set_system import needs
         conds = needs.status(p)
         if p.encumbrance() > 1:
@@ -1131,10 +1293,7 @@ class LocalScene(Scene):
         else:
             pr = self.prompt(self.target())
             if pr:
-                w = ui.font(24).size(pr)[0] + 70
-                pr_r = pygame.Rect(W // 2 - w // 2, H - 64, w, 34)
-                ui.panel(screen, pr_r, alpha=210)
-                ui.text(screen, "[E] " + pr, (W // 2, H - 56), 24, ui.TEXT, center=True)
+                ui.prompt(screen, "E", pr, (W // 2, H - 48), 24)
         combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H, self.hotbar())
         if p.hp < p.max_hp * 0.3:
             pulse = 0.5 + 0.5 * math.sin(self.t * 5)
@@ -1149,8 +1308,12 @@ class LocalScene(Scene):
             ui.text(screen, "Tip", (hr.x + 10, hr.y + 6), 20, ui.ACCENT, bold=True)
             for i, l in enumerate(lines):
                 ui.text(screen, l, (hr.x + 50, hr.y + 6 + i * 19), 21)
-        ui.text(screen, "K/LMB attack  L/RMB block  F kick  Space dodge  1-4 spells  B book  I inv  C char  M map  J journal",
-                (12, H - 26), 20, ui.TEXT_DIM)
+        x = 12
+        for key, label in (("LMB", "attack"), ("RMB", "block"), ("F", "kick"), ("Space", "dodge"), ("1-4", "spells"),
+                           ("B", "spells"), ("I", "bag"), ("C", "hero"), ("M", "map"), ("J", "journal"), ("H", "guide"),
+                           ("Tab", "menu")):
+            x += ui.keycap(screen, key, (x, H - 27), 15) + 4
+            x += ui.text(screen, label, (x, H - 25), 18, ui.TEXT_DIM) + 12
 
     def place_name(self):
         loc = self.data.location(self.state.location)

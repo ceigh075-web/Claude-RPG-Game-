@@ -216,7 +216,9 @@ def draw_floaters(screen, world, camx, camy, scale=2):
     """Damage numbers: pop in, drift up, fade. Big hits and backstabs ("!") are larger; labels are outlined."""
     fancy = visuals.enabled()
     for text, x, y, t, col in world.floaters:
-        alpha = 1 - t / 0.9
+        if t < 0:
+            continue                      # staggered pop-ups wait their turn
+        alpha = max(0.0, min(1.0, 1 - t / 0.9))
         rise = t * 20 if not fancy else 26 * (1 - (1 - min(1.0, t / 0.6)) ** 2)
         sx, sy = (x - camx) * scale, (y - camy - rise) * scale
         size = 22 if not text.endswith("!") else 28
@@ -267,10 +269,16 @@ def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):
         props = spell_rules.compute(data, sp, p.skills["magic"])
         y = r.y + 34 + i * 20
         cd = world.spell_cd.get((pc.cid, sp["name"]), 0) if pc else 0
-        ok = p.mana >= props["mana"] and cd <= 0
+        short = p.mana < props["mana"]
+        ok = not short and cd <= 0
         ui.text(screen, f"[{i + 1}] {sp['name']}", (r.x + 12, y), 20, ui.TEXT if ok else ui.TEXT_DIM)
-        ui.text(screen, f"{props['mana']} mp" + (f"  {cd:.1f}s" if cd > 0 else ""), (r.right - 12, y), 20,
-                tuple(props["color"]) if ok else ui.TEXT_DIM, right=True)
+        tag = f"{props['mana']} mp"
+        if cd > 0:
+            tag += f"  {cd:.1f}s"
+        elif short:
+            tag = f"need {props['mana'] - p.mana:.0f} more"
+        ui.text(screen, tag, (r.right - 12, y), 20,
+                tuple(props["color"]) if ok else ((220, 120, 120) if short else ui.TEXT_DIM), right=True)
     if world.in_combat:
         ui.text(screen, "IN COMBAT", (W // 2, 14), 26, (240, 110, 90), bold=True, center=True)
 

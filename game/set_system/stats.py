@@ -48,7 +48,8 @@ class Character:
 
     @property
     def max_mana(self):
-        return round(20 + self.skills["magic"] * 0.8)
+        # QoL rework: a bigger pool that grows with magic skill and level (was 20 + magic * 0.8)
+        return round(40 + self.skills["magic"] * 1.2 + (self.level - 1) * 3)
 
     @property
     def carry_capacity(self):

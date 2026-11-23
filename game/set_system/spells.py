@@ -109,6 +109,19 @@ def capacity(data, level):
 MAX_DRAFTS = 6
 
 
+def revise(state, where, index, spell):
+    """Edit an existing spell (book or draft) in place."""
+    validate(state.data, spell, state.player.level)
+    lst = state.spellbook if where == "book" else state.spell_drafts
+    if not (0 <= index < len(lst)):
+        return False, "No such spell."
+    if any(d["name"] == spell["name"] for k, d in enumerate(state.spell_drafts + state.spellbook)
+           if d is not lst[index]):
+        return False, "A spell with that name already exists."
+    lst[index] = dict(spell)
+    return True, f"'{spell['name']}' rewritten."
+
+
 def save_draft(state, spell):
     """Creating a spell is free: it goes to the drafts list (not yet usable outside practice)."""
     validate(state.data, spell, state.player.level)
@@ -120,12 +133,29 @@ def save_draft(state, spell):
     return True, f"Draft '{spell['name']}' saved."
 
 
-def inscribe(state, draft_index, replace_index=None, at_table=False):
-    """Permanently record a draft in the spell book. Needs a scribing table and Enchanted Ink;
-    replacing an existing spell also consumes a Mana Crystal."""
-    data, p = state.data, state.player
-    if not at_table:
-        return False, "Spells can only be inscribed at a scribing table."
+# ------------------------------------------------------------------ mana economy (real-time)
+REGEN_CALM = 0.03          # fraction of max mana restored per second out of combat
+REGEN_COMBAT = 0.012       # ...and while fighting
+HIT_MANA_RATIO = 0.3       # weapon damage dealt -> mana
+HIT_MANA_CAP = 8.0         # most mana one weapon hit can restore
+
+
+def regen_per_second(char, in_combat):
+    return char.max_mana * (REGEN_COMBAT if in_combat else REGEN_CALM)
+
+
+def mana_from_hit(damage, skill):
+    """Mana restored by landing a weapon hit (spells and blocked hits give none)."""
+    if skill == "magic" or damage <= 0:
+        return 0.0
+    return min(HIT_MANA_CAP, damage * HIT_MANA_RATIO)
+
+
+def inscribe(state, draft_index, replace_index=None, at_table=True):
+    """Record a draft in the spell book. Free and possible anywhere (QoL rework); `at_table` is kept only
+    for call compatibility. The book's size still grows with level."""
+    data = state.data
+    p = state.player
     if not (0 <= draft_index < len(state.spell_drafts)):
         return False, "No such draft."
     draft = state.spell_drafts[draft_index]
@@ -133,13 +163,6 @@ def inscribe(state, draft_index, replace_index=None, at_table=False):
     cap = capacity(data, p.level)
     if replace_index is None and len(state.spellbook) >= cap:
         return False, f"Your spell book is full ({cap}). Choose a spell to replace."
-    if not p.inventory.has("enchanted_ink"):
-        return False, "You need Enchanted Ink to inscribe a spell."
-    if replace_index is not None:
-        if not p.inventory.has(data.magic["spellbook"]["replace_cost_item"]):
-            return False, "Replacing a spell costs a Mana Crystal."
-        p.inventory.remove(data.magic["spellbook"]["replace_cost_item"])
-    p.inventory.remove("enchanted_ink")
     if replace_index is not None:
         old = state.spellbook[replace_index]["name"]
         state.spellbook[replace_index] = draft

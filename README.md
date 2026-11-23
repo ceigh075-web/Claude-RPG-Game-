@@ -55,6 +55,9 @@ PyInstaller builds for the OS it runs on, so build the `.exe` on Windows. GitHub
 | F / Space | Kick / dodge roll |
 | Q | Switch melee / ranged weapon |
 | G | Hostile intent on/off: your attacks hit anyone (townsfolk, companions), and finish off the fallen |
+| H | Adventurer's Guide: tutorials, where to find resources, how to earn money, your objectives |
+| Tab | Quick menu (every screen in one place) |
+| F11 | Full screen (the window can also be resized) |
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
 | B / P / R | Spell book / your company / relationships |

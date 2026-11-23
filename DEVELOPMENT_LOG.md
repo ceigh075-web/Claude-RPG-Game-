@@ -29,6 +29,31 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Visual overhaul (art, animation, VFX) | ✅ Done |
 | Universal targeting & consequences | ✅ Done |
 | NPC & enemy visual variety | ✅ Done |
+| Quality of life update | ✅ Done |
+
+## Session 7 — Quality of life: mana, movement, UI and guidance
+
+- Mana rework (Set System, `spells.py` / `stats.py`): larger pool (40 + 1.2/Magic + 3/level), real-time regeneration
+  (3%/s calm, 1.2%/s in combat), mana from weapon hits (30% of damage, cap 8). Spell design, editing (new) and
+  inscription work anywhere for free. The HUD shows the regeneration rate and per-spell cost ticks on the bar, and
+  says why a spell can't be cast.
+- UI: a wood/parchment theme in `ui/widgets.py` (planked panels, brass studs, title plaques, parchment
+  cards/tooltips, keycaps, framed bars, selection markers), so every screen picked it up. Notifications are
+  parchment slips colour-coded by kind, with sounds; duplicates refresh instead of stacking. Scalable window
+  and F11 full screen (pygame SCALED). Text renders are cached; menus reuse a snapshot of the paused world
+  (inventory frame 12.3 ms -> 7.4 ms).
+- Movement: velocity with acceleration/deceleration, corner sliding, 15% faster walking for the player, smoothed
+  camera with look-ahead, footsteps, page-turn/coin/save/warning sounds, floating gain pop-ups.
+- Clarity: `knowledge.py` derives item sources and uses, crafting-station towns, money methods, job next steps
+  and place summaries from the data. The Adventurer's Guide (H, 13 chapters). Inventory filters, sorting,
+  comparison and item cards; crafting shows where missing ingredients come from; shops keep unaffordable and
+  unsellable items visible with the reason; the world map describes resources and enemies; the Jobs tab has a
+  "Next:" step; prompts show refusal reasons and action durations; relationship/faction standing changes
+  are announced; quick-load asks first; save messages include the date.
+- Tests: `tests/test_qol.py` (14) covers mana growth, regeneration, hit recovery, limits, failure messages,
+  inscription anywhere, knowledge coverage for every item and station, guide chapters, the Tab menu, movement
+  ramp and glide, and save/load. One old test that required a scribing table was updated to the new rule.
+  157 tests in total.
 
 ## Session 6 — NPC and enemy visual variety
 

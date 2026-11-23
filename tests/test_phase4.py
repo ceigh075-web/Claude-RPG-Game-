@@ -94,22 +94,29 @@ class TestSpellbook(unittest.TestCase):
         return {"name": name, "sub": "ice", "move": "projectile", "stat": "damage", "tier": tier}
 
     def test_draft_then_inscribe(self):
+        """QoL rework: inscribing works anywhere and costs nothing; the book's size still limits it."""
         s = new_state()
         ok, _ = spells.save_draft(s, self.draft())
         self.assertTrue(ok)
         ok, msg = spells.inscribe(s, 0, at_table=False)
-        self.assertFalse(ok)  # needs a scribing table
-        ok, msg = spells.inscribe(s, 0, at_table=True)
         self.assertFalse(ok)  # book full at level 1 (capacity 2) -> must replace
-        s.player.inventory.add("enchanted_ink", 2)
-        ok, msg = spells.inscribe(s, 0, replace_index=0, at_table=True)
-        self.assertFalse(ok)  # replacing costs a mana crystal
-        s.player.inventory.add("mana_crystal")
-        ok, msg = spells.inscribe(s, 0, replace_index=0, at_table=True)
+        self.assertIn("full", msg)
+        ok, msg = spells.inscribe(s, 0, replace_index=0, at_table=False)
         self.assertTrue(ok, msg)
         self.assertEqual(s.spellbook[0]["name"], "Frost Bolt")
         self.assertEqual(s.spell_drafts, [])
-        self.assertEqual(s.player.inventory.count("enchanted_ink"), 1)
+
+    def test_revise_spell_anywhere(self):
+        s = new_state()
+        sp = dict(s.spellbook[0])
+        sp["tier"] = 1
+        sp["name"] = "Renamed Dart"
+        ok, msg = spells.revise(s, "book", 0, sp)
+        self.assertTrue(ok, msg)
+        self.assertEqual(s.spellbook[0]["name"], "Renamed Dart")
+        clash = dict(sp, name=s.spellbook[1]["name"])
+        ok, _ = spells.revise(s, "book", 0, clash)
+        self.assertFalse(ok)
 
     def test_capacity_with_level(self):
         s = new_state()

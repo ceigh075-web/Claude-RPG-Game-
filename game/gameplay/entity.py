@@ -35,8 +35,9 @@ class Actor:
                     return True
         return False
 
-    def move(self, lmap, dx, dy, dt):
-        """Move by direction (dx, dy) at self.speed with axis-separated collision. Returns True if moved."""
+    def move(self, lmap, dx, dy, dt, slide=False):
+        """Move by direction (dx, dy) at self.speed with axis-separated collision. Returns True if moved.
+        With `slide`, bumping a wall corner nudges sideways (up to 5 px) so you glide around it."""
         if dx == 0 and dy == 0:
             self.moving = False
             return False
@@ -48,10 +49,29 @@ class Actor:
         if not self._blocked(lmap, nx, self.y):
             self.x = nx
             moved = True
+        elif slide and abs(dx) > 0.7:
+            for off in (1, 2, 3, 4, 5):
+                for sgn in (-1, 1):
+                    if not self._blocked(lmap, nx, self.y + sgn * off) and not self._blocked(lmap, self.x, self.y + sgn * min(off, step)):
+                        self.y += sgn * min(off, step)
+                        moved = True
+                        break
+                if moved:
+                    break
         ny = self.y + dy * step
         if not self._blocked(lmap, self.x, ny):
             self.y = ny
             moved = True
+        elif slide and abs(dy) > 0.7:
+            for off in (1, 2, 3, 4, 5):
+                done = False
+                for sgn in (-1, 1):
+                    if not self._blocked(lmap, self.x + sgn * off, ny) and not self._blocked(lmap, self.x + sgn * min(off, step), self.y):
+                        self.x += sgn * min(off, step)
+                        moved = done = True
+                        break
+                if done:
+                    break
         if abs(dx) > abs(dy):
             self.facing = "right" if dx > 0 else "left"
         else:
