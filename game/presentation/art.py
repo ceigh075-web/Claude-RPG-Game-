@@ -643,6 +643,29 @@ class Art:
                 pygame.draw.polygon(s, wood, [(x, 4), (x + 1, 0), (x + 3, 4)])
             pygame.draw.line(s, dark, (0, 10), (w, 10), 2)
             return s
+        if t == "stockade":
+            s = pygame.Surface((34, 30), pygame.SRCALPHA)
+            # stone cell-house with barred windows behind a stake fence
+            pygame.draw.rect(s, (118, 112, 104), (6, 8, 22, 12))
+            pygame.draw.rect(s, (84, 78, 72), (6, 8, 22, 12), 1)
+            for x in range(8, 27, 4):
+                pygame.draw.line(s, (100, 94, 88), (x, 9), (x, 19))
+            pygame.draw.polygon(s, roof, [(4, 9), (17, 2), (30, 9)])
+            pygame.draw.polygon(s, _shade(roof, 0.7), [(4, 9), (17, 2), (30, 9)], 1)
+            for wx in (9, 21):
+                pygame.draw.rect(s, (30, 24, 22), (wx, 11, 4, 4))
+                for bx in (wx + 1, wx + 2):
+                    s.set_at((bx, 11), (150, 150, 155))
+                    s.set_at((bx, 12), (150, 150, 155))
+                    s.set_at((bx, 13), (150, 150, 155))
+                    s.set_at((bx, 14), (150, 150, 155))
+            for x in range(0, 34, 3):
+                pygame.draw.rect(s, wood, (x, 19, 2, 11))
+                pygame.draw.polygon(s, wood, [(x, 19), (x + 1, 17), (x + 2, 19)])
+            pygame.draw.line(s, dark, (0, 23), (33, 23))
+            pygame.draw.rect(s, (60, 44, 30), (14, 21, 6, 9))
+            pygame.draw.line(s, (150, 150, 155), (14, 25), (19, 25))
+            return s
         if t == "watchtower":
             for x in (2, w - 4):
                 pygame.draw.rect(s, dark, (x, 10, 2, h - 10))

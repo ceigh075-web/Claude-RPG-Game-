@@ -401,7 +401,7 @@ class LocalScene(Scene):
                 c.fled = True                    # led away to your holdings
         self.game.scenes.push(ChoiceScene(self.game, f"The {c.name} yields",
                                           opts, choose, body=f"Willing to serve you: {morale.willingness(self.state, eid)}/100. "
-                                          "Prisoners need a house or an outpost to hold them."))
+                                          "Cells %d/%d (a house cellar holds 1, an outpost stockade 4)." % morale.prison_capacity(self.state)))
 
     def search_body(self, a):
         """Open the loot panel for a fallen character. Taking from townsfolk is robbery if anyone sees it."""

@@ -93,11 +93,21 @@ def chapters(scene):
     out.append(("Morale & Prisoners", [
         ("Morale", "Human foes lose heart when badly hurt, when allies fall or their leader goes down. Then they "
                    "flee, or yield if they're cornered. Beasts and the dead never yield."),
-        ("When they yield", "Approach (E): take them prisoner (needs a house or an outpost), ask them to join if "
+        ("When they yield", "Approach (E): take them prisoner (needs a free cell), ask them to join if "
                             "they're willing, demand their purse, or let them go (their faction remembers mercy)."),
         ("Prisoners", "Open the Tab menu, Prisoners. Captives grow loyal with time, kindness (a ration a day) and "
                       "talk; hungry, resentful captives escape. Loyal captives become retainers who earn marks daily "
                       "and help hold seized towns."),
+        ("Cells & beds", "A house cellar holds 1 captive in cramped conditions (resentment grows); an outpost "
+                         "Stockade holds 4 in decent conditions (they warm to you faster). Retainers need beds: 1 per "
+                         "house, 2 at the outpost and 4 per Bunkhouse. Full? Release someone or build more."),
+    ]))
+    out.append(("Looting", [
+        ("Drops", "Beaten foes spill coins and materials on the ground: walk over them to pick them up. Gear stays "
+                  "on the body (a bag floats over it): press E to search."),
+        ("Containers", "Barrels, crates and chests open a loot list: take one thing (E) or everything (A). What you "
+                       "leave stays there; emptied containers refill after a few days. In towns that's theft if seen."),
+        ("Storage", "At your house chest or outpost storage, press Q to store every raw material at once."),
     ]))
     out.append(("Companions & People", [
         ("Recruiting", "Everyone can join you. Ask them what it would take: some want marks, standing, a duel or "

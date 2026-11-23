@@ -174,3 +174,74 @@ class TestLooting(unittest.TestCase):
         from game.presentation import icons
         for item in list(DATA.items) + ["marks"]:
             self.assertIsNotNone(icons.icon(DATA, item))
+
+
+class TestPrisonerHousing(unittest.TestCase):
+    def setUp(self):
+        from tests.test_combat import new_state
+        self.st = new_state()
+
+    def found_outpost(self, stockades=1):
+        st = self.st
+        st.base["founded"] = 0
+        st.base.setdefault("buildings", {})
+        for i in range(stockades):
+            st.base["buildings"][str(i)] = {"type": "stockade", "done": True, "damaged": False, "crop": None}
+
+    def test_no_facility_blocks_capture(self):
+        from game.set_system import morale
+        self.found_outpost(0)                                   # an outpost without a stockade has no cells
+        self.assertEqual(morale.prison_capacity(self.st), (0, 0))
+        opts = {k: (ok, why) for _, k, ok, why in morale.options(self.st, "bandit_cutthroat")}
+        self.assertFalse(opts["prisoner"][0])
+        self.assertIn("stockade", opts["prisoner"][1])
+        self.assertIn("can't", morale.resolve(self.st, "bandit_cutthroat", "prisoner"))
+
+    def test_capacity_counts_and_fills(self):
+        from game.set_system import morale
+        self.st.property["brackenford"] = {"building": "b5", "bought": 0, "storage": {}}
+        self.found_outpost(1)
+        self.assertEqual(morale.prison_capacity(self.st), (0, 5))
+        for _ in range(5):
+            morale.resolve(self.st, "bandit_cutthroat", "prisoner")
+        self.assertEqual(morale.prison_capacity(self.st), (5, 5))
+        self.assertFalse(morale.can_hold_prisoners(self.st))
+        held = [p["held_at"] for p in morale.prisoners(self.st)]
+        self.assertEqual(held[:4], ["stockade:0"] * 4)           # decent cells fill first
+        self.assertEqual(held[4], "house:brackenford")
+
+    def test_conditions_change_feelings(self):
+        from game.set_system import morale
+        self.st.property["brackenford"] = {"building": "b5", "bought": 0, "storage": {}}
+        self.found_outpost(1)
+        morale.resolve(self.st, "bandit_cutthroat", "prisoner")
+        p = morale.prisoners(self.st)[0]
+        morale.set_treatment(self.st, p["id"], False)
+        morale.daily(self.st)
+        good = dict(p)
+        q = dict(p, id="x", held_at="house:brackenford", loyalty=10.0, resentment=20.0)
+        p.update(loyalty=10.0, resentment=20.0)
+        morale.prisoners(self.st).append(q)
+        morale.daily(self.st)
+        self.assertGreater(p["loyalty"], q["loyalty"])
+        self.assertLess(p["resentment"], q["resentment"])
+        self.assertTrue(good)
+
+    def test_retainer_beds(self):
+        from game.set_system import morale
+        self.st.property["brackenford"] = {"building": "b5", "bought": 0, "storage": {}}
+        self.assertEqual(morale.retainer_capacity(self.st), (0, 1))
+        morale.retainers(self.st).append({"name": "x", "enemy": "bandit_cutthroat", "since": 0, "loyalty": 60})
+        self.assertFalse(morale.bed_free(self.st))
+        morale.resolve(self.st, "bandit_cutthroat", "prisoner")
+        p = morale.prisoners(self.st)[0]
+        p["loyalty"] = 99
+        self.assertIn("bed", morale.recruit_prisoner(self.st, p["id"]))
+
+    def test_old_save_prisoner_gets_a_cell(self):
+        from game.set_system import morale
+        self.st.property["brackenford"] = {"building": "b5", "bought": 0, "storage": {}}
+        morale.prisoners(self.st).append({"id": "old", "enemy": "bandit_cutthroat", "name": "B", "loyalty": 10.0,
+                                          "resentment": 20.0, "kind": True, "since": 0, "talked": -1})
+        morale.daily(self.st)
+        self.assertEqual(morale.prisoners(self.st)[0]["held_at"], "house:brackenford")

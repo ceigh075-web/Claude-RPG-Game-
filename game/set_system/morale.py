@@ -56,9 +56,69 @@ def decide(enemy, morale, hp_frac, cornered=False):
 
 
 # ------------------------------------------------------------------ after a surrender
-def can_hold_prisoners(state):
+HOUSE_CELLS = 1             # a house cellar holds one captive (cramped)
+STOCKADE_CELLS = 4          # each outpost stockade holds four (decent)
+OUTPOST_BEDS = 2            # retainers the outpost can house without a bunkhouse
+BUNK_BEDS = 4               # ...plus four per bunkhouse
+HOUSE_BEDS = 1              # ...and one spare room per house
+CONDITIONS = {"cramped": {"name": "cramped cellar", "loyalty": 0.0, "resentment": 1.5},
+              "decent": {"name": "stockade", "loyalty": 1.0, "resentment": -1.0}}
+
+
+def facilities(state):
+    """Places that can hold prisoners: [{"id", "name", "cap", "quality", "used"}]."""
     from . import base
-    return base.founded(state) or bool(getattr(state, "property", {}))
+    out = []
+    for town in sorted(getattr(state, "property", {})):
+        out.append({"id": f"house:{town}", "name": f"House cellar, {state.data.location(town)['name']}",
+                    "cap": HOUSE_CELLS, "quality": "cramped"})
+    if base.founded(state):
+        for k, _ in base.buildings_of(state, "stockade"):
+            out.append({"id": f"stockade:{k}", "name": "Outpost stockade", "cap": STOCKADE_CELLS, "quality": "decent"})
+    held = {}
+    for p in prisoners(state):
+        held[p.get("held_at")] = held.get(p.get("held_at"), 0) + 1
+    for f in out:
+        f["used"] = held.get(f["id"], 0)
+    return out
+
+
+def prison_capacity(state):
+    fs = facilities(state)
+    return sum(f["used"] for f in fs), sum(f["cap"] for f in fs)
+
+
+def free_cell(state):
+    """The best facility with room (decent before cramped), or None."""
+    fs = [f for f in facilities(state) if f["used"] < f["cap"]]
+    fs.sort(key=lambda f: f["quality"] != "decent")
+    return fs[0] if fs else None
+
+
+def retainer_capacity(state):
+    from . import base
+    beds = HOUSE_BEDS * len(getattr(state, "property", {}))
+    if base.founded(state):
+        beds += OUTPOST_BEDS + BUNK_BEDS * len(base.buildings_of(state, "bunkhouse"))
+    return len(retainers(state)), beds
+
+
+def bed_free(state):
+    used, cap = retainer_capacity(state)
+    return used < cap
+
+
+def no_cell_reason(state):
+    from . import base
+    used, cap = prison_capacity(state)
+    if cap == 0:
+        return ("nowhere to hold them: buy a house (1 cell) or build a stockade at your outpost (4 cells)"
+                if not base.founded(state) else "nowhere to hold them: build a stockade at your outpost (4 cells)")
+    return f"all cells are full ({used}/{cap}): build a stockade or release someone"
+
+
+def can_hold_prisoners(state):
+    return free_cell(state) is not None
 
 
 def willingness(state, enemy_id):
@@ -78,9 +138,10 @@ def options(state, enemy_id):
     hold = can_hold_prisoners(state)
     will = willingness(state, enemy_id)
     return [
-        ("Take them prisoner", "prisoner", hold, "" if hold else "needs a house or an outpost to hold them"),
-        ("Ask them to join your outpost" if will >= 70 else "Ask them to join you", "recruit", will >= 70 and hold,
-         "" if will >= 70 and hold else ("not willing yet" if will < 70 else "needs a house or outpost")),
+        ("Take them prisoner (cells %d/%d)" % prison_capacity(state), "prisoner", hold, "" if hold else no_cell_reason(state)),
+        ("Ask them to join your outpost" if will >= 70 else "Ask them to join you", "recruit", will >= 70 and bed_free(state),
+         "" if will >= 70 and bed_free(state) else ("not willing yet" if will < 70 else
+                                                     "no free beds for retainers (house, outpost or bunkhouse)")),
         ("Demand their purse", "rob", True, ""),
         ("Let them go", "release", True, ""),
     ]
@@ -106,18 +167,22 @@ def resolve(state, enemy_id, choice, purse=0):
             factions.change_rep(state, fac, -1, f"robbed a {name}")
         return f"The {name} hands over {purse} marks and flees." if purse else f"The {name} has nothing. They flee."
     if choice == "prisoner":
-        if not can_hold_prisoners(state):
-            return "You have nowhere to hold a prisoner (buy a house or found an outpost)."
+        cell = free_cell(state)
+        if cell is None:
+            return "You can't take a prisoner: " + no_cell_reason(state) + "."
         p = {"id": f"pr{state.stats.get('prisoners_taken', 0) + 1}", "enemy": enemy_id, "name": name,
-             "loyalty": 10.0, "resentment": 20.0, "kind": True, "since": state.clock.day_index, "talked": -1}
+             "loyalty": 10.0, "resentment": 20.0, "kind": True, "since": state.clock.day_index, "talked": -1,
+             "held_at": cell["id"]}
         state.stats["prisoners_taken"] = state.stats.get("prisoners_taken", 0) + 1
         prisoners(state).append(p)
         state.memory.record("player", "significant", f"{state.player.name} took a {name} prisoner.", importance=2,
                             location=state.location, **_stamp(state))
-        return f"The {name} is taken to your holdings as a prisoner."
+        return f"The {name} is taken to your {cell['name'].lower()} as a prisoner."
     if choice == "recruit":
-        if willingness(state, enemy_id) < 70 or not can_hold_prisoners(state):
+        if willingness(state, enemy_id) < 70:
             return f"The {name} refuses."
+        if not bed_free(state):
+            return f"You have no bed for a retainer. Buy a house or build a bunkhouse first."
         retainers(state).append({"name": name, "enemy": enemy_id, "since": state.clock.day_index, "loyalty": 55.0})
         state.memory.record("player", "recruited", f"A former {name} swore to serve {state.player.name}.",
                             importance=2, location=state.location, **_stamp(state))
@@ -132,6 +197,29 @@ def prisoners(state):
 
 def retainers(state):
     return state.stats.setdefault("retainers", [])
+
+
+def conditions_of(state, p):
+    """'decent' or 'cramped'. Prisoners from older saves are placed in the best cell available."""
+    fs = {f["id"]: f for f in facilities(state)}
+    if p.get("held_at") not in fs:
+        cell = free_cell(state)
+        p["held_at"] = cell["id"] if cell else (next(iter(fs)) if fs else None)
+    f = fs.get(p.get("held_at"))
+    return f["quality"] if f else "cramped"
+
+
+def move_prisoner(state, pid):
+    """Move a captive to the next facility with a free cell."""
+    for p in prisoners(state):
+        if p["id"] == pid:
+            fs = [f for f in facilities(state) if f["id"] != p.get("held_at") and f["used"] < f["cap"]]
+            if not fs:
+                return "There's no other free cell."
+            fs.sort(key=lambda f: f["quality"] != "decent")
+            p["held_at"] = fs[0]["id"]
+            return f"The {p['name']} is moved to the {fs[0]['name'].lower()}."
+    return "No such prisoner."
 
 
 def set_treatment(state, pid, kind):
@@ -173,6 +261,8 @@ def recruit_prisoner(state, pid):
         if p["id"] == pid:
             if p["loyalty"] < RECRUIT_LOYALTY:
                 return f"The {p['name']} isn't ready to serve you (loyalty {p['loyalty']:.0f}/{RECRUIT_LOYALTY})."
+            if not bed_free(state):
+                return "No free bed for another retainer: buy a house or build a bunkhouse."
             prisoners(state).remove(p)
             retainers(state).append({"name": p["name"], "enemy": p["enemy"], "since": state.clock.day_index,
                                      "loyalty": p["loyalty"]})
@@ -197,6 +287,9 @@ def daily(state):
         else:
             p["loyalty"] = min(100.0, p["loyalty"] + 1)
             p["resentment"] = min(100.0, p["resentment"] + (2 if p["kind"] else 6))
+        cond = CONDITIONS[conditions_of(state, p)]          # where they are kept matters too
+        p["loyalty"] = max(0.0, min(100.0, p["loyalty"] + cond["loyalty"]))
+        p["resentment"] = max(0.0, min(100.0, p["resentment"] + cond["resentment"]))
         if p["resentment"] >= ESCAPE_RESENTMENT:
             prisoners(state).remove(p)
             msgs.append(f"A captive {p['name']} escaped in the night.")

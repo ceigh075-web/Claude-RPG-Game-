@@ -124,6 +124,17 @@
    },
    "hours": 20,
    "desc": "Scribing table and research projects."
+  },
+  "stockade": {
+   "name": "Stockade",
+   "marks": 200,
+   "items": {
+    "plank": 12,
+    "stone_block": 8,
+    "nails": 20
+   },
+   "hours": 14,
+   "desc": "A walled yard with cells and a cookhouse. Holds 4 prisoners in decent conditions; they warm to you faster than in a cellar."
   }
  },
  "defense": {
