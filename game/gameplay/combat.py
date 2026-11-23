@@ -180,6 +180,7 @@ class CombatWorld:
         self.effects = []
         self.floaters = []      # [text, x, y, t, color]
         self.particles = []     # [x, y, vx, vy, t, color]
+        self.vfx_events = []    # purely visual notifications (hits, dodges) consumed by the renderer
         self.pickups = []       # {"item","qty","x","y"}
         self.shake = 0.0
         self.hitstop = 0.0
@@ -429,7 +430,7 @@ class CombatWorld:
         """Apply a computed spell's effect to one target."""
         stat = p["stat"]
         if stat == "damage":
-            prof = {"damage": p["power"], "knockback": 50, "stagger": 0.25, "skill": "magic", "scaling": [],
+            prof = {"damage": p["power"], "knockback": 50, "stagger": 0.25, "skill": "magic", "scaling": [], "vfx_sub": p["sub"],
                     "statuses": [(p["status"], *self._status_mag(p, 0.5))] if p["status"] not in ("none",) else []}
             self.hit(src, tgt, prof, origin)
         elif stat == "heal":
@@ -443,14 +444,15 @@ class CombatWorld:
             tgt.buffs["shield"] = [0, p["duration"]]
             self.floaters.append(["SHIELD", tgt.x, tgt.y - 26, 0.0, p["color"]])
         elif stat == "knockback":
-            prof = {"damage": 1, "knockback": p["power"] * 2.2, "stagger": 0.5, "skill": "magic", "scaling": []}
+            prof = {"damage": 1, "knockback": p["power"] * 2.2, "stagger": 0.5, "skill": "magic", "scaling": [],
+                    "vfx_sub": p["sub"]}
             self.hit(src, tgt, prof, origin)
         elif stat == "root":
             self.add_status(tgt, "root", 1.0, p["duration"])
             self.provoke(src, tgt)
         elif stat == "affliction":
             mag, dur = self._status_mag(p, 1.0)
-            prof = {"damage": 1, "knockback": 10, "stagger": 0.1, "skill": "magic", "scaling": [],
+            prof = {"damage": 1, "knockback": 10, "stagger": 0.1, "skill": "magic", "scaling": [], "vfx_sub": p["sub"],
                     "statuses": [(p["status"], mag, dur)]}
             self.hit(src, tgt, prof, origin)
 
@@ -473,6 +475,7 @@ class CombatWorld:
         if res["dodged"]:
             self.sfx("dodge")
             self.floaters.append(["dodge", tgt.x, tgt.y - 26, 0.0, (200, 200, 255)])
+            self._vfx("dodge", src, tgt, profile, res, origin)
             if tgt.char:
                 tgt.char.train("dodging", 3, tgt.race_data)
             return res
@@ -501,6 +504,7 @@ class CombatWorld:
         for name, mag, dur in res["statuses"]:
             self.add_status(tgt, name, mag, dur, origin)
         tgt.flash = 0.12
+        self._vfx("hit", src, tgt, profile, res, origin, dmg)
         self.sfx("block" if res["blocked"] else ("heavy" if profile.get("knockback", 0) > 100 or res["stagger_time"] > 0.3 else "hit"))
         col = (255, 255, 255) if src and src.team == "player" else (255, 120, 100)
         if res["blocked"]:
@@ -906,6 +910,16 @@ class CombatWorld:
             else:
                 keep.append(pk)
         self.pickups = keep
+
+    def _vfx(self, kind, src, tgt, profile, res, origin, dmg=0.0):
+        """Record a presentation-only event; never read by gameplay code."""
+        if len(self.vfx_events) > 64:
+            del self.vfx_events[:32]
+        self.vfx_events.append({"kind": kind, "src": src, "tgt": tgt, "weapon": profile.get("weapon"),
+                                "sub": profile.get("vfx_sub"), "skill": profile.get("skill"), "blocked": res.get("blocked", False),
+                                "guard_broken": res.get("guard_broken", False), "backstab": res.get("backstab", False),
+                                "stagger": res.get("stagger_time", 0.0), "knockback": res.get("knockback", 0.0),
+                                "dmg": dmg, "origin": origin, "x": tgt.x, "y": tgt.y})
 
     def _burst(self, x, y, color, n):
         for _ in range(n):

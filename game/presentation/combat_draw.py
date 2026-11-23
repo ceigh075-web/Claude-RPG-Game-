@@ -4,6 +4,7 @@ import math
 
 import pygame
 
+from . import vfx, visuals
 from ..set_system import combat as rules
 from ..set_system import spells as spell_rules
 from .ui import widgets as ui
@@ -14,6 +15,9 @@ WEAPON_COLOR = {"rustite": (176, 110, 70), "greyvein": (180, 186, 196), "sunsilv
 
 def sprite_entries(world, art, camx, camy, t):
     """(sort_y, image, x, y) tuples for combatants, to merge into the scene's depth-sorted draw list."""
+    out = visuals.combatant_entries(world, art, camx, camy, t, getattr(world, "state", None))
+    if out is not None:
+        return out + pickup_entries(world, art, camx, camy, t)
     out = []
     for c in world.combatants:
         look = c.look
@@ -41,6 +45,11 @@ def sprite_entries(world, art, camx, camy, t):
         out.append((c.y, img, int(x), int(y)))
         if c.flash > 0:
             out.append((c.y + 0.01, art.white(img), int(x), int(y)))
+    return out + pickup_entries(world, art, camx, camy, t)
+
+
+def pickup_entries(world, art, camx, camy, t):
+    out = []
     for pk in world.pickups:
         it = "marks" if pk["item"] == "marks" else world.data.item(pk["item"])["type"]
         bob = math.sin(t * 4 + pk["x"]) * 1.5
@@ -76,9 +85,23 @@ def _weapon_line(c):
     return a, length, frac
 
 
+def draw_under(canvas, world, camx, camy, t):
+    """Ground-level combat visuals (spell zones, telegraphs, rune circles, shockwaves), drawn under sprites."""
+    if visuals.enabled():
+        vfx.update(world, t)
+        vfx.draw_under(canvas, world, camx, camy, t)
+
+
+def vfx_lights(world):
+    return vfx.lights(world) if visuals.enabled() else []
+
+
 def draw_fx(canvas, world, art, camx, camy, t):
+    new = visuals.enabled()
+    if new:
+        vfx.draw(canvas, world, camx, camy, t)
     # spell zones (under everything else)
-    for e in world.effects:
+    for e in ([] if new else world.effects):
         col = e.spell["color"]
         x, y = e.x - camx, e.y - camy
         if e.kind == "wave":
@@ -112,7 +135,7 @@ def draw_fx(canvas, world, art, camx, camy, t):
         if not c.alive:
             continue
         cx, cy = c.x - camx, c.y - 8 - camy
-        wl = _weapon_line(c)
+        wl = None if visuals.enabled() else _weapon_line(c)
         if wl:
             a, length, frac = wl
             ore = None
@@ -150,15 +173,15 @@ def draw_fx(canvas, world, art, camx, camy, t):
                             -math.atan2(c.aim[1], c.aim[0]) - 1.1, -math.atan2(c.aim[1], c.aim[0]) + 1.1, 2)
         if c.telegraph > 0 and c.team == "enemy" and c.state == "windup" and c.enemy["archetype"] in ("heavy", "intelligent"):
             ui.text(canvas, "!", (int(cx), int(cy - 24)), 18, (255, 90, 60), center=True)
-        for s in c.statuses:
+        for s in ([] if new else c.statuses):
             if s["kind"] in ("dot", "slow", "root"):
                 col = {"bleed": (200, 30, 40), "burn": (255, 140, 40), "poison": (110, 200, 60), "chill": (170, 220, 250),
                        "root": (90, 160, 70), "entangle": (90, 160, 70), "scald": (230, 230, 240)}.get(s["name"], (255, 255, 255))
                 canvas.fill(col, (int(cx) - 1 + int(math.sin(t * 9 + c.cid) * 5), int(cy) - 14, 2, 2))
-        if c.shield > 0:
+        if c.shield > 0 and not new:
             pygame.draw.circle(canvas, (150, 220, 230), (int(cx), int(cy + 2)), 11, 1)
     # projectiles
-    for pr in world.projectiles:
+    for pr in ([] if new else world.projectiles):
         x, y = pr.x - camx, pr.y - camy
         dx, dy = rules_norm(pr.vx, pr.vy)
         if pr.kind == "spell":
@@ -173,13 +196,16 @@ def draw_fx(canvas, world, art, camx, camy, t):
             ln = 7 if pr.kind == "arrow" else 6
             pygame.draw.line(canvas, (120, 90, 60), (x - dx * ln, y - dy * ln), (x, y), 2 if pr.kind == "bolt" else 1)
             canvas.fill((220, 220, 230), (int(x), int(y), 2, 2))
-    for p in world.particles:
+    for p in ([] if new else world.particles):
         canvas.fill(p[5], (int(p[0] - camx), int(p[1] - camy), 2, 2))
     # enemy health bars
     for c in world.combatants:
         if c.team == "enemy" and c.alive and (c.hp < c.max_hp or c.alerted):
             w = 18 if c.max_hp < 120 else 26
-            x, y = int(c.x - w / 2 - camx), int(c.y - (40 if c.enemy["shape"] == "brute" else 30) - camy)
+            top = {"brute": 40, "worm": 30, "beast": 26, "bug": 20, "dummy": 30}.get(c.enemy["shape"], 30)
+            if new and c.enemy["shape"] == "humanoid":
+                top = 32
+            x, y = int(c.x - w / 2 - camx), int(c.y - top - camy)
             pygame.draw.rect(canvas, (20, 16, 20), (x - 1, y - 1, w + 2, 4))
             pygame.draw.rect(canvas, (200, 60, 50) if c.hostile else (200, 180, 80), (x, y, int(w * c.hp / c.max_hp), 2))
             if c.guard < rules.GUARD_MAX and c.blocking:
@@ -187,11 +213,34 @@ def draw_fx(canvas, world, art, camx, camy, t):
 
 
 def draw_floaters(screen, world, camx, camy, scale=2):
+    """Damage numbers: pop in, drift up, fade. Big hits and backstabs ("!") are larger; labels are outlined."""
+    fancy = visuals.enabled()
     for text, x, y, t, col in world.floaters:
         alpha = 1 - t / 0.9
-        sx, sy = (x - camx) * scale, (y - camy - t * 20) * scale
-        ui.text(screen, text, (int(sx), int(sy)), 22 if not text.endswith("!") else 28,
-                tuple(int(c * (0.4 + 0.6 * alpha)) for c in col), bold=True, center=True)
+        rise = t * 20 if not fancy else 26 * (1 - (1 - min(1.0, t / 0.6)) ** 2)
+        sx, sy = (x - camx) * scale, (y - camy - rise) * scale
+        size = 22 if not text.endswith("!") else 28
+        if fancy:
+            try:
+                n = float(text.rstrip("!"))
+                size += min(10, int(n / 6))
+            except ValueError:
+                pass
+            pop = 1.0 + max(0.0, 0.35 - t) * 1.6
+            size = int(size * pop)
+        c = tuple(int(v * (0.4 + 0.6 * alpha)) for v in col)
+        if fancy:
+            f = ui.font(size, True)
+            img = f.render(text, True, c)
+            out = f.render(text, True, (16, 10, 14))
+            px, py = int(sx - img.get_width() / 2), int(sy)
+            for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2)):
+                screen.blit(out, (px + dx, py + dy))
+            screen.blit(img, (px, py))
+        else:
+            ui.text(screen, text, (int(sx), int(sy)), size, c, bold=True, center=True)
+    if fancy:
+        vfx.draw_screen(screen, world, screen.get_width(), screen.get_height())
 
 
 def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):

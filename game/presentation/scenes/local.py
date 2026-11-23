@@ -909,6 +909,7 @@ class LocalScene(Scene):
             sh = art.shadow(12)
             sprites.append((a.y - 0.5, sh, int(a.x - 6 - camx), int(a.y - 3 - camy)))
             sprites.append((a.y, img, int(a.x - 8 - camx), int(a.y - 23 - camy)))
+        combat_draw.draw_under(c, self.combat, camx, camy, self.t)
         sprites.sort(key=lambda s: s[0])
         for _, img, bx, by in sprites:
             c.blit(img, (bx, by))
@@ -980,6 +981,7 @@ class LocalScene(Scene):
             rad = LIGHT_KINDS.get(o["kind"])
             if rad:
                 lights.append((o["x"] * T + 8, o["y"] * T + 8, rad))
+        lights += combat_draw.vfx_lights(self.combat)
         if m.kind == "town":
             for b in m.buildings.values():
                 lights.append((b["door"][0] * T + 8, b["door"][1] * T, 34))

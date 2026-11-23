@@ -1,0 +1,350 @@
+"""Animated humanoid sprites built on the Pixel Crawler "Body_A" rig.
+
+For every base frame we analyse the body once (cached):
+  * body pixels vs. the baked-in tool vs. the white smear arc,
+  * body regions (head / torso / arms / legs / feet) found by eroding and re-growing the silhouette, so
+    clothing, sleeves, boots and hair follow every pose of every animation automatically,
+  * the tool's grip and tip points, which tell us where to draw the character's *actual* weapon.
+
+A `look` (skin, hair, outfit, race, armour) is then applied per character and cached per frame.
+Directions: down / up / right / left (left = mirrored side view).
+"""
+import math
+
+import pygame
+
+from . import assets
+
+BODY = "Entities/Characters/Body_A/Animations/"
+ANIMS = {  # name: (folder, file stem, frames, up-file override)
+    "idle": ("Idle_Base", "Idle", 4, None), "walk": ("Walk_Base", "Walk", 6, None),
+    "run": ("Run_Base", "Run", 6, None), "slice": ("Slice_Base", "Slice", 8, None),
+    "pierce": ("Pierce_Base", "Pierce", 8, "Top"), "crush": ("Crush_Base", "Crush", 8, None),
+    "hit": ("Hit_Base", "Hit", 4, None), "death": ("Death_Base", "Death", 8, None),
+    "collect": ("Collect_Base", "Collect", 8, None),
+}
+FW = 64
+OUTLINE = (0, 0, 0)
+EYE = (76, 181, 40)
+SKIN_BASE = (217, 160, 102)
+
+_base = {}      # (anim, dir) -> list of FrameInfo
+_body_pal = None
+_looks = {}     # (look_key, anim, dir, idx) -> (surface, smear)
+FOOT_Y = 41     # feet row inside a 64x64 frame (measured from the idle frames on first load)
+
+
+class FrameInfo:
+    __slots__ = ("body", "smear", "grip", "tip", "regions", "bbox")
+
+
+def _sheet(anim, d):
+    folder, stem, n, up = ANIMS[anim]
+    suffix = {"down": "Down", "up": up or "Up", "side": "Side"}[d]
+    return assets.frames(f"{BODY}{folder}/{stem}_{suffix}-Sheet.png", FW, FW)[:n]
+
+
+def _palette():
+    """Colours that belong to the bare body (collected from tool-free animations)."""
+    global _body_pal, FOOT_Y
+    if _body_pal is None:
+        pal = set()
+        bottoms = []
+        for anim in ("idle", "walk", "run", "hit"):
+            for d in ("down", "up", "side"):
+                for f in _sheet(anim, d):
+                    for y in range(FW):
+                        for x in range(FW):
+                            c = f.get_at((x, y))
+                            if c.a:
+                                pal.add((c.r, c.g, c.b))
+                    if anim == "idle":
+                        m = pygame.mask.from_surface(f, 1)
+                        rects = m.get_bounding_rects()
+                        if rects:
+                            bottoms.append(max(r.bottom for r in rects) - 1)
+        pal.discard(OUTLINE)
+        _body_pal = pal
+        if bottoms:
+            FOOT_Y = max(set(bottoms), key=bottoms.count)
+    return _body_pal
+
+
+def _is_smear(c):
+    # the pack's swing arcs are flat light grey (231,231,231); tool highlights are never neutral
+    return c[0] == c[1] == c[2] and c[0] >= 225
+
+
+def _analyse(src):
+    """Separate body / tool / smear and label body regions for one base frame."""
+    pal = _palette()
+    W = H = FW
+    body, tool, smear = set(), [], set()
+    blacks = []
+    for y in range(H):
+        for x in range(W):
+            c = src.get_at((x, y))
+            if not c.a:
+                continue
+            rgb = (c.r, c.g, c.b)
+            if rgb == OUTLINE:
+                blacks.append((x, y))
+            elif _is_smear(rgb):
+                smear.add((x, y))
+            elif rgb in pal:
+                body.add((x, y))
+            else:
+                tool.append((x, y))
+    near_body = lambda p: any((p[0] + dx, p[1] + dy) in body for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+    outline = {p for p in blacks if near_body(p)}
+    # tool outline pixels (black, touching tool, not body) count as tool for anchoring
+    toolset = set(tool)
+    tool_outline = [p for p in blacks if p not in outline and any((p[0] + dx, p[1] + dy) in toolset
+                                                                  for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
+    info = FrameInfo()
+    out = pygame.Surface((W, H), pygame.SRCALPHA)
+    for p in body | outline:
+        out.set_at(p, src.get_at(p))
+    info.body = out
+    sm = pygame.Surface((W, H), pygame.SRCALPHA)
+    for p in smear:
+        sm.set_at(p, (255, 255, 255, 235))
+    info.smear = sm if smear else None
+    # grip = tool pixel nearest to the body; tip = tool pixel farthest from the grip
+    pts = tool + tool_outline
+    info.grip = info.tip = None
+    if len(pts) >= 4 and body:
+        grip = min(pts, key=lambda p: min(abs(p[0] - b[0]) + abs(p[1] - b[1]) for b in _sample(body)))
+        tip = max(pts, key=lambda p: (p[0] - grip[0]) ** 2 + (p[1] - grip[1]) ** 2)
+        if math.hypot(tip[0] - grip[0], tip[1] - grip[1]) >= 3:
+            info.grip, info.tip = grip, tip
+    info.regions = _regions(body)
+    rs = pygame.mask.from_surface(out, 1).get_bounding_rects()
+    info.bbox = rs[0].unionall(rs[1:]) if rs else pygame.Rect(0, 0, 0, 0)
+    return info
+
+
+def _sample(body, n=60):
+    lst = list(body)
+    step = max(1, len(lst) // n)
+    return lst[::step]
+
+
+def _erode(px, r):
+    s = set(px)
+    for _ in range(r):
+        s = {p for p in s if all((p[0] + dx, p[1] + dy) in s for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))}
+    return s
+
+
+def _grow(seed, limit, r):
+    s = set(seed)
+    for _ in range(r):
+        s |= {(p[0] + dx, p[1] + dy) for p in s for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} & limit
+    return s
+
+
+def _blobs(px):
+    px = set(px)
+    out = []
+    while px:
+        start = px.pop()
+        comp, stack = {start}, [start]
+        while stack:
+            x, y = stack.pop()
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if n in px:
+                    px.discard(n)
+                    comp.add(n)
+                    stack.append(n)
+        out.append(comp)
+    return out
+
+
+def _regions(body):
+    """Label body pixels: head, torso, arms, legs, feet (dict region -> set of pixels)."""
+    if not body:
+        return {"head": set(), "torso": set(), "arms": set(), "legs": set(), "feet": set()}
+    core = _erode(body, 2)
+    blobs = sorted(_blobs(core), key=lambda b: min(p[1] for p in b))
+    head_core = blobs[0] if blobs else set()
+    head = _grow(head_core, body, 3)
+    hb = max(p[1] for p in head) if head else 0
+    rest_blobs = [b for b in blobs[1:] if len(b) >= 3]
+    torso_core = max(rest_blobs, key=len) if rest_blobs else set()
+    torso = _grow(torso_core, body - head, 2)
+    if torso:
+        tb = max(p[1] for p in torso)
+    else:
+        tb = hb + 6
+        torso = {p for p in body - head if p[1] <= tb}
+    legs = {p for p in body - head - torso if p[1] > tb - 1}
+    arms = body - head - torso - legs
+    by = max(p[1] for p in body)
+    feet = {p for p in legs if p[1] >= by - 1}
+    legs -= feet
+    return {"head": head, "torso": torso, "arms": arms, "legs": legs, "feet": feet}
+
+
+def base(anim, d):
+    key = (anim, d)
+    if key not in _base:
+        _base[key] = [_analyse(f) for f in _sheet(anim, d)]
+    return _base[key]
+
+
+# ------------------------------------------------------------------------- looks
+def _shade_map(rgb, target, light_bias=0):
+    """Map a body pixel's shade onto `target` keeping relative lightness."""
+    L = assets.luminance(rgb) / assets.luminance(SKIN_BASE)
+    f = max(0.35, min(1.45, L + light_bias))
+    return tuple(max(0, min(255, int(c * f))) for c in target)
+
+
+def look_key(look):
+    return tuple(sorted((k, tuple(v) if isinstance(v, list) else v) for k, v in look.items()))
+
+
+def compose(look, anim, d, idx):
+    """(surface 64x64, smear surface or None, FrameInfo) for a character look; left is mirrored."""
+    side = d in ("left", "right")
+    bd = "side" if side else d
+    frames = base(anim, bd)
+    idx = idx % len(frames)
+    key = (look_key(look), anim, bd, idx)
+    if key not in _looks:
+        _looks[key] = _paint(look, frames[idx], bd)
+    surf, smear = _looks[key]
+    info = frames[idx]
+    if d == "left":
+        fkey = key + ("L",)
+        if fkey not in _looks:
+            _looks[fkey] = (pygame.transform.flip(surf, True, False),
+                            pygame.transform.flip(smear, True, False) if smear else None)
+        surf, smear = _looks[fkey]
+    return surf, smear, info
+
+
+def _paint(look, info, d):
+    src = info.body
+    out = src.copy()
+    R = info.regions
+    skin = tuple(look.get("skin", SKIN_BASE))
+    hair = tuple(look.get("hair", (60, 40, 30)))
+    shirt = tuple(look.get("shirt", (90, 90, 140)))
+    pants = tuple(look.get("pants", (70, 60, 50)))
+    boots = tuple(look.get("boots", (54, 40, 32)))
+    armor = look.get("armor")
+    helm = look.get("helm")
+    race = look.get("race", "human")
+
+    def put(p, col):
+        c = src.get_at(p)
+        out.set_at(p, (*_shade_map((c.r, c.g, c.b), col), 255))
+
+    for p in R["head"]:
+        put(p, skin)
+    for p in R["torso"]:
+        put(p, tuple(armor) if armor else shirt)
+    # sleeves near the torso, bare forearms / gloves beyond
+    torso = R["torso"]
+    for p in R["arms"]:
+        near = any((p[0] + dx, p[1] + dy) in torso for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2))
+        put(p, (tuple(armor) if armor else shirt) if near else (tuple(look["gloves"]) if look.get("gloves") else skin))
+    for p in R["legs"]:
+        put(p, pants)
+    for p in R["feet"]:
+        put(p, boots)
+    head = R["head"]
+    if head:
+        hx0 = min(p[0] for p in head)
+        hx1 = max(p[0] for p in head)
+        hy0 = min(p[1] for p in head)
+        hy1 = max(p[1] for p in head)
+        cx = (hx0 + hx1) / 2
+        eye_row = None
+        for p in head:
+            c = src.get_at(p)
+            if (c.r, c.g, c.b) == EYE:
+                eye_row = p[1] if eye_row is None else min(eye_row, p[1])
+        style = look.get("hair_style", 0)
+        cap = tuple(helm) if helm else (tuple(look["hood"]) if isinstance(look.get("hood"), (list, tuple)) else None)
+        rows = 3 if style != 2 else 2
+        for p in head:
+            x, y = p
+            c = src.get_at(p)
+            if (c.r, c.g, c.b) == EYE:
+                if look.get("eye"):
+                    out.set_at(p, (*look["eye"], 255))
+                continue
+            top = y < hy0 + rows
+            back = False
+            if d == "up":
+                back = y < hy1 - 1
+            elif d == "side":
+                back = x < cx - 1 and y < hy1 - 2       # side frames face right: hair at the back (left)
+            elif d == "down" and style == 1:
+                back = (x <= hx0 + 1 or x >= hx1 - 1) and y < hy1 - 1
+            if cap is not None:
+                if top or back or (d != "down" and y < hy0 + 4) or (x in (hx0, hx1) and y < hy1 - 1):
+                    put(p, cap)
+            elif style != 3 and (top or back):
+                put(p, hair)
+        # race features
+        _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
+    smear = None
+    if info.smear is not None:
+        smear = info.smear.copy()
+        tintc = look.get("smear")
+        if tintc:
+            smear.fill((*tintc, 255), special_flags=pygame.BLEND_RGBA_MULT)
+    return out, smear
+
+
+def _px(out, x, y, col):
+    if 0 <= x < FW and 0 <= y < FW:
+        out.set_at((x, y), (*col, 255))
+
+
+def _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look):
+    er = eye_row if eye_row is not None else hy0 + 4
+    dark = tuple(int(c * 0.6) for c in skin)
+    if race == "sylth" and d != "up":
+        # long swept-back ears
+        if d == "down":
+            for side, x in ((-1, hx0 - 1), (1, hx1 + 1)):
+                _px(out, x, er - 1, skin)
+                _px(out, x + side, er - 2, skin)
+                _px(out, x + side, er - 1, OUTLINE)
+                _px(out, x + 2 * side, er - 3, OUTLINE)
+                _px(out, x, er, OUTLINE)
+        else:
+            x = int((hx0 + hx1) / 2) - 1
+            _px(out, x, er - 1, skin)
+            _px(out, x - 1, er - 2, skin)
+            _px(out, x - 2, er - 3, OUTLINE)
+    elif race == "murrok":
+        if d == "down":
+            mid = (hx0 + hx1) // 2
+            for x in (mid - 2, mid + 2):
+                _px(out, x, hy1 - 1, (240, 236, 220))
+            _px(out, hx0, hy0 - 1, dark)
+            _px(out, hx1, hy0 - 1, dark)
+        elif d == "side":
+            _px(out, hx1 - 1, hy1 - 1, (240, 236, 220))
+    elif race == "kethari":
+        for i, p in enumerate(sorted(head)):
+            if i % 9 == 4 and p[1] > hy0 + 2:
+                c = out.get_at(p)
+                if (c.r, c.g, c.b) != OUTLINE and (c.r, c.g, c.b) != EYE:
+                    out.set_at(p, (*dark, 255))
+    if look.get("warpaint") and d != "up":
+        for x in range(hx0 + 1, hx1):
+            if (x + er) % 2 == 0:
+                c = out.get_at((x, er + 1)) if 0 <= er + 1 < FW else None
+                if c and c.a and (c.r, c.g, c.b) != OUTLINE:
+                    out.set_at((x, er + 1), (*look["warpaint"], 255))
+
+
+def clear_cache():
+    _looks.clear()
