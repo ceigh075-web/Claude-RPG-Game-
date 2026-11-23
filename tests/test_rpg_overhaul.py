@@ -89,3 +89,24 @@ class TestSpellCustomization(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAttackFromConversation(unittest.TestCase):
+    def setUp(self):
+        import random
+        from tests.test_overhaul import LOOK
+        self.st, self.m, self.w, self.pc = world()
+        self.LOOK, self.random = LOOK, random
+
+    def test_any_townsperson_can_be_attacked(self):
+        a = self.w.add_townsfolk(None, self.pc.x + 20, self.pc.y, self.LOOK, self.random.Random(2))
+        self.assertFalse(self.w.hostile_between(self.pc, a))
+        self.w.provoke(self.pc, a)
+        self.assertIn(self.pc.cid, a.grudge)
+        self.assertTrue(self.w.hostile_between(self.pc, a))
+
+    def test_guards_respond_to_witnessed_assault(self):
+        a = self.w.add_townsfolk(None, self.pc.x + 20, self.pc.y, self.LOOK, self.random.Random(2))
+        g = self.w.add_townsfolk(None, self.pc.x + 80, self.pc.y, self.LOOK, self.random.Random(3), guard=True)
+        self.w.provoke(self.pc, a)
+        self.assertIn(self.pc.cid, g.grudge)

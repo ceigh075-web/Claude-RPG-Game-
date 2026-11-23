@@ -466,6 +466,84 @@ class LocalScene(Scene):
             return f"{a.name} isn't in a talking mood."
         return f"{a.name} keeps their distance."
 
+    # ---------------------------------------------------------------- attacking from a conversation
+    def combatant_for(self, npc):
+        """The living combatant standing in for a named NPC (or companion) in this scene."""
+        for a in self.combat.combatants:
+            if not a.alive or a is self.player:
+                continue
+            if (a.npc and a.npc["id"] == npc["id"]) or getattr(a, "companion_id", None) == npc["id"]:
+                return a
+        return None
+
+    def confirm_attack(self, a, on_yes=None):
+        """Attack anyone straight from talking to them - after a warning about what it will cost."""
+        if a is None or not a.alive:
+            return
+        from ...set_system import crime
+        town = self.map.kind != "wild" and crime.owner(self.state, crime.town_of(self.state)) != "player"
+        n = len([w for w in self.witnesses(a.x, a.y, 170) if w is not a])
+        warn = []
+        if getattr(a, "companion_id", None):
+            warn.append("They are your companion: they will leave you, and your other companions will judge you.")
+        if a.npc:
+            warn.append(f"{a.npc['name']} will remember this, and so will their friends and faction.")
+        if town:
+            warn.append(f"{n} witness{'es' if n != 1 else ''} nearby. Guards will come and you will have a bounty here."
+                        if n or a.npc else "No one seems to be watching... but guards patrol.")
+        if getattr(a, "is_guard", False):
+            warn.append("Attacking a guard brings every guard in town down on you.")
+
+        def go():
+            if on_yes:
+                on_yes()
+            self.attack_character(a)
+        from .common import ConfirmScene
+        self.game.scenes.push(ConfirmScene(self.game, f"Attack {a.npc['name'] if a.npc else a.name}?", " ".join(warn), go,
+                                           yes="Attack", no="Stay my hand"))
+
+    def attack_character(self, a):
+        """Turn on someone: face them, strike (or close in), and let the world react through the combat runtime's
+        normal assault path (Set System: aggression.on_assault, crime, guards, witnesses)."""
+        from ...gameplay.combat import norm
+        p = self.player
+        if a is None or not a.alive or p is None:
+            return
+        p.aim = norm(a.x - p.x, a.y - p.y)
+        self.combat.provoke(p, a)
+        self.combat.attack(p)
+        self.settlement_alarm(a.x, a.y)
+
+    def settlement_alarm(self, x, y):
+        """Word spreads: townsfolk who are near enough to hear grow wary of you (keep away / fight if cornered)."""
+        if self.map.kind == "wild":
+            return 0
+        n = 0
+        for o in self.combat.combatants:
+            if o.team != "npc" or not o.alive or getattr(o, "is_guard", False) or o.ai is None:
+                continue
+            if getattr(o.ai, "mode", "") == "calm" and math.hypot(o.x - x, o.y - y) < 420:
+                o.ai.mode, o.ai.mode_t = "wary", 0.0
+                n += 1
+        self.state.flags[f"alarm:{self.state.location}"] = self.state.clock.day_index
+        return n
+
+    def stranger_menu(self, a):
+        from .common import ChoiceScene
+        shop = getattr(a, "citizen", False) is False and self.map.building is not None and self.map.building.get("shop")
+        opts = [("Trade" if shop else "Chat", "talk"), (f"[Attack the {a.name.lower()}]", "attack"), ("Leave", "leave")]
+
+        def choose(v):
+            if v == "talk":
+                if shop:
+                    self.open_shop(self.map.building["shop"])
+                else:
+                    line = stable_rng("line", a.cid, self.state.clock.hour).choice(self.CROWD_LINES)
+                    self.game.notify(f"{a.name}: {line}")
+            elif v == "attack":
+                self.confirm_attack(a)
+        self.game.scenes.push(ChoiceScene(self.game, a.name, opts, choose))
+
     def talkable(self, a):
         """Can this character be talked to / traded with right now?"""
         if a not in self.combat.combatants or not a.alive or a.fled:
@@ -725,12 +803,8 @@ class LocalScene(Scene):
             if not self.talkable(a):
                 self.game.notify(self.refusal(a))
                 return
-            if a.npc is None and getattr(a, "citizen", False):
-                line = stable_rng("line", a.cid, self.state.clock.hour).choice(self.CROWD_LINES)
-                self.game.notify(f"{a.name}: {line}")
-                return
             if a.npc is None:
-                self.open_shop(self.map.building["shop"])
+                self.stranger_menu(a)
                 return
             from .dialogue import DialogueScene
             self.game.scenes.push(DialogueScene(self.game, a.npc, self))

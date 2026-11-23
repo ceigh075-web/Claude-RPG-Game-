@@ -64,6 +64,8 @@ class DialogueScene(Scene):
         if npc.get("shop"):
             _, at_work = npc_mod.shopkeeper(st, st.location, npc["shop"])
             e.append(("Let's trade.", "trade", at_work))
+        if self.local is not None and self.local.combatant_for(npc) is not None:
+            e.append((f"[Attack {npc['name']}]", "attack"))
         e.append(("Goodbye.", "bye"))
         self.menu.set_entries(e)
 
@@ -145,6 +147,8 @@ class DialogueScene(Scene):
             self.game.scenes.push(GiftScene(self.game, npc, self))
         elif v == "peace":
             self.broker_peace()
+        elif v == "attack":
+            self.local.confirm_attack(self.local.combatant_for(npc), on_yes=self.close)
         elif v == "bye":
             self.close()
             self.game.toast(f"{npc['name']}: \"{fallback.farewell(npc)}\"")
