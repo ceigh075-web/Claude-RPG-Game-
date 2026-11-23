@@ -38,6 +38,9 @@ def normalize(data, spell):
         out["element"] = m["subelements"][sub]["element"]
     out.setdefault("sub", None)
     out.setdefault("focus", "balanced")
+    out.setdefault("move", "projectile")
+    out.setdefault("stat", "damage")
+    out["tier"] = int(out.get("tier", 1))
     out["size"] = float(out.get("size", 1.0))
     for k in TUNING_KEYS:
         out[k] = float(out.get(k, 1.0))
@@ -190,7 +193,7 @@ def compute(data, spell, magic_skill=0.0, mana_conduct=0.0):
         style = f"{style}#{sp['hue']}#{sp['intensity']:g}"      # a colour/intensity variant of the look
     color = variant_color(tuple(src["color"]), sp["hue"])
     out = {
-        "name": sp.get("name") or describe_name(data, sp), "sub": style, "sub_id": sp["sub"],
+        "name": sp.get("name") or describe_name(data, sp), "sub": sp["sub"], "sub_id": sp["sub"], "style": style,
         "element": sp["element"], "move": sp["move"], "stat": sp["stat"], "tier": tier, "focus": sp["focus"],
         "size": size, "color": color, "behavior": sp["behavior"], "hue": sp["hue"], "intensity": sp["intensity"],
         "duration_mult": sp["duration"], "potency": sp["potency"],
@@ -226,6 +229,15 @@ def variant_color(col, hue):
     return (int(r * 255), int(g * 255), int(b * 255))
 
 
+def source_name(data, spell):
+    """Display name of what a spell is made of: its sub-element, or its element when it has none."""
+    m = data.magic
+    sub = spell.get("sub")
+    if sub:
+        return m["subelements"][sub]["name"]
+    return m["elements"][spell["element"]]["name"]
+
+
 def describe_name(data, spell):
     m = data.magic
     sp = normalize(data, spell)
@@ -257,14 +269,66 @@ def starter_spellbook():
     return [dict(s) for s in STARTER_SPELLS]
 
 
-def migrate(data, spells_list):
-    """Upgrade spells saved by older versions in place (element / focus / size)."""
+def repair(data, spell):
+    """Bring a saved spell back inside the current rules. Returns (spell, [what changed]).
+    Older versions allowed combinations that are no longer valid (sub-elements that moved to another element,
+    effects a source can no longer carry, behaviours on the wrong movement, out-of-range sliders); rather than
+    losing the spell, each bad field is reset to the nearest valid choice and the change is reported."""
+    m = data.magic
+    sp = normalize(data, spell)
+    notes = []
+    if sp["sub"] is not None and sp["sub"] not in m["subelements"]:
+        notes.append(f"unknown sub-element {sp['sub']} removed")
+        sp["sub"] = None
+    if sp["sub"] is not None and m["subelements"][sp["sub"]]["element"] != sp["element"]:
+        sp["element"] = m["subelements"][sp["sub"]]["element"]
+        notes.append(f"element set to {m['elements'][sp['element']]['name']} to match {m['subelements'][sp['sub']]['name']}")
+    if sp["element"] not in m["elements"]:
+        raise SpellError(f"unknown element {sp['element']}")
+    if sp["move"] not in m["movements"]:
+        notes.append(f"unknown movement {sp['move']} replaced")
+        sp["move"] = "projectile"
+    if sp["focus"] not in m["focuses"]:
+        sp["focus"] = "balanced"
+        notes.append("focus reset")
+    if str(sp["tier"]) not in m["tiers"]:
+        sp["tier"] = max(1, min(int(t) for t in m["tiers"]) if sp["tier"] < 1 else max(int(t) for t in m["tiers"]))
+        notes.append("tier adjusted")
+    allowed = allowed_effects(data, sp["element"], sp["sub"])
+    if sp["stat"] not in allowed:
+        notes.append(f"effect {sp['stat']} replaced with {allowed[0]}")
+        sp["stat"] = allowed[0]
+    lo, hi = m["sizes"]["min"], m["sizes"]["max"]
+    sp["size"] = min(hi, max(lo, sp["size"]))
+    for k in TUNING_KEYS:
+        t = m["tuning"][k]
+        sp[k] = min(t["max"], max(t["min"], sp[k]))
+    bh = m["behaviors"].get(sp["behavior"])
+    if bh is None or (bh["moves"] and sp["move"] not in bh["moves"]):
+        sp["behavior"] = "standard"
+        notes.append("behaviour reset to Standard")
+    if not 0 <= sp["hue"] < len(m["appearance"]["hues"]):
+        sp["hue"] = 0
+    ai = m["appearance"]["intensity"]
+    sp["intensity"] = min(ai["max"], max(ai["min"], sp["intensity"]))
+    validate(data, sp)
+    return sp, notes
+
+
+def migrate(data, spells_list, report=None):
+    """Upgrade spells saved by older versions (missing fields, outdated combinations). Spells that cannot be
+    repaired at all (no element or sub-element we know) are listed in `report` instead of crashing the load."""
     out = []
     for sp in spells_list:
         try:
-            out.append(normalize(data, sp))
-        except SpellError:
+            fixed, notes = repair(data, sp)
+        except SpellError as e:
+            if report is not None:
+                report.append(f"The spell '{sp.get('name', '?')}' could not be restored ({e}).")
             continue
+        if notes and report is not None:
+            report.append(f"'{fixed.get('name', '?')}' was updated for the new magic rules: " + "; ".join(notes) + ".")
+        out.append(fixed)
     return out
 
 

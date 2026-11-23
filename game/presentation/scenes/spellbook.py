@@ -148,7 +148,7 @@ class SpellbookScene(Scene):
             y = 410
             pygame.draw.line(screen, ui.BORDER, (70, y - 8), (W - 70, y - 8))
             ui.text(screen, p["name"], (70, y), 28, tuple(p["color"]), bold=True)
-            ui.text(screen, f"Tier {p['tier']}  {self.data.magic['subelements'][p['sub']]['name']} / "
+            ui.text(screen, f"Tier {p['tier']}  {spells.source_name(self.data, p)} / "
                             f"{self.data.magic['movements'][p['move']]['name']} / {self.data.magic['stats'][p['stat']]['name']}",
                     (70, y + 32), 22, ui.TEXT_DIM)
             ui.text_block(screen, p["description"], (70, y + 58, W - 160, 60), 22)

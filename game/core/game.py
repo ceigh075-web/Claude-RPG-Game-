@@ -127,6 +127,9 @@ class Game:
         self.last_save_minutes = self.state.clock.total_minutes
         self.enter_world()
         self.toast(f"Loaded slot {slot}.")
+        notes = getattr(self.state, "load_notes", [])
+        if notes:
+            self.notify(notes)
         return True
 
     def toast(self, text, seconds=3.5):

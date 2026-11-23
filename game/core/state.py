@@ -14,6 +14,7 @@ LOG_LIMIT = 60
 class GameState:
     def __init__(self, data):
         self.data = data
+        self.load_notes = []      # messages from repairing an older save (shown once after loading)
         self.rng = GameRNG()
         self.clock = GameClock()
         self.player = None
@@ -116,8 +117,10 @@ class GameState:
         s.stats = d["stats"]
         s.log = d["log"]
         from ..set_system.spells import migrate
-        s.spellbook = migrate(data, d.get("spellbook", starter_spellbook()))
-        s.spell_drafts = migrate(data, d.get("spell_drafts", []))
+        report = []
+        s.spellbook = migrate(data, d.get("spellbook", starter_spellbook()), report)
+        s.spell_drafts = migrate(data, d.get("spell_drafts", []), report)
+        s.load_notes = report
         s.known_recipes = d.get("known_recipes", [])
         s.relationships = d.get("relationships", {})
         s.favors = d.get("favors", {})

@@ -618,7 +618,7 @@ def update(world, t, camx=0, camy=0):
     # projectiles: trails, launch flourishes, impacts when they vanish
     alive = {}
     for pr in world.projectiles:
-        sub = pr.payload.get("sub") if pr.kind == "spell" and pr.payload else None
+        sub = pr.payload.get("style") if pr.kind == "spell" and pr.payload else None
         if pr not in fx.seen_proj and sub:
             _cast_flourish(fx, pr.owner, sub)
         alive[pr] = (pr.x, pr.y, sub, pr.kind, pr.vx, pr.vy)
@@ -646,7 +646,7 @@ def update(world, t, camx=0, camy=0):
     # spell effects
     eff_alive = {}
     for e in world.effects:
-        sub = e.spell.get("sub")
+        sub = e.spell.get("style")
         flags = fx.seen_eff.get(e)
         if flags is None:
             flags = {"burst": False}
@@ -826,7 +826,7 @@ def draw_under(canvas, world, camx, camy, t):
     """Ground-level layers drawn before sprites: zones, telegraphs, ward circles, rune circles."""
     fx = state_for(world)
     for e in world.effects:
-        sub = e.spell.get("sub")
+        sub = e.spell.get("style")
         st = style(sub)
         x, y = e.x - camx, e.y - camy
         k = e.kind
@@ -973,7 +973,7 @@ def draw(canvas, world, camx, camy, t):
     """Effects drawn above sprites: projectiles, beams, waves, orbiters, particles."""
     fx = state_for(world)
     for e in world.effects:
-        sub = e.spell.get("sub")
+        sub = e.spell.get("style")
         st = style(sub)
         x, y = e.x - camx, e.y - camy
         k = e.kind
@@ -1057,7 +1057,7 @@ def draw(canvas, world, camx, camy, t):
         x, y = pr.x - camx, pr.y - camy
         ang = math.atan2(pr.vy, pr.vx)
         if pr.kind == "spell":
-            sub = pr.payload.get("sub") if pr.payload else None
+            sub = pr.payload.get("style") if pr.payload else None
             st = style(sub)
             size = pr.payload.get("size", 1.0) if pr.payload else 1.0
             add_glow(canvas, x, y, 11 * size ** 0.5, st.core, 0.6 * st.glow)
@@ -1250,9 +1250,9 @@ def lights(world):
     out = []
     for pr in world.projectiles:
         if pr.kind == "spell":
-            out.append((pr.x, pr.y, 22 if style(pr.payload.get("sub") if pr.payload else None).glow > 0.6 else 14))
+            out.append((pr.x, pr.y, 22 if style(pr.payload.get("style") if pr.payload else None).glow > 0.6 else 14))
     for e in world.effects:
-        st = style(e.spell.get("sub"))
+        st = style(e.spell.get("style"))
         if st.glow < 0.5:
             continue
         if e.kind in ("ground", "area", "ward"):

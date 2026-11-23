@@ -43,9 +43,9 @@ class TestSpellCustomization(unittest.TestCase):
         v = spells.compute(DATA, dict(BOLT, hue=3, intensity=1.5))
         self.assertEqual(v["mana"], base["mana"])
         self.assertNotEqual(v["color"], base["color"])
-        self.assertIn("#", v["sub"])
+        self.assertIn("#", v["style"])
         from game.presentation import vfx
-        self.assertIsNot(vfx.style(v["sub"]), vfx.DEFAULT)
+        self.assertIsNot(vfx.style(v["style"]), vfx.DEFAULT)
 
     def test_invalid_behaviour_rejected(self):
         with self.assertRaises(spells.SpellError):

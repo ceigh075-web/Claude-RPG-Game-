@@ -585,7 +585,7 @@ class CombatWorld:
         """Apply a computed spell's effect to one target."""
         stat = p["stat"]
         if stat == "damage":
-            prof = {"damage": p["power"], "knockback": 50, "stagger": 0.25, "skill": "magic", "scaling": [], "vfx_sub": p["sub"],
+            prof = {"damage": p["power"], "knockback": 50, "stagger": 0.25, "skill": "magic", "scaling": [], "vfx_sub": p["style"],
                     "statuses": [(p["status"], *self._status_mag(p, 0.5))] if p["status"] not in ("none",) else []}
             self.hit(src, tgt, prof, origin)
         elif stat == "heal":
@@ -600,14 +600,14 @@ class CombatWorld:
             self.floaters.append(["SHIELD", tgt.x, tgt.y - 26, 0.0, p["color"]])
         elif stat == "knockback":
             prof = {"damage": 1, "knockback": p["power"] * 2.2, "stagger": 0.5, "skill": "magic", "scaling": [],
-                    "vfx_sub": p["sub"]}
+                    "vfx_sub": p["style"]}
             self.hit(src, tgt, prof, origin)
         elif stat == "root":
             self.add_status(tgt, "root", 1.0, p["duration"])
             self.provoke(src, tgt)
         elif stat == "affliction":
             mag, dur = self._status_mag(p, 1.0)
-            prof = {"damage": 1, "knockback": 10, "stagger": 0.1, "skill": "magic", "scaling": [], "vfx_sub": p["sub"],
+            prof = {"damage": 1, "knockback": 10, "stagger": 0.1, "skill": "magic", "scaling": [], "vfx_sub": p["style"],
                     "statuses": [(p["status"], mag, dur)]}
             self.hit(src, tgt, prof, origin)
 
