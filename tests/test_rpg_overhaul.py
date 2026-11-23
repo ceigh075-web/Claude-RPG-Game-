@@ -245,3 +245,36 @@ class TestPrisonerHousing(unittest.TestCase):
                                           "resentment": 20.0, "kind": True, "since": 0, "talked": -1})
         morale.daily(self.st)
         self.assertEqual(morale.prisoners(self.st)[0]["held_at"], "house:brackenford")
+
+
+class TestCharacterCreator(unittest.TestCase):
+    def test_every_option_renders_in_every_animation(self):
+        import pygame
+        pygame.init()
+        try:
+            pygame.display.set_mode((1, 1))
+        except pygame.error:
+            pass
+        from game.presentation import charsprites
+        from game.presentation.scenes import creator
+        base = {"race": "human", "skin": [200, 160, 120], "hair": [40, 30, 20], "shirt": [90, 60, 120],
+                "pants": [50, 40, 40]}
+        looks = [dict(base, face=f, eye=[40, 90, 160]) for f in creator.FACE_MARKS]
+        looks += [dict(base, hat=h, hat_col=[90, 60, 40]) for h in creator.HATS if h]
+        looks += [dict(base, outfit=o, outfit_col=[120, 40, 40], cape=[60, 60, 120]) for o in creator.OUTFITS]
+        looks += [dict(base, hair_style=i, beard=i % 5, build="stout", height="tall") for i in range(10)]
+        looks += [dict(base, acc=list(creator.ACCESSORIES), warpaint=[170, 40, 40], eye_style=0)]
+        for look in looks:
+            for anim in ("idle", "walk", "slice"):
+                for d in ("down", "left", "up", "right"):
+                    surf, _, _ = charsprites.compose(look, anim, d, 1)
+                    self.assertGreater(surf.get_bounding_rect().w, 0)
+
+    def test_face_marks_change_the_sprite(self):
+        import pygame
+        pygame.init()
+        from game.presentation import charsprites
+        base = {"race": "human", "skin": [200, 160, 120], "hair": [40, 30, 20]}
+        plain = charsprites.compose(dict(base, face="none"), "idle", "down", 0)[0]
+        blush = charsprites.compose(dict(base, face="blush"), "idle", "down", 0)[0]
+        self.assertNotEqual(pygame.image.tobytes(plain, "RGBA"), pygame.image.tobytes(blush, "RGBA"))

@@ -31,7 +31,7 @@ def draw_backdrop(game, screen, t):
         y = 40 + (i * 97) % 180 if i % 3 else 290
         canvas.blit(art.obj("tree", i % 4, "grassland"), (x, y))
     # a little party walking the road
-    for i, look in enumerate(game._menu_looks):
+    for i, look in enumerate(getattr(game, "_menu_looks", [])):
         frame = int(t * 8 + i) % 4
         canvas.blit(visuals.portrait(art, look, "right", frame, True), (250 + i * 22, 230))
     dark = pygame.Surface(canvas.get_size(), pygame.SRCALPHA)
@@ -147,7 +147,9 @@ class NewGameScene(Scene):
                 self.reroll()
         if k in (pygame.K_RETURN, pygame.K_SPACE):
             if self.field == 3:
-                self.reroll()
+                from .creator import CharacterCreatorScene
+                self.game.scenes.push(CharacterCreatorScene(self.game, self.look, self.races[self.race_i],
+                                                            title="Customize Appearance", pronouns=PRONOUNS[self.pron_i]))
             elif self.field == 4:
                 self.start()
             else:
@@ -167,7 +169,7 @@ class NewGameScene(Scene):
         race = self.data.races[race_id]
         rows = [("Name", (self.name or "") + ("_" if self.field == 0 and int(self.t * 2) % 2 == 0 else "")),
                 ("Race", f"<  {race['name']}  >"), ("Pronouns", f"<  {PRONOUNS[self.pron_i]}  >"),
-                ("Appearance", "<  Randomize  >"), ("", "Begin your journey")]
+                ("Appearance", "Customize...  (< > randomize)"), ("", "Begin your journey")]
         y = r.y + 70
         for i, (label, val) in enumerate(rows):
             sel = i == self.field

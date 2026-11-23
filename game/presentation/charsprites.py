@@ -301,6 +301,8 @@ def _paint(look, info, d):
         # race features
         _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
     eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}
+    if head and d in ("down", "side") and not look.get("helm"):
+        _face(out, src, d, head, eye_px, skin, look)
     out = wardrobe.apply(out, src, look, R, d, eye_px)
     out = wardrobe.reshape(out, look, FOOT_Y)
     smear = None
@@ -310,6 +312,63 @@ def _paint(look, info, d):
         if tintc:
             smear.fill((*tintc, 255), special_flags=pygame.BLEND_RGBA_MULT)
     return out, smear
+
+
+FACE_MARKS = ("none", "freckles", "blush", "scar", "beauty_mark", "tattoo")
+
+
+def _face(out, src, d, head, eye_px, skin, look):
+    """Eyes with an iris colour and a catch-light (the anime-style 'shine'), plus optional face marks.
+    Works from the eye pixels the rig provides, so it follows every frame and both front/side views."""
+    if not eye_px:
+        return
+    cx = (min(p[0] for p in head) + max(p[0] for p in head)) / 2
+
+    def skin_at(x, y):
+        if (x, y) not in head:
+            return False
+        c = src.get_at((x, y))
+        return (c.r, c.g, c.b) not in (EYE, (0, 0, 0))
+
+    def blend(x, y, col, a):
+        if skin_at(x, y):
+            c = out.get_at((x, y))
+            out.set_at((x, y), (int(c.r + (col[0] - c.r) * a), int(c.g + (col[1] - c.g) * a), int(c.b + (col[2] - c.b) * a), 255))
+
+    iris = tuple(look.get("eye") or (64, 44, 36))
+    shine = look.get("eye_style", 1) != 0
+    mark = look.get("face", "none")
+    mcol = tuple(look.get("face_col") or (190, 60, 60))
+    for ex, ey in sorted(eye_px):
+        out_dir = -1 if (d == "side" or ex < cx) else 1          # towards the cheek
+        if shine:
+            out.set_at((ex, ey), (*iris, 255))
+            if (ex, ey - 1) in head and src.get_at((ex, ey - 1))[:3] == (0, 0, 0):
+                out.set_at((ex, ey - 1), (*tuple(int(c * 0.45) for c in iris), 255))
+            sx = ex - 1 if d != "side" else ex - 1
+            if skin_at(sx, ey - 1):
+                out.set_at((sx, ey - 1), (250, 250, 255, 255))
+        cheek = ex + out_dir * 1
+        if mark == "blush":
+            blend(cheek, ey + 1, (240, 110, 120), 0.55)
+            blend(cheek + out_dir, ey + 1, (240, 110, 120), 0.35)
+        elif mark == "freckles":
+            blend(cheek, ey + 1, tuple(int(c * 0.6) for c in skin), 0.8)
+            blend(cheek + out_dir * 2, ey + 1, tuple(int(c * 0.6) for c in skin), 0.8)
+            blend(ex, ey + 2, tuple(int(c * 0.65) for c in skin), 0.6)
+        elif mark == "tattoo":
+            blend(cheek + out_dir, ey, mcol, 0.85)
+            blend(cheek + out_dir, ey + 1, mcol, 0.85)
+    eyes = sorted(eye_px)
+    if mark == "scar":
+        ex, ey = eyes[-1]
+        for k, y in enumerate(range(ey - 3, ey + 3)):
+            x = ex + (1 if k < 3 else 0)
+            if (x, y) != (ex, ey):
+                blend(x, y, (210, 120, 110), 0.75)
+    elif mark == "beauty_mark":
+        ex, ey = eyes[0]
+        blend(ex + (1 if d == "side" else -1), ey + 2, (60, 36, 30), 0.9)
 
 
 def _px(out, x, y, col):
