@@ -134,3 +134,48 @@ class TestFallback(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(assets.available(), "art folder missing")
+class TestCharacterVariety(unittest.TestCase):
+    def test_named_npcs_have_distinct_looks(self):
+        from game.presentation import looks
+        sigs = {}
+        for nid, npc in DATA.npcs.items():
+            lk = looks.npc_identity(DATA, npc)
+            sig = (lk["race"], lk.get("hair_style"), lk.get("hat"), lk.get("outfit"), lk.get("beard"),
+                   tuple(lk.get("outfit_col", ())), tuple(lk.get("hair", ())), tuple(sorted(lk.get("acc", []))))
+            self.assertNotIn(sig, sigs, f"{nid} looks identical to {sigs.get(sig)}")
+            sigs[sig] = nid
+        # and the silhouettes vary: several kinds of headwear, outfits and hairstyles in use
+        all_looks = [looks.npc_identity(DATA, n) for n in DATA.npcs.values()]
+        self.assertGreaterEqual(len({lk.get("hat") for lk in all_looks}), 6)
+        self.assertGreaterEqual(len({lk.get("outfit") for lk in all_looks}), 6)
+        self.assertGreaterEqual(len({lk.get("hair_style") for lk in all_looks}), 7)
+
+    def test_identity_is_stable(self):
+        from game.presentation import looks
+        npc = DATA.npcs["garrow"]
+        self.assertEqual(looks.npc_identity(DATA, npc), looks.npc_identity(DATA, npc))
+
+    def test_every_named_npc_has_every_combat_animation(self):
+        from game.presentation import looks
+        for npc in DATA.npcs.values():
+            lk = looks.npc_identity(DATA, npc)
+            for anim in ("idle", "walk", "slice", "pierce", "crush", "hit", "death"):
+                for d in ("down", "up", "left", "right"):
+                    surf, _, _ = charsprites.compose(lk, anim, d, 3)
+                    self.assertGreater(surf.get_bounding_rect().h, 8, (npc["id"], anim, d))
+
+    def test_enemy_variants_differ(self):
+        from game.presentation import looks
+        for eid in looks.ENEMY_ROLE:
+            variants = {repr(sorted(looks.enemy_variant(DATA, eid, k).items())) for k in range(6)}
+            self.assertGreaterEqual(len(variants), 5, eid)
+
+    def test_husk_variants_load(self):
+        for v in range(len(creatures.SKELETONS)):
+            for anim in ("idle", "move", "death"):
+                img, w, foot = creatures.skeleton(anim, 2, v)
+                self.assertIsNotNone(img)
+                self.assertGreater(img.get_bounding_rect().h, 3)

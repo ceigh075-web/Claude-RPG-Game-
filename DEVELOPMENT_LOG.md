@@ -28,6 +28,29 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | 9 Polish | ✅ Done |
 | Visual overhaul (art, animation, VFX) | ✅ Done |
 | Universal targeting & consequences | ✅ Done |
+| NPC & enemy visual variety | ✅ Done |
+
+## Session 6 — NPC and enemy visual variety
+
+- `wardrobe.py`: modular hair (10 styles), beards (4), headwear (cap, wide hat, wizard hat, crown, bandana, horns,
+  circlet, miner's lamp-helmet, feathered cap, hood), outfits (tunic, robe, dress, coat, vest, apron,
+  tabard, bare), capes, belts, accessories (necklace, scarf, satchel, eyepatch, glasses, pauldrons, quiver,
+  earring, fur) and body builds. Drawn from per-frame body regions, so every piece follows every
+  animation in all four directions, with the pack's outline style.
+- Fixed head segmentation on the rig: the head now runs to the chin (neck detection). Previously the lower
+  face was painted with the shirt colour (it looked like a collar), and on hit frames most of the face was.
+- `looks.py`: identities for all 47 named NPCs (occupation, faction, age, pronouns, personality, race build),
+  role pools for townsfolk and per-spawn enemy variants. NPC data, dialogue, relationships and behaviour
+  are untouched.
+- Ambient town crowds (anonymous, daytime, profession and race mix per town).
+- Enemies: three more pack skeleton variants imported for husks; creature marking variants, biome tints,
+  golem hues, elite scaling, and proper death poses for brutes, lurkers and golems (rubble, mound, shards).
+  Enemy stats, AI and behaviour are unchanged.
+- Evaluated but not used: the pack's orcs (no orc enemy exists; adding one would change gameplay) and the
+  Knight/Rogue/Wizard/Citizen NPC sheets (side view only, no attack or hit frames). See ASSETS.md.
+- `tools/character_gallery.py` renders all NPCs, townsfolk, enemy variants, creatures and husks.
+- Tests (+5): all named NPC looks unique; at least 6 headwear types, 6 outfits and 7 hairstyles in use; looks stable; every
+  NPC has every combat animation in every direction; enemy variants differ; husk variants load. 142 total.
 
 ## Session 5 — Universal entity interaction and combat
 

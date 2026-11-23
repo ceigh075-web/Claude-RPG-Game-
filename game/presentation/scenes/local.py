@@ -257,8 +257,10 @@ class LocalScene(Scene):
             a = self.combat.add_townsfolk(npc, sx * T + 8, sy * T + 14, npc_look(self.data, npc), rng,
                                           anchor_radius=1 if building else 4, stationary=stationary)
             self.npcs.append(a)
+        self.spawn_crowd(keep)
         # anonymous shopkeeper for shops without a named owner
-        if building is not None and building.get("shop") and not any(a.npc is None for a in keep):
+        if building is not None and building.get("shop") and not any(a.npc is None and not getattr(a, "citizen", False)
+                                                                     for a in keep):
             keeper, at_work = npc_mod.shopkeeper(st, st.location, building["shop"])
             if keeper is None and at_work:
                 sx, sy = spots[0]
@@ -267,6 +269,38 @@ class LocalScene(Scene):
                 a = self.combat.add_townsfolk(None, sx * T + 8, sy * T + 14, random_look(self.data.races[race], rng, race),
                                               rng, anchor_radius=1, stationary=True, name="Shopkeeper")
                 self.npcs.append(a)
+
+    CROWD_RACES = {"thornhollow": ["murrok"] * 7 + ["human"] * 2 + ["kethari"],
+                   "hammerlee": ["kethari"] * 5 + ["human"] * 4 + ["murrok"], "cinderdeep": ["kethari"] * 5 + ["human"] * 4 + ["murrok"],
+                   "glimmerfen": ["sylth"] * 5 + ["human"] * 4 + ["kethari"]}
+    ROLE_NAMES = {"citizen": "Townsperson", "farmer": "Farmer", "miner": "Miner", "smith": "Smith", "merchant": "Trader",
+                  "guard": "Town Guard", "noble": "Noble", "scholar": "Scholar", "mage": "Mage", "healer": "Healer",
+                  "hunter": "Hunter", "sailor": "Dockhand", "bard": "Musician", "warrior": "Sellsword", "rogue": "Drifter",
+                  "priest": "Priest", "witch": "Herb-wife", "shaman": "Shaman", "raider": "Clan Warrior"}
+    CROWD_LINES = ["\"Fine day, isn't it?\"", "\"Mind the cart.\"", "\"Can't stop, I'm late.\"",
+                   "\"Heard the roads are bad lately.\"", "\"Prices keep climbing.\"", "\"Safe travels, stranger.\"",
+                   "They nod politely.", "They eye your weapon and keep walking."]
+
+    def spawn_crowd(self, keep):
+        """Anonymous townsfolk dressed for their town's trade: daytime only, outdoors in towns (purely ambient)."""
+        st, m = self.state, self.map
+        town = self.data.towns.get(st.location)
+        if m.kind != "town" or m.building is not None or town is None or not 7 <= st.clock.hour < 21:
+            return
+        from ..looks import townsfolk
+        n = min(7, 3 + town.get("population", 200) // 250)
+        n -= sum(1 for a in keep if getattr(a, "citizen", False))
+        races = self.CROWD_RACES.get(st.location, ["human"] * 6 + ["kethari", "sylth", "murrok"])
+        spots = list(m.npc_spots) or [m.entry]
+        for i in range(max(0, n)):
+            rng = stable_rng("crowd", st.location, st.clock.day_index, st.clock.hour // 3, i)
+            look, role = townsfolk(self.data, rng, town.get("specialty", ""), rng.choice(races))
+            sx, sy = spots[rng.randrange(len(spots))]
+            sx, sy = m.find_open_near(sx + rng.randint(-4, 4), sy + rng.randint(-3, 3), 4)
+            a = self.combat.add_townsfolk(None, sx * T + 8, sy * T + 14, look, rng, anchor_radius=6,
+                                          name=self.ROLE_NAMES.get(role, "Townsperson"))
+            a.citizen = True
+            self.npcs.append(a)
 
     def refusal(self, a):
         mode = getattr(a.ai, "mode", "")
@@ -429,6 +463,8 @@ class LocalScene(Scene):
             a = tgt[1]
             if not self.talkable(a):
                 return f"{a.name} won't deal with you" if a.alive else None
+            if a.npc is None and getattr(a, "citizen", False):
+                return f"Greet the {a.name}"
             if a.npc is None:
                 return "Trade with the Shopkeeper"
             return f"Talk to {a.npc['name']}"
@@ -455,6 +491,10 @@ class LocalScene(Scene):
             a = tgt[1]
             if not self.talkable(a):
                 self.game.notify(self.refusal(a))
+                return
+            if a.npc is None and getattr(a, "citizen", False):
+                line = stable_rng("line", a.cid, self.state.clock.hour).choice(self.CROWD_LINES)
+                self.game.notify(f"{a.name}: {line}")
                 return
             if a.npc is None:
                 self.open_shop(self.map.building["shop"])
@@ -971,8 +1011,8 @@ class LocalScene(Scene):
         # NPC names (screen space)
         for a in self.npcs + self.combat.companions():
             if self.player.dist_to(a.x, a.y) < 70 and a in self.combat.combatants and not a.killed:
-                label = a.npc["name"] if a.npc else "Shopkeeper"
-                col = ui.TEXT
+                label = a.npc["name"] if a.npc else a.name
+                col = ui.TEXT if a.npc else ui.TEXT_DIM
                 if self.combat.hostile_between(self.player, a):
                     col = (240, 110, 90)
                 elif a.downed:

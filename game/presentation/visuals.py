@@ -7,7 +7,7 @@ import math
 
 import pygame
 
-from . import animator, assets, charsprites, creatures
+from . import animator, assets, charsprites, creatures, looks
 from . import weapons_art as wa
 
 ORE_ARMOR = {"rustite": (150, 92, 64), "greyvein": (150, 158, 172), "sunsilver": (214, 190, 104),
@@ -96,7 +96,32 @@ def weapon_for(c, data, state=None):
     return melee or ranged
 
 
-def enemy_look(c):
+_enemy_looks = {}
+
+
+def enemy_look(c, data=None):
+    """Varied look for a humanoid enemy (stable for each spawned combatant)."""
+    e = c.enemy or {}
+    if e.get("npc"):                      # duels and named foes keep their own identity
+        return c.look
+    eid = getattr(c, "enemy_id", "")
+    if data is not None and eid in looks.ENEMY_ROLE:
+        key = (eid, c.cid)
+        if key not in _enemy_looks:
+            if len(_enemy_looks) > 400:
+                _enemy_looks.clear()
+            lk = looks.enemy_variant(data, eid, c.cid)
+            if e.get("elite_event"):
+                lk["cape"] = [120, 20, 30]
+                lk["hat"] = "horns" if eid == "thornblood_raider" else lk.get("hat", "crown")
+                lk["height"] = "tall"
+                lk["acc"] = sorted(set(lk.get("acc", [])) | {"pauldrons"})
+            _enemy_looks[key] = lk
+        return _enemy_looks[key]
+    return _old_enemy_look(c)
+
+
+def _old_enemy_look(c):
     """Pack-compositor look for a humanoid enemy."""
     eid = getattr(c, "enemy_id", "")
     base = dict(c.look)
@@ -127,12 +152,15 @@ def combatant_entries(world, art, camx, camy, t, state=None):
             out += _husk(c, art, camx, camy, t)
             shadow_w = 12
         elif shape == "humanoid":
-            look = enemy_look(c) if e and c.team == "enemy" else dress(c.look, c.char, data)
+            look = enemy_look(c, data) if e and c.team == "enemy" else dress(c.look, c.char, data)
             out += animator.humanoid_entries(c, look, weapon_for(c, data, state), t, camx, camy, art, art.white)
         else:
             cshape = creatures.shape_for(eid, e)
             anim, idx = creatures.creature_anim(c)
-            img = creatures.frame(cshape, e["color"], anim, idx)
+            col = creature_color(cshape, eid, e, c.cid, getattr(world.map, "biome", None))
+            img = creatures.frame(cshape, col, anim, idx, c.cid)
+            if e.get("elite_event"):
+                img = _elite(img)
             if c.facing == "left" or (c.facing in ("up", "down") and c.aim[0] < 0):
                 img = pygame.transform.flip(img, True, False)
             w, h = img.get_size()
@@ -181,34 +209,83 @@ def _star():
     return _pool_cache["star"]
 
 
+BIOME_TINT = {"forest": (104, 84, 62), "desert": (200, 170, 112), "snow": (220, 226, 236), "swamp": (70, 92, 62),
+              "volcanic": (74, 54, 48), "cave": (84, 74, 96), "mountain": (122, 116, 110), "crystal": (130, 150, 200),
+              "moor": (100, 100, 82), "canyon": (172, 104, 72), "hills": (132, 110, 80), "coast": (150, 140, 120),
+              "ruins": (110, 110, 100)}
+GOLEM_HUES = [(150, 220, 230), (190, 150, 240), (150, 230, 170)]
+
+
+def creature_color(shape, eid, e, cid, biome):
+    """Natural creatures take on a little of their surroundings; golems come in several mineral hues."""
+    col = tuple(e["color"])
+    if shape == "crystal":
+        return GOLEM_HUES[cid % len(GOLEM_HUES)]
+    tint = BIOME_TINT.get(biome)
+    if tint and shape in ("beast", "bug", "worm") and eid != "ice_wolf":
+        col = tuple(int(a * 0.72 + b * 0.28) for a, b in zip(col, tint))
+    return col
+
+
+_elite_cache = {}
+
+
+def _elite(img):
+    """Named / elite monsters are drawn half again as large."""
+    key = id(img)
+    if key not in _elite_cache:
+        if len(_elite_cache) > 300:
+            _elite_cache.clear()
+        w, h = img.get_size()
+        _elite_cache[key] = (img, pygame.transform.scale(img, (w * 3 // 2, h * 3 // 2)))
+    return _elite_cache[key][1]
+
+
 def _husk(c, art, camx, camy, t):
+    """Husks are pack skeletons (base / rogue / warrior / mage, fixed per spawn). The sheets only have idle,
+    run and death, so attacks are a wind-up lean and a lunge, hits a recoil, using the same timing as everyone."""
     st = c.state
+    variant = c.cid % len(creatures.SKELETONS)
     if st == "dead":
         anim, idx = "death", min(7, int(c.dead_t / 0.1))
     elif c.moving or st in ("windup", "active", "recovery"):
         anim, idx = "move", int((c.anim_t if c.moving else c.state_t) * 10) % 6
     else:
         anim, idx = "idle", int(t * 6 + c.cid) % 4
-    img, size = creatures.skeleton(anim, idx)
+    img, size, foot = creatures.skeleton(anim, idx, variant)
     if img is None:
         return []
     left = c.facing == "left" or (c.facing in ("up", "down") and c.aim[0] < 0)
     if left:
         img = pygame.transform.flip(img, True, False)
-    foot = 47 if size == 64 else 31
     x, y = c.x - size / 2 - camx, c.y - foot - camy
     if st == "active":  # lunge toward the target
-        x += c.aim[0] * 4
+        x += c.aim[0] * 5
         y += c.aim[1] * 2
     elif st == "windup":
+        x -= c.aim[0] * 2
+        y += 1
+    elif st == "stagger" or c.flash > 0:
         x -= c.aim[0] * 2
     if st == "dead":
         img = img.copy()
         img.set_alpha(max(0, int(255 * (1 - max(0.0, c.dead_t - 0.9) / 0.8))))
     out = [(c.y, img, int(x), int(y))]
+    if st == "windup" and creatures.SKELETONS[variant] == "Skeleton - Mage":
+        orb = _orb()
+        out.append((c.y + 0.02, orb, int(c.x + c.aim[0] * 8 - 3 - camx), int(c.y - 16 - camy)))
     if c.flash > 0 and st != "dead":
         out.append((c.y + 0.01, art.white(img), int(x), int(y)))
     return out
+
+
+def _orb():
+    if "orb" not in _pool_cache:
+        s = pygame.Surface((7, 7), pygame.SRCALPHA)
+        pygame.draw.circle(s, (150, 60, 200), (3, 3), 3)
+        pygame.draw.circle(s, (230, 180, 255), (3, 3), 1)
+        _pool_cache["orb"] = s
+    return _pool_cache["orb"]
 
 
 def npc_entries(a, art, camx, camy, t, data=None):

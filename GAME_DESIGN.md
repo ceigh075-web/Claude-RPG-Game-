@@ -162,6 +162,28 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## Character looks
+
+- **Named NPCs** each have an identity built from their occupation (smith's apron, miner's lamp-helmet,
+  queen's crown and cape, archmage's pointed hat and long beard, warchief's horned helm and furs...), faction
+  colours (tabards, capes, clothes), age (greying hair, balding), personality (the greedy wear jewellery, the
+  sociable bright colours, the shifty hide behind scarves and hoods) and race build (broad Murrok,
+  willowy Sylth, compact Kethari). Looks are deterministic per NPC and only affect appearance.
+- **Townsfolk**: towns have an anonymous daytime crowd (3-7 people) dressed for the local trade - farmers in
+  Brackenford, miners in Cinderdeep, smiths in Hammerlee, traders and dockhands in Saltmarket, mages in
+  Glimmerfen, clan warriors in Thornhollow - with each town's racial mix. They can be greeted and, like
+  everyone, attacked.
+- **Building blocks** (`wardrobe.py`): 10 hairstyles, 4 beards, 9 kinds of headwear, 8 outfits, capes,
+  belts, 9 accessories, stout/slim builds and tall/short heights. All are drawn per animation frame,
+  so every combination has the full set of animations: walk, run, three attack styles, hit, death and cast.
+- **Enemies**: humanoid enemies get a fresh variant for each spawn within their role (hooded or bandana'd
+  cutthroats, feather-capped archers with quivers, Hollow soldiers in grey tabards, caped captains, painted
+  Murrok raiders in furs and horns). Husks are one of four pack skeletons (plain, hooded rogue, armoured
+  warrior, robed mage). Creatures get marking variants (saddle-backed or pale wolves, spined or spotted
+  skitterers, striped or spiked wurms, mossy or crystal-studded brutes, mushroom-capped bog lurkers),
+  natural creatures take on a little of their region's colours, golems come in three mineral hues, and
+  elite/named monsters are drawn half again as large with capes and horns.
+
 ## Violence against anyone (universal targeting)
 
 Every living character can be attacked: enemies, wildlife, townsfolk, shopkeepers, faction leaders,

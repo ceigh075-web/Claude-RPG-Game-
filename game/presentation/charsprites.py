@@ -13,7 +13,7 @@ import math
 
 import pygame
 
-from . import assets
+from . import assets, wardrobe
 
 BODY = "Entities/Characters/Body_A/Animations/"
 ANIMS = {  # name: (folder, file stem, frames, up-file override)
@@ -169,8 +169,16 @@ def _regions(body):
     blobs = sorted(_blobs(core), key=lambda b: min(p[1] for p in b))
     head_core = blobs[0] if blobs else set()
     head = _grow(head_core, body, 3)
+    # Upright frames: the whole head (forehead to chin) ends at the neck, a 0-3 px wide row ~12 rows down.
+    top = min(p[1] for p in body)
+    if head and min(p[1] for p in head) <= top + 2:
+        hx0, hx1 = min(p[0] for p in head), max(p[0] for p in head)
+        for y in range(top + 9, top + 15):
+            if sum(1 for p in body if p[1] == y and hx0 - 1 <= p[0] <= hx1 + 1) <= 3:
+                head = {p for p in body if p[1] < y and hx0 - 1 <= p[0] <= hx1 + 1}
+                break
     hb = max(p[1] for p in head) if head else 0
-    rest_blobs = [b for b in blobs[1:] if len(b) >= 3]
+    rest_blobs = [b - head for b in blobs[1:] if len(b - head) >= 3]
     torso_core = max(rest_blobs, key=len) if rest_blobs else set()
     torso = _grow(torso_core, body - head, 2)
     if torso:
@@ -292,6 +300,9 @@ def _paint(look, info, d):
                 put(p, hair)
         # race features
         _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
+    eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}
+    out = wardrobe.apply(out, src, look, R, d, eye_px)
+    out = wardrobe.reshape(out, look, FOOT_Y)
     smear = None
     if info.smear is not None:
         smear = info.smear.copy()

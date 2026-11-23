@@ -111,7 +111,7 @@ Writes go to a temp file then `os.replace` for atomic saves.
 | local_ai (dialogue) | `client`, `context`, `personality`, `actions` (whitelist bridge), `dialogue` (engine: thread does HTTP only), `fallback` |
 | world | `worldmap`, `mapgen`, `travel`, `effects`, `weather` |
 | gameplay | `entity`, `interactions`, `npcs`, `combat` (runtime), `enemy_ai`, `companion_ai`, `bystander_ai` |
-| presentation | `art` (procedural fallback), `assets` (pack sprite manifest), `charsprites` (humanoid rig compositor), `weapons_art`, `animator`, `creatures`, `visuals` (gameplay → look/weapon glue), `vfx` (spell & combat effects), `env` (ground, water, buildings, props, decor), `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
+| presentation | `art` (procedural fallback), `assets` (pack sprite manifest), `charsprites` (humanoid rig compositor), `wardrobe` (hair, clothes, hats, accessories, builds), `looks` (NPC identities, townsfolk and enemy variants), `weapons_art`, `animator`, `creatures`, `visuals` (gameplay → look/weapon glue), `vfx` (spell & combat effects), `env` (ground, water, buildings, props, decor), `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
 
 **Daily tick order** (`set_system/daily.py`): companion bonds → relationship neglect → world events
 (expiry, jobs, Hollow, territory, honours, festivals, a new event) → base (construction, research,

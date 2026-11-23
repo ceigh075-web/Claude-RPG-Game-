@@ -29,13 +29,89 @@ def _outline(s):
     return out
 
 
-def frame(shape, color, anim, idx):
-    """Surface for a creature pose (cached)."""
-    key = (shape, tuple(color), anim, idx)
+VARIANTS = {"beast": [None, "saddle", "pale", "saddle"], "bug": [None, "spikes", "spots"],
+            "worm": [None, "stripes", "spikes"], "brute": [None, "moss", "crystals"], "bog": [None, "mushrooms", "moss"],
+            "crystal": [None, "spikes"], "dummy": [None]}
+
+
+def frame(shape, color, anim, idx, variant=0):
+    """Surface for a creature pose (cached). `variant` adds markings so a pack never looks cloned."""
+    marks = VARIANTS.get(shape, [None])[variant % len(VARIANTS.get(shape, [None]))]
+    if shape == "beast" and sum(color) > 600:
+        marks = "frost"               # ice wolves always bristle with frost
+    key = (shape, tuple(color), anim, idx, marks)
     if key not in _cache:
         fn = DRAW.get(shape, _wolf)
-        _cache[key] = _outline(fn(tuple(color), anim, idx))
+        body = fn(tuple(color), anim, idx)
+        if marks and not (anim == "death" and idx >= 3):
+            _markings(body, marks, tuple(color))
+        _cache[key] = _outline(body)
     return _cache[key]
+
+
+def _markings(s, marks, col):
+    w, h = s.get_size()
+    r = s.get_bounding_rect()
+    if r.w == 0:
+        return
+    tops = {}
+    for x in range(r.x, r.right):
+        for y in range(r.y, r.bottom):
+            if s.get_at((x, y)).a:
+                tops[x] = y
+                break
+    dark, light = _shade(col, 0.55), _shade(col, 1.45)
+    if marks == "saddle":                       # dark back stripe
+        for x, y0 in tops.items():
+            if r.x + r.w * 0.15 < x < r.x + r.w * 0.7:
+                for y in range(y0, min(y0 + 3, h)):
+                    if s.get_at((x, y)).a:
+                        s.set_at((x, y), dark)
+    elif marks == "pale":                       # light underside, chest and muzzle
+        for x in range(r.x, r.right):
+            n = 0
+            for y in range(int(r.y + r.h * 0.7), r.y, -1):
+                c = s.get_at((x, y))
+                if c.a and sum(c[:3]) > 90:
+                    s.set_at((x, y), light)
+                    n += 1
+                    if n >= 2:
+                        break
+        for x in range(r.right - 6, r.right):        # muzzle
+            for y in range(r.y, r.y + r.h // 2):
+                c = s.get_at((x, y))
+                if c.a and sum(c[:3]) > 90 and (x + y) % 2:
+                    s.set_at((x, y), light)
+    elif marks == "stripes":
+        for x, y0 in tops.items():
+            if (x // 3) % 2 == 0:
+                for y in range(y0, r.bottom):
+                    c = s.get_at((x, y))
+                    if c.a and sum(c[:3]) > 60:
+                        s.set_at((x, y), _shade(tuple(c[:3]), 0.75))
+    elif marks in ("spikes", "frost", "crystals"):
+        colr = {"spikes": dark, "frost": (235, 248, 255), "crystals": (150, 230, 240)}[marks]
+        step = 3 if marks != "crystals" else 5
+        for x, y0 in tops.items():
+            if (x - r.x) % step == 1 and r.x + 2 < x < r.right - 3:
+                for k in range(2 if marks != "crystals" else 3):
+                    if y0 - 1 - k >= 0:
+                        s.set_at((x, y0 - 1 - k), colr)
+    elif marks == "spots":
+        for i, (x, y0) in enumerate(sorted(tops.items())):
+            if i % 4 == 2 and y0 + 2 < h and s.get_at((x, y0 + 2)).a:
+                s.set_at((x, y0 + 2), light)
+    elif marks in ("moss", "mushrooms"):
+        for i, (x, y0) in enumerate(sorted(tops.items())):
+            if marks == "moss" and i % 5 in (1, 2):
+                s.set_at((x, y0), (70, 130, 60))
+                if y0 + 1 < h:
+                    s.set_at((x, y0 + 1), (60, 110, 50))
+            elif marks == "mushrooms" and i % 7 == 3 and y0 >= 2:
+                s.set_at((x, y0 - 1), (200, 50, 50))
+                s.set_at((x - 1, y0 - 1), (200, 50, 50))
+                s.set_at((x + 1, y0 - 1), (230, 220, 200))
+                s.set_at((x, y0 - 2), (220, 60, 60))
 
 
 FRAMES = {"idle": 4, "move": 4, "windup": 2, "strike": 2, "hit": 2, "death": 4}
@@ -181,11 +257,21 @@ def _brute(col, anim, idx, kind="stone"):
     ox = 8 + p["lean"] // 2
     by = 12 + p["bob"]
     if p["lie"] >= 1:
-        pygame.draw.ellipse(s, col, (4, 26, 30, 11))
-        pygame.draw.ellipse(s, dark, (8, 30, 22, 6))
-        if kind == "crystal":
-            for k in range(3):
-                pygame.draw.polygon(s, light, [(10 + k * 7, 28), (12 + k * 7, 22), (14 + k * 7, 28)])
+        if kind == "stone":            # collapses into a heap of boulders
+            for bx, by, r in ((10, 32, 6), (20, 30, 7), (29, 33, 5), (15, 26, 4), (25, 25, 4)):
+                pygame.draw.circle(s, col, (bx, by), r)
+                pygame.draw.circle(s, light, (bx - 1, by - 2), max(1, r // 3))
+                pygame.draw.line(s, dark, (bx - r + 2, by + 1), (bx + r - 2, by + 1))
+        elif kind == "bog":            # sinks into a mossy mound and a puddle
+            pygame.draw.ellipse(s, (50, 80, 60), (2, 31, 36, 8))
+            pygame.draw.ellipse(s, col, (8, 24, 24, 12))
+            for mx in (12, 19, 26):
+                pygame.draw.circle(s, (70, 120, 60), (mx, 26), 2)
+            s.set_at((15, 33), (120, 170, 140))
+        else:                          # shatters into shards
+            for k, (x0, h) in enumerate(((6, 6), (12, 9), (19, 7), (26, 10), (32, 5))):
+                pygame.draw.polygon(s, light if k % 2 else col, [(x0, 36), (x0 + 2, 36 - h), (x0 + 4, 36)])
+            pygame.draw.ellipse(s, dark, (4, 35, 32, 4))
         return s
     raise_ = {"windup": 8 + 2 * idx, "strike": -4, "idle": 0, "move": 0, "hit": 2}.get(anim, 0)
     # legs
@@ -288,15 +374,36 @@ def creature_anim(c):
 
 
 # ----------------------------------------------------------------------------- husk = pack skeleton
-def skeleton(anim, idx):
+SKELETONS = ["Skeleton - Base", "Skeleton - Rogue", "Skeleton - Warrior", "Skeleton - Base", "Skeleton - Mage"]
+_mob_cache = {}
+
+
+def mob_frames(kit, anim):
+    """(frames, foot_y) for a pack mob animation. Frame size = sheet height; feet = lowest opaque row."""
+    key = (kit, anim)
+    if key not in _mob_cache:
+        folder = {"idle": "Idle", "move": "Run", "death": "Death"}[anim]
+        rel = f"Entities/Mobs/Skeleton Crew/{kit}/{folder}/{folder}-Sheet.png"
+        sheet = assets.image(rel)
+        h = sheet.get_height()
+        fr = assets.frames(rel, h, h)
+        foot = max(f.get_bounding_rect().bottom for f in fr) - 1
+        _mob_cache[key] = (fr, foot)
+    return _mob_cache[key]
+
+
+def skeleton(anim, idx, variant=0):
+    """(frame, width, foot_y) for a husk; variant picks base / rogue / warrior / mage skeleton."""
+    kit = SKELETONS[variant % len(SKELETONS)]
     try:
-        if anim == "death":
-            fr = assets.frames(SKEL + "Death/Death-Sheet.png", 64, 64)
-            return fr[min(len(fr) - 1, idx * 3)], 64
-        if anim == "move":
-            fr = assets.frames(SKEL + "Run/Run-Sheet.png", 64, 64)
-            return fr[idx % len(fr)], 64
-        fr = assets.frames(SKEL + "Idle/Idle-Sheet.png", 32, 32)
-        return fr[idx % len(fr)], 32
+        fr, foot = mob_frames(kit, anim)
     except (FileNotFoundError, pygame.error):
-        return None, 0
+        try:
+            fr, foot = mob_frames(SKELETONS[0], anim)
+        except (FileNotFoundError, pygame.error):
+            return None, 0, 0
+    if anim == "death":
+        k = min(len(fr) - 1, idx * len(fr) // 8)
+        return fr[k], fr[k].get_width(), foot
+    f = fr[idx % len(fr)]
+    return f, f.get_width(), foot

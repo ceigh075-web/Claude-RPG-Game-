@@ -726,22 +726,13 @@ def _outline(surf):
     return out
 
 
-def random_look(race_data, rng, race_id):
-    return {
-        "race": race_id,
-        "skin": list(rng.choice(race_data["skin"])),
-        "hair": list(rng.choice(race_data["hair"])),
-        "shirt": [rng.randint(60, 200), rng.randint(60, 200), rng.randint(60, 200)],
-        "pants": [rng.randint(40, 110), rng.randint(40, 100), rng.randint(40, 90)],
-        "hair_style": rng.randint(0, 2),
-    }
+def random_look(race_data, rng, race_id, role="citizen"):
+    """A varied look (hair, clothes, accessories) for a new character or an anonymous townsperson."""
+    from .looks import build
+    return build(rng, race_data, race_id, role, None, rng.randint(18, 60), "they/them")
 
 
 def npc_look(data, npc):
-    rng = stable_rng("look", npc["id"])
-    look = random_look(data.races[npc["race"]], rng, npc["race"])
-    if npc.get("faction") and npc["faction"] in data.factions:
-        look["shirt"] = [min(255, int(c * 0.9 + 20)) for c in data.factions[npc["faction"]]["color"]]
-    if npc.get("pronouns") == "she/her" and rng.random() < 0.6:
-        look["hair_style"] = 1
-    return look
+    """Named NPCs: an identity built from occupation, faction, age, pronouns and personality (see looks.py)."""
+    from .looks import npc_identity
+    return npc_identity(data, npc)
