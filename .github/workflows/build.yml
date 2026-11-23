@@ -32,6 +32,7 @@ jobs:
           python tools/autoplay.py out/autoplay
           python tools/combat_demo.py out/combat
           python tools/ui_smoke.py out/ui
+          python tools/fuzz.py 3 1
 
   build:
     needs: test

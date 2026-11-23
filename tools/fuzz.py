@@ -6,6 +6,7 @@ from loot screens).
 """
 import os
 import random
+import tempfile
 import sys
 import traceback
 
@@ -91,7 +92,7 @@ def main():
     secs = float(sys.argv[1]) if len(sys.argv) > 1 else 6
     seed = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     rng = random.Random(seed)
-    g = Game(headless=True, save_dir=os.path.join("/tmp", f"fuzz_saves_{seed}"))
+    g = Game(headless=True, save_dir=os.path.join(tempfile.gettempdir(), f"fuzz_saves_{seed}"))
     g.new_game("Fuzz", "sylth", {"race": "sylth"}, "they/them")
     prepare(g)
     st = g.state

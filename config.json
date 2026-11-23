@@ -3,13 +3,13 @@
     "enabled": true,
     "backend": "ollama",
     "endpoint": "http://localhost:11434",
-    "model": "llama3.2:3b",
+    "model": "llama3.2:3baaeaxpzssdr",
     "timeout_seconds": 20,
     "temperature": 0.8,
     "max_tokens": 220
   },
   "audio": {
-    "master": 0.6000000000000001,
+    "master": 0.8,
     "sfx": 0.8,
     "music": 0.7999999999999999
   }

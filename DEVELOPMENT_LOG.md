@@ -32,6 +32,32 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Quality of life update | ✅ Done |
 | Major combat overhaul | ✅ Done |
 | Major RPG overhaul (spells, creator, visuals, looting, prisons) | ✅ Done |
+| Bug fixes & visual consistency | ✅ Done |
+
+## Session 10 — Bug fixes and visual consistency
+
+- **Spell book crash** (`KeyError: 'ash#0#1.5'`): `spells.compute()` stored the visual style key (sub-element or
+  element id, plus `#hue#intensity` for colour variants) in the field called `sub`, and the spell book looked
+  that up as a sub-element. Any variant spell, and any spell without a sub-element, crashed the detail view.
+  Fixed at the source: `sub` is the real sub-element (or None), `style` is the VFX key; combat and VFX read
+  `style`; display uses `spells.source_name()`.
+- Saved spells from older rule sets are now repaired (`spells.repair`): mismatched sub-elements move to their
+  element, invalid effects/behaviours/tiers reset, sliders clamp. Changes are shown after loading instead of the
+  spell silently disappearing. `normalize` also fills missing movement/effect/tier.
+- `tests/test_spell_matrix.py`: every valid element × sub-element × movement × effect × behaviour combination
+  (thousands) computes and describes; every source with colour variants draws in the spell book and every
+  designer field; every source saves, loads and casts; every movement casts; broken old spells are repaired.
+- `tools/fuzz.py`: random keyboard and mouse input on every screen and in the world (town, wilds) with
+  invariants (no negative counts or gold, mana and health in range). Runs in CI. Clean on several seeds;
+  pyflakes clean; every asset reference resolves.
+- Icons: one fantasy icon sheet for all interface icons (items with ore-tier recolouring, elements,
+  sub-elements, effects, attributes and skills, actions). Shown in inventory, item cards, shops, crafting,
+  storage, transfer, loot, spell book, designer, HUD (weapon and spells), the E prompt, dialogue choices,
+  stranger and Tab menus, and job markers on the world map; towns get pixel-art house markers. Dropped loot
+  uses the same icons reduced to world scale.
+- Characters: anime-style fringe and side locks for every hairstyle, mouths with expressions (neutral, smile,
+  grin, stern, sad) chosen from NPC personality and selectable in the creator, eye shine kept; cast pose now
+  spans the whole cast.
 
 ## Session 9 — Major RPG overhaul: spell customization, character creator, visuals, looting, prisons
 

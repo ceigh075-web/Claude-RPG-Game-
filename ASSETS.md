@@ -2,6 +2,20 @@
 
 Kindred Roads' code, data and most effects are original. The only third-party art is listed here.
 
+## Shikashi's Fantasy Icons Pack
+
+| | |
+|---|---|
+| Author | Shikashi (icons partly based on designs from game-icons.net, CC BY 3.0: credit to the game-icons.net contributors) |
+| Source | Supplied by the project owner as `Shikashis_Fantasy_Icons_Pack.zip` |
+| Licence | Pack text: "You can use and remix these icons for commercial games and projects." |
+| Location | `assets/icons/fantasy_icons.png` (the transparent 32x32 sheet only) |
+| Used for | Every interface icon: items, ore-tier gear (recoloured per metal), elements, sub-elements, spell effects, stats and skills, actions (talk, trade, attack, loot, steal, mine, forge...), quests on the world map. Dropped loot uses the same icons reduced to 16 px |
+
+Packs supplied but **not** used: *FREE Adventurer 2D Pixel Art* (one fixed hero design, which would clash with the
+customizable characters; used only as a style reference for eyes and hair), *FreePixelFood*, *Pixel Mart* and
+*Ghostpixxells pixelfood* (no licence text included, and mostly modern foods; the icon pack covers the game's foods).
+
 ## Pixel Crawler – Free Pack (Exterior 0.1)
 
 | | |
