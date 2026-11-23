@@ -136,3 +136,23 @@ class TestSpellMatrix(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestIcons(unittest.TestCase):
+    def test_every_item_element_effect_and_action_has_an_icon(self):
+        pygame.init()
+        from game.presentation import icons
+        for item in list(DATA.items) + ["marks"]:
+            img = icons.ui_icon(DATA, item)
+            self.assertEqual(img.get_size(), (32, 32), item)
+            self.assertGreater(img.get_bounding_rect().w, 4, item)
+            self.assertIsNotNone(icons.icon(DATA, item))
+        for el in M["elements"]:
+            self.assertIsNotNone(icons.named(icons.ELEMENT_CELL, el), el)
+        for sub in M["subelements"]:
+            self.assertIsNotNone(icons.named(icons.SUB_CELL, sub), sub)
+        for stat in M["stats"]:
+            self.assertIsNotNone(icons.named(icons.EFFECT_CELL, stat), stat)
+        from game.set_system.stats import ATTRIBUTES, SKILLS
+        for k in list(ATTRIBUTES) + list(SKILLS):
+            self.assertIsNotNone(icons.named(icons.STAT_CELL, k), k)

@@ -302,6 +302,9 @@ def _paint(look, info, d):
                     put(p, tuple(min(255, int(v * 1.45 + 30)) for v in hair))
                 else:
                     put(p, hair)
+        if cap is None and style != 3:
+            _bangs(out, src, put, head, d, style, hair, hx0, hx1, hy0, hy1, rows, eye_row)
+        _mouth(out, src, head, d, hx0, hx1, hy1, skin, look)
         # race features
         _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
     eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}
@@ -316,6 +319,87 @@ def _paint(look, info, d):
         if tintc:
             smear.fill((*tintc, 255), special_flags=pygame.BLEND_RGBA_MULT)
     return out, smear
+
+
+LONG_STYLES = (1, 4, 5, 7, 8)     # long, ponytail, bun, curly, braids: side locks reach the jaw
+EXPRESSIONS = ("neutral", "smile", "grin", "stern", "sad")
+
+
+def _bangs(out, src, put, head, d, style, hair, hx0, hx1, hy0, hy1, rows, eye_row):
+    """Anime-style fringe: a jagged row of locks over the forehead and side locks framing the face."""
+    if d == "up":
+        return
+    er = eye_row if eye_row is not None else hy0 + 8
+    brow = er - 2                               # keep the brows and eyes clear
+    top = hy0 + rows
+    pattern = {0: (2, 1, 2, 1), 1: (2, 2, 1, 2), 2: (1, 0, 1, 0), 4: (2, 1, 1, 2), 5: (1, 2, 1, 2), 6: (0, 0, 0, 0),
+               7: (2, 1, 2, 2), 8: (1, 2, 2, 1), 9: (2, 1, 3, 1)}.get(style, (2, 1, 2, 1))
+    deep = tuple(int(c * 0.78) for c in hair)
+
+    def paint(x, y, col):
+        if (x, y) in head and y < brow:
+            c = src.get_at((x, y))
+            if (c.r, c.g, c.b) != (0, 0, 0):
+                put((x, y), col)
+
+    if d == "down":
+        for i, x in enumerate(range(hx0 + 1, hx1)):
+            depth = pattern[i % len(pattern)]
+            for k in range(depth):
+                paint(x, top + k, hair if k < depth - 1 else deep)
+        if style not in (2, 6):
+            lock_end = er + 1 if style in LONG_STYLES else er - 1
+            for y in range(top, lock_end + 1):
+                for x in (hx0 + 1, hx1 - 1):
+                    if (x, y) in head:
+                        put((x, y), deep if y > er - 2 else hair)
+    else:   # side: fringe over the brow at the front of the face (side frames face right)
+        cx = (hx0 + hx1) // 2
+        for i, x in enumerate(range(cx, hx1)):
+            depth = pattern[i % len(pattern)]
+            for k in range(depth):
+                paint(x, top + k, hair if k < depth - 1 else deep)
+
+
+def _mouth(out, src, head, d, hx0, hx1, hy1, skin, look):
+    """A tiny mouth gives the face an expression (look key 'expression')."""
+    if d == "up":
+        return
+    expr = look.get("expression", "neutral")
+    lip = (196, 112, 108)
+    dark = tuple(int(c * 0.62) for c in skin)
+    y = hy1 - 1
+
+    def px(x, yy, col):
+        if (x, yy) in head:
+            c = src.get_at((x, yy))
+            if (c.r, c.g, c.b) not in ((0, 0, 0), EYE):
+                out.set_at((x, yy), (*col, 255))
+
+    if d == "down":
+        cx = (hx0 + hx1) // 2
+        if expr == "smile":
+            px(cx, y, lip)
+            px(cx + 1, y, lip)
+        elif expr == "grin":
+            px(cx, y, (250, 245, 240))
+            px(cx + 1, y, (250, 245, 240))
+            px(cx - 1, y - 1, dark)
+            px(cx + 2, y - 1, dark)
+        elif expr == "stern":
+            px(cx, y, dark)
+            px(cx + 1, y, dark)
+            px(cx - 1, y, dark)
+        elif expr == "sad":
+            px(cx, y, dark)
+            px(cx + 1, y, dark)
+            px(cx - 1, y + 1, dark)
+            px(cx + 2, y + 1, dark)
+        else:
+            px(cx, y, dark)
+    else:
+        x = hx1 - 2
+        px(x, y, lip if expr in ("smile", "grin") else dark)
 
 
 FACE_MARKS = ("none", "freckles", "blush", "scar", "beauty_mark", "tattoo")

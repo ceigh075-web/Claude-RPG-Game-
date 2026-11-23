@@ -52,7 +52,10 @@ def choose(a, t):
     if st == "draw":
         return "pierce", 1 + int(t * 6) % 2
     if st == "cast":
-        return "crush", min(3, int(a.state_t / 0.07))
+        # raise-and-release over the whole cast: frames 1-4 of the overhead swing, then hold the release
+        from ..gameplay.combat import CAST_TIME
+        dur = max(0.05, CAST_TIME)
+        return "crush", 1 + min(3, int(3.99 * a.state_t / dur))
     if getattr(a, "blocking", False):
         return "pierce", 0
     if st == "dodge":

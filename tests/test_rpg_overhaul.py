@@ -260,6 +260,7 @@ class TestCharacterCreator(unittest.TestCase):
         base = {"race": "human", "skin": [200, 160, 120], "hair": [40, 30, 20], "shirt": [90, 60, 120],
                 "pants": [50, 40, 40]}
         looks = [dict(base, face=f, eye=[40, 90, 160]) for f in creator.FACE_MARKS]
+        looks += [dict(base, expression=e, hair_style=k % 10) for k, e in enumerate(charsprites.EXPRESSIONS)]
         looks += [dict(base, hat=h, hat_col=[90, 60, 40]) for h in creator.HATS if h]
         looks += [dict(base, outfit=o, outfit_col=[120, 40, 40], cape=[60, 60, 120]) for o in creator.OUTFITS]
         looks += [dict(base, hair_style=i, beard=i % 5, build="stout", height="tall") for i in range(10)]

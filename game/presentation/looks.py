@@ -218,6 +218,17 @@ def build(rng, race_data, race_id, role="citizen", faction=None, age=30, pronoun
             look["cape"] = list(fc)
     # personality touches
     p = personality or {}
+    if p:
+        if p.get("aggression", 5) >= 7:
+            look["expression"] = "stern"
+        elif p.get("friendliness", 5) >= 8 and p.get("confidence", 5) >= 7:
+            look["expression"] = "grin"
+        elif p.get("friendliness", 5) >= 6:
+            look["expression"] = "smile"
+        elif p.get("friendliness", 5) <= 3:
+            look["expression"] = "sad" if p.get("confidence", 5) <= 4 else "stern"
+    else:
+        look["expression"] = rng.choice(("neutral", "neutral", "smile", "smile", "stern", "grin"))
     if p.get("greed", 5) >= 7 and "necklace" not in look["acc"]:
         look["acc"].append("necklace")
     if p.get("sociability", 5) >= 8 and rng.random() < 0.5:

@@ -81,6 +81,7 @@ class CharacterCreatorScene(Scene):
             ("Body", "Height", "cycle", "height", HEIGHTS),
             ("Face", "Eye colour", "cycle", "eye", EYES),
             ("Face", "Eye style", "cycle", "eye_style", [1, 0]),
+            ("Face", "Expression", "cycle", "expression", list(charsprites.EXPRESSIONS)),
             ("Face", "Face mark", "cycle", "face", FACE_MARKS),
             ("Face", "Face paint", "cycle", "warpaint", PAINT),
             ("Face", "Facial hair", "cycle", "beard", list(range(len(BEARDS)))),
@@ -108,6 +109,8 @@ class CharacterCreatorScene(Scene):
             return 1 if v is None else v
         if key == "face":
             return v or "none"
+        if key == "expression":
+            return v or "neutral"
         if key in ("beard", "hair_style"):
             return v or 0
         return tuple(v) if isinstance(v, list) else v
