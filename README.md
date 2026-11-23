@@ -19,8 +19,8 @@ Oregon-Trail-style text journey, then explore, fight, gather and talk in real-ti
 ## Download & play
 
 - **Windows .exe:** open the repository's **Releases** page (or the latest **Actions → Build** run) and
-  download `KindredRoads-windows.zip`. Unzip it and run `KindredRoads.exe`. Builds for Linux and macOS
-  are there too. See [PLAYING.md](PLAYING.md).
+  download `KindredRoads-windows.zip`. Unzip it and run `KindredRoads.exe`. A Linux build is there too
+  (macOS players: run from source). See [PLAYING.md](PLAYING.md).
 - **From source (any OS, Python 3.11+):** double-click `Play (Windows).bat`, or run `./play.sh` on
   Linux/macOS, or:
 
@@ -41,8 +41,7 @@ dist/KindredRoads --selftest
 ```
 
 PyInstaller builds for the OS it runs on, so build the `.exe` on Windows. GitHub Actions
-(`.github/workflows/build.yml`) builds and self-tests Windows, Linux and macOS executables on every push.
-Pushing a tag like `v1.0.0` publishes them as a Release.
+(`.github/workflows/build.yml`) builds and self-tests Windows and Linux executables and publishes them as a Release on every push to `main`.
 
 ## Controls
 
