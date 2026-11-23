@@ -683,9 +683,26 @@ class Art:
         if t == "well":
             return self._make_obj("well", 0, "grassland", None)
         wall_h = h // 2
-        pygame.draw.rect(s, col, (1, h - wall_h, w - 2, wall_h))
-        pygame.draw.polygon(s, roof if t != "research" else (70, 60, 120), [(0, h - wall_h), (w // 2, 0 if t != "research" else 4), (w, h - wall_h)])
+        textured = False
+        try:
+            from . import env
+            if env.enabled():
+                # same textures as town buildings: plank/plaster facade under a shingled or thatched roof
+                wstyle = {"research": "plaster2", "trading": "plaster", "workshop": "vplank"}.get(t, "plank")
+                strip = env._wall_strip(wstyle, None)
+                s.blit(strip, (0, h - wall_h), (0, 32 - wall_h, w, wall_h))
+                rcol = {"research": (90, 70, 150), "trading": (150, 60, 50), "bunkhouse": (120, 90, 60)}.get(t, roof)
+                rs = env._roof(w, h - wall_h - 3, rcol, "thatch" if t in ("bunkhouse", "storage") else "shingle", hash(t) & 0xff)
+                s.blit(rs, (0, 0))
+                pygame.draw.rect(s, (16, 12, 14), (0, h - wall_h, w, wall_h), 1)
+                textured = True
+        except Exception:
+            textured = False
+        if not textured:
+            pygame.draw.rect(s, col, (1, h - wall_h, w - 2, wall_h))
+            pygame.draw.polygon(s, roof if t != "research" else (70, 60, 120), [(0, h - wall_h), (w // 2, 0 if t != "research" else 4), (w, h - wall_h)])
         pygame.draw.rect(s, dark, (w // 2 - 2, h - 7, 5, 7))
+        pygame.draw.rect(s, (16, 12, 14), (w // 2 - 2, h - 7, 5, 7), 1)
         if t == "trading":
             for x in range(0, w, 6):
                 pygame.draw.rect(s, (200, 60, 60) if (x // 6) % 2 else (240, 230, 210), (x, h - wall_h - 2, 6, 3))
