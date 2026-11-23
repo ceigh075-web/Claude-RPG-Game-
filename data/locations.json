@@ -1,244 +1,1294 @@
 {
-  "towns": [
-    {
-      "id": "brackenford", "name": "Brackenford", "pos": [40, 34], "biome": "grassland",
-      "specialty": "farming", "faction": "crown", "population": 140,
-      "description": "A sleepy farming village of hedgerows and grain sheds where the Kingsroad meets the river ford.",
-      "buildings": ["inn", "provisioner", "house", "house", "farmhouse", "barn", "property_for_sale", "well"],
-      "shops": ["provisioner"],
-      "resources": ["grain", "berries", "fiber", "wood"],
-      "activities": ["Farm work for pay", "Cheapest food in the region", "Buy your first house"],
-      "unique": ["Starting village", "Harvest festival in Harvestmoon"],
-      "palette": {"roof": [150, 70, 50], "wall": [196, 170, 120]}
-    },
-    {
-      "id": "velmora", "name": "Velmora", "pos": [52, 26], "biome": "grassland",
-      "specialty": "military", "faction": "crown", "population": 900,
-      "description": "The walled capital of the Crown. Banners, barracks and a bounty board that is never empty.",
-      "buildings": ["barracks", "inn", "provisioner", "armorer", "palace", "bounty_board", "house", "house", "property_for_sale", "well", "temple"],
-      "shops": ["provisioner", "armorer"],
-      "resources": ["bread", "leather"],
-      "activities": ["Crown bounties", "Armor trade", "Petition the Queen"],
-      "unique": ["Royal court", "Crown bounty board"],
-      "palette": {"roof": [60, 80, 140], "wall": [200, 200, 205]}
-    },
-    {
-      "id": "cinderdeep", "name": "Cinderdeep", "pos": [34, 10], "biome": "mountain",
-      "specialty": "mining", "faction": "ironhold", "population": 260,
-      "description": "Soot-black terraces cut into the mountainside, ringing with picks day and night.",
-      "buildings": ["mine_entrance", "provisioner", "assayer", "inn", "house", "forge", "well"],
-      "shops": ["provisioner", "assayer"],
-      "resources": ["rustite_ore", "greyvein_ore", "stone"],
-      "activities": ["Paid mine shifts", "Sell ore at the assayer", "Smelt ore"],
-      "unique": ["Mine shift work", "Best ore prices"],
-      "palette": {"roof": [70, 60, 60], "wall": [120, 110, 100]}
-    },
-    {
-      "id": "hammerlee", "name": "Hammerlee", "pos": [58, 9], "biome": "hills",
-      "specialty": "crafting", "faction": "ironhold", "population": 380,
-      "description": "Seat of the Ironhold Guild. Twenty chimneys, one constant hammer-song.",
-      "buildings": ["guild_hall", "smithy", "forge", "workshop", "inn", "provisioner", "house", "property_for_sale", "well"],
-      "shops": ["smithy", "provisioner", "workshop"],
-      "resources": ["leather", "wood"],
-      "activities": ["Commission weapons", "Learn recipes", "Guild contracts"],
-      "unique": ["Master forge (all ore tiers)", "Weapon recipes"],
-      "palette": {"roof": [120, 50, 40], "wall": [150, 130, 110]}
-    },
-    {
-      "id": "saltmarket", "name": "Saltmarket", "pos": [12, 30], "biome": "coast",
-      "specialty": "trading", "faction": "caravans", "population": 620,
-      "description": "A loud harbor town of salt flats, warehouses and a market that never closes.",
-      "buildings": ["market", "warehouse", "inn", "provisioner", "general_store", "docks", "house", "property_for_sale", "well"],
-      "shops": ["general_store", "provisioner", "market"],
-      "resources": ["fish", "salt"],
-      "activities": ["Best buy/sell prices", "Caravan contracts", "Exotic goods"],
-      "unique": ["Caravan League hall", "Docks"],
-      "palette": {"roof": [40, 110, 120], "wall": [220, 210, 180]}
-    },
-    {
-      "id": "glimmerfen", "name": "Glimmerfen", "pos": [30, 52], "biome": "swamp",
-      "specialty": "magic", "faction": "ashen", "population": 210,
-      "description": "Stilt-houses over glowing water, around the leaning tower of the Ashen Circle.",
-      "buildings": ["mage_tower", "enchanter", "apothecary", "inn", "provisioner", "house", "well"],
-      "shops": ["enchanter", "apothecary", "provisioner"],
-      "resources": ["mirelight_herb", "mana_crystal"],
-      "activities": ["Spell tutoring", "Mana items", "Ashen Circle research"],
-      "unique": ["Spell scribing table", "Mana springs"],
-      "palette": {"roof": [80, 60, 120], "wall": [120, 140, 120]}
-    },
-    {
-      "id": "redwater", "name": "Redwater", "pos": [74, 30], "biome": "canyon",
-      "specialty": "mercenary", "faction": "none", "population": 330,
-      "description": "A rough town of red stone where sellswords drink, brawl and sign contracts.",
-      "buildings": ["arena", "bounty_board", "inn", "provisioner", "armorer", "house", "property_for_sale", "well"],
-      "shops": ["armorer", "provisioner"],
-      "resources": ["leather"],
-      "activities": ["Fighting pit", "Hire mercenaries", "Bounties"],
-      "unique": ["Fighting pit", "Mercenary hiring hall"],
-      "palette": {"roof": [160, 60, 40], "wall": [190, 120, 90]}
-    },
-    {
-      "id": "thornhollow", "name": "Thornhollow", "pos": [88, 14], "biome": "forest",
-      "specialty": "hunting", "faction": "thornblood", "population": 190,
-      "description": "Murrok longhouses wrapped in thorn palisades deep in the eastern woods.",
-      "buildings": ["longhouse", "shaman_hut", "provisioner", "tannery", "house", "well"],
-      "shops": ["provisioner", "tannery"],
-      "resources": ["hide", "meat", "thornwood"],
-      "activities": ["Hunting trials", "Hide trade", "Shaman's blessing"],
-      "unique": ["Clan moot", "Hunting trials"],
-      "palette": {"roof": [90, 70, 40], "wall": [110, 80, 50]}
-    },
-    {
-      "id": "duskreach", "name": "Duskreach", "pos": [80, 52], "biome": "moor",
-      "specialty": "frontier", "faction": "crown", "population": 120,
-      "description": "The last walled post before the ruined east. Scavengers, wardens and wary eyes.",
-      "buildings": ["watchtower", "scavenger_shop", "inn", "provisioner", "chapel", "house", "property_for_sale", "well"],
-      "shops": ["scavenger_shop", "provisioner"],
-      "resources": ["scrap"],
-      "activities": ["Buy relics and scrap", "Frontier patrols", "Expeditions east"],
-      "unique": ["Gateway to the Shattered Spire"],
-      "palette": {"roof": [70, 70, 80], "wall": [140, 130, 120]}
-    }
+ "towns": [
+  {
+   "id": "brackenford",
+   "name": "Brackenford",
+   "pos": [
+    40,
+    34
+   ],
+   "biome": "grassland",
+   "specialty": "farming",
+   "faction": "crown",
+   "population": 140,
+   "description": "A sleepy farming village of hedgerows and grain sheds where the Kingsroad meets the river ford.",
+   "buildings": [
+    "inn",
+    "provisioner",
+    "house",
+    "house",
+    "farmhouse",
+    "barn",
+    "property_for_sale",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "provisioner",
+    "outfitter"
+   ],
+   "resources": [
+    "grain",
+    "berries",
+    "fiber",
+    "wood"
+   ],
+   "activities": [
+    "Farm work for pay",
+    "Cheapest food in the region",
+    "Buy your first house"
+   ],
+   "unique": [
+    "Starting village",
+    "Harvest festival in Harvestmoon"
+   ],
+   "palette": {
+    "roof": [
+     150,
+     70,
+     50
+    ],
+    "wall": [
+     196,
+     170,
+     120
+    ]
+   }
+  },
+  {
+   "id": "velmora",
+   "name": "Velmora",
+   "pos": [
+    52,
+    26
+   ],
+   "biome": "grassland",
+   "specialty": "military",
+   "faction": "crown",
+   "population": 900,
+   "description": "The walled capital of the Crown. Banners, barracks and a bounty board that is never empty.",
+   "buildings": [
+    "barracks",
+    "inn",
+    "provisioner",
+    "armorer",
+    "palace",
+    "bounty_board",
+    "house",
+    "house",
+    "property_for_sale",
+    "well",
+    "temple"
+   ],
+   "shops": [
+    "provisioner",
+    "armorer"
+   ],
+   "resources": [
+    "bread",
+    "leather"
+   ],
+   "activities": [
+    "Crown bounties",
+    "Armor trade",
+    "Petition the Queen"
+   ],
+   "unique": [
+    "Royal court",
+    "Crown bounty board"
+   ],
+   "palette": {
+    "roof": [
+     60,
+     80,
+     140
+    ],
+    "wall": [
+     200,
+     200,
+     205
+    ]
+   }
+  },
+  {
+   "id": "cinderdeep",
+   "name": "Cinderdeep",
+   "pos": [
+    34,
+    10
+   ],
+   "biome": "mountain",
+   "specialty": "mining",
+   "faction": "ironhold",
+   "population": 260,
+   "description": "Soot-black terraces cut into the mountainside, ringing with picks day and night.",
+   "buildings": [
+    "mine_entrance",
+    "provisioner",
+    "assayer",
+    "inn",
+    "house",
+    "forge",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "provisioner",
+    "assayer",
+    "outfitter"
+   ],
+   "resources": [
+    "rustite_ore",
+    "greyvein_ore",
+    "stone"
+   ],
+   "activities": [
+    "Paid mine shifts",
+    "Sell ore at the assayer",
+    "Smelt ore"
+   ],
+   "unique": [
+    "Mine shift work",
+    "Best ore prices"
+   ],
+   "palette": {
+    "roof": [
+     70,
+     60,
+     60
+    ],
+    "wall": [
+     120,
+     110,
+     100
+    ]
+   }
+  },
+  {
+   "id": "hammerlee",
+   "name": "Hammerlee",
+   "pos": [
+    58,
+    9
+   ],
+   "biome": "hills",
+   "specialty": "crafting",
+   "faction": "ironhold",
+   "population": 380,
+   "description": "Seat of the Ironhold Guild. Twenty chimneys, one constant hammer-song.",
+   "buildings": [
+    "guild_hall",
+    "smithy",
+    "forge",
+    "workshop",
+    "inn",
+    "provisioner",
+    "house",
+    "property_for_sale",
+    "well"
+   ],
+   "shops": [
+    "smithy",
+    "provisioner",
+    "workshop"
+   ],
+   "resources": [
+    "leather",
+    "wood"
+   ],
+   "activities": [
+    "Commission weapons",
+    "Learn recipes",
+    "Guild contracts"
+   ],
+   "unique": [
+    "Master forge (all ore tiers)",
+    "Weapon recipes"
+   ],
+   "palette": {
+    "roof": [
+     120,
+     50,
+     40
+    ],
+    "wall": [
+     150,
+     130,
+     110
+    ]
+   }
+  },
+  {
+   "id": "saltmarket",
+   "name": "Saltmarket",
+   "pos": [
+    12,
+    30
+   ],
+   "biome": "coast",
+   "specialty": "trading",
+   "faction": "caravans",
+   "population": 620,
+   "description": "A loud harbor town of salt flats, warehouses and a market that never closes.",
+   "buildings": [
+    "market",
+    "warehouse",
+    "inn",
+    "provisioner",
+    "general_store",
+    "docks",
+    "house",
+    "property_for_sale",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "general_store",
+    "provisioner",
+    "market",
+    "outfitter"
+   ],
+   "resources": [
+    "fish",
+    "salt"
+   ],
+   "activities": [
+    "Best buy/sell prices",
+    "Caravan contracts",
+    "Exotic goods"
+   ],
+   "unique": [
+    "Caravan League hall",
+    "Docks"
+   ],
+   "palette": {
+    "roof": [
+     40,
+     110,
+     120
+    ],
+    "wall": [
+     220,
+     210,
+     180
+    ]
+   }
+  },
+  {
+   "id": "glimmerfen",
+   "name": "Glimmerfen",
+   "pos": [
+    30,
+    52
+   ],
+   "biome": "swamp",
+   "specialty": "magic",
+   "faction": "ashen",
+   "population": 210,
+   "description": "Stilt-houses over glowing water, around the leaning tower of the Ashen Circle.",
+   "buildings": [
+    "mage_tower",
+    "enchanter",
+    "apothecary",
+    "inn",
+    "provisioner",
+    "house",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "enchanter",
+    "apothecary",
+    "provisioner",
+    "outfitter"
+   ],
+   "resources": [
+    "mirelight_herb",
+    "mana_crystal"
+   ],
+   "activities": [
+    "Spell tutoring",
+    "Mana items",
+    "Ashen Circle research"
+   ],
+   "unique": [
+    "Spell scribing table",
+    "Mana springs"
+   ],
+   "palette": {
+    "roof": [
+     80,
+     60,
+     120
+    ],
+    "wall": [
+     120,
+     140,
+     120
+    ]
+   }
+  },
+  {
+   "id": "redwater",
+   "name": "Redwater",
+   "pos": [
+    74,
+    30
+   ],
+   "biome": "canyon",
+   "specialty": "mercenary",
+   "faction": "none",
+   "population": 330,
+   "description": "A rough town of red stone where sellswords drink, brawl and sign contracts.",
+   "buildings": [
+    "arena",
+    "bounty_board",
+    "inn",
+    "provisioner",
+    "armorer",
+    "house",
+    "property_for_sale",
+    "well"
+   ],
+   "shops": [
+    "armorer",
+    "provisioner"
+   ],
+   "resources": [
+    "leather"
+   ],
+   "activities": [
+    "Fighting pit",
+    "Hire mercenaries",
+    "Bounties"
+   ],
+   "unique": [
+    "Fighting pit",
+    "Mercenary hiring hall"
+   ],
+   "palette": {
+    "roof": [
+     160,
+     60,
+     40
+    ],
+    "wall": [
+     190,
+     120,
+     90
+    ]
+   }
+  },
+  {
+   "id": "thornhollow",
+   "name": "Thornhollow",
+   "pos": [
+    88,
+    14
+   ],
+   "biome": "forest",
+   "specialty": "hunting",
+   "faction": "thornblood",
+   "population": 190,
+   "description": "Murrok longhouses wrapped in thorn palisades deep in the eastern woods.",
+   "buildings": [
+    "longhouse",
+    "shaman_hut",
+    "provisioner",
+    "tannery",
+    "house",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "provisioner",
+    "tannery",
+    "outfitter"
+   ],
+   "resources": [
+    "hide",
+    "meat",
+    "thornwood"
+   ],
+   "activities": [
+    "Hunting trials",
+    "Hide trade",
+    "Shaman's blessing"
+   ],
+   "unique": [
+    "Clan moot",
+    "Hunting trials"
+   ],
+   "palette": {
+    "roof": [
+     90,
+     70,
+     40
+    ],
+    "wall": [
+     110,
+     80,
+     50
+    ]
+   }
+  },
+  {
+   "id": "duskreach",
+   "name": "Duskreach",
+   "pos": [
+    80,
+    52
+   ],
+   "biome": "moor",
+   "specialty": "frontier",
+   "faction": "crown",
+   "population": 120,
+   "description": "The last walled post before the ruined east. Scavengers, wardens and wary eyes.",
+   "buildings": [
+    "watchtower",
+    "scavenger_shop",
+    "inn",
+    "provisioner",
+    "chapel",
+    "house",
+    "property_for_sale",
+    "well",
+    "outfitter"
+   ],
+   "shops": [
+    "scavenger_shop",
+    "provisioner",
+    "outfitter"
+   ],
+   "resources": [
+    "scrap"
+   ],
+   "activities": [
+    "Buy relics and scrap",
+    "Frontier patrols",
+    "Expeditions east"
+   ],
+   "unique": [
+    "Gateway to the Shattered Spire"
+   ],
+   "palette": {
+    "roof": [
+     70,
+     70,
+     80
+    ],
+    "wall": [
+     140,
+     130,
+     120
+    ]
+   }
+  }
+ ],
+ "wilderness": [
+  {
+   "id": "meadowrun",
+   "name": "Meadowrun Fields",
+   "pos": [
+    46,
+    30
+   ],
+   "biome": "grassland",
+   "danger": 1,
+   "description": "Rolling fields of wildflowers between Brackenford and the capital.",
+   "reason": "Easy foraging and hunting; safe place to learn the ropes.",
+   "resources": {
+    "forage": [
+     "berries",
+     "fiber",
+     "herbs"
+    ],
+    "ores": [],
+    "scavenge": 1,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "wolf"
+   ],
+   "features": [
+    "berry_bushes",
+    "pond"
+   ]
+  },
+  {
+   "id": "old_mill_woods",
+   "name": "Old Mill Woods",
+   "pos": [
+    36,
+    40
+   ],
+   "biome": "forest",
+   "danger": 1,
+   "description": "Quiet woods around a collapsed watermill.",
+   "reason": "Wood, herbs and the old mill's leftovers.",
+   "resources": {
+    "forage": [
+     "berries",
+     "herbs",
+     "mushrooms"
+    ],
+    "ores": [],
+    "scavenge": 2,
+    "wood": 3,
+    "water": true
+   },
+   "enemies": [
+    "wolf",
+    "bandit_cutthroat"
+   ],
+   "features": [
+    "ruined_mill",
+    "stream"
+   ]
+  },
+  {
+   "id": "rustback_hills",
+   "name": "Rustback Hills",
+   "pos": [
+    38,
+    22
+   ],
+   "biome": "hills",
+   "danger": 1,
+   "description": "Red-streaked hills where Rustite pokes through the turf.",
+   "reason": "Surface Rustite veins \u2014 the classic way to earn your first marks.",
+   "resources": {
+    "forage": [
+     "fiber"
+    ],
+    "ores": [
+     "rustite"
+    ],
+    "scavenge": 1,
+    "wood": 1,
+    "water": false
+   },
+   "enemies": [
+    "wolf"
+   ],
+   "features": [
+    "ore_veins"
+   ]
+  },
+  {
+   "id": "cinder_pass",
+   "name": "Cinder Pass",
+   "pos": [
+    36,
+    16
+   ],
+   "biome": "mountain",
+   "danger": 2,
+   "description": "A switchback pass of black scree leading up to Cinderdeep.",
+   "reason": "Rustite and some Greyvein; ore haulers worth robbing \u2014 or protecting.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "rustite",
+     "greyvein"
+    ],
+    "scavenge": 1,
+    "wood": 0,
+    "water": false
+   },
+   "enemies": [
+    "bandit_cutthroat",
+    "bandit_archer"
+   ],
+   "features": [
+    "ore_veins",
+    "rockfall"
+   ]
+  },
+  {
+   "id": "deep_galleries",
+   "name": "The Deep Galleries",
+   "pos": [
+    28,
+    6
+   ],
+   "biome": "cave",
+   "danger": 3,
+   "description": "Abandoned lower galleries of the old mine, now home to skittering things.",
+   "reason": "Rich Greyvein and Sunsilver seams.",
+   "resources": {
+    "forage": [
+     "mushrooms"
+    ],
+    "ores": [
+     "greyvein",
+     "sunsilver"
+    ],
+    "scavenge": 2,
+    "wood": 0,
+    "water": true
+   },
+   "enemies": [
+    "cave_skitterer",
+    "stone_brute"
+   ],
+   "features": [
+    "ore_veins",
+    "underground_pool"
+   ]
+  },
+  {
+   "id": "frostfang_ridge",
+   "name": "Frostfang Ridge",
+   "pos": [
+    48,
+    6
+   ],
+   "biome": "snow",
+   "danger": 3,
+   "description": "Wind-scoured snowfields between the two mountain towns.",
+   "reason": "Sunsilver veins and the solitary hunter who knows them.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "greyvein",
+     "sunsilver"
+    ],
+    "scavenge": 1,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "ice_wolf"
+   ],
+   "features": [
+    "ore_veins",
+    "hunter_camp"
+   ],
+   "npcs": [
+    "ysolde"
+   ]
+  },
+  {
+   "id": "kingsroad_verge",
+   "name": "Kingsroad Verge",
+   "pos": [
+    62,
+    18
+   ],
+   "biome": "grassland",
+   "danger": 1,
+   "description": "The paved royal road north to Hammerlee, lined with milestones and toll posts.",
+   "reason": "Caravan traffic, toll patrol jobs, roadside trade.",
+   "resources": {
+    "forage": [
+     "berries",
+     "fiber"
+    ],
+    "ores": [],
+    "scavenge": 1,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "bandit_cutthroat"
+   ],
+   "features": [
+    "toll_post",
+    "milestones"
+   ]
+  },
+  {
+   "id": "saltwind_dunes",
+   "name": "Saltwind Dunes",
+   "pos": [
+    22,
+    26
+   ],
+   "biome": "desert",
+   "danger": 2,
+   "description": "Pale dunes crusted with salt, littered with wrecked carts.",
+   "reason": "Salt deposits and the remains of lost caravans.",
+   "resources": {
+    "forage": [
+     "salt"
+    ],
+    "ores": [],
+    "scavenge": 3,
+    "wood": 0,
+    "water": false
+   },
+   "enemies": [
+    "sand_wurm",
+    "bandit_archer"
+   ],
+   "features": [
+    "wrecked_carts",
+    "salt_flats"
+   ]
+  },
+  {
+   "id": "wreckers_cove",
+   "name": "Wrecker's Cove",
+   "pos": [
+    8,
+    42
+   ],
+   "biome": "coast",
+   "danger": 2,
+   "description": "A cove where storms and smugglers have left a graveyard of ships.",
+   "reason": "Shipwreck loot and smuggler stashes.",
+   "resources": {
+    "forage": [
+     "fish",
+     "kelp"
+    ],
+    "ores": [],
+    "scavenge": 4,
+    "wood": 2,
+    "water": false
+   },
+   "enemies": [
+    "bandit_cutthroat",
+    "hollow_shieldbearer"
+   ],
+   "features": [
+    "shipwreck",
+    "smuggler_cache"
+   ]
+  },
+  {
+   "id": "mirelight_bog",
+   "name": "Mirelight Bog",
+   "pos": [
+    20,
+    46
+   ],
+   "biome": "swamp",
+   "danger": 2,
+   "description": "Glowing reeds and sucking mud. Something big moves under the water.",
+   "reason": "Rare herbs and poison reagents; the bog-witch Margit.",
+   "resources": {
+    "forage": [
+     "mirelight_herb",
+     "herbs",
+     "mushrooms"
+    ],
+    "ores": [],
+    "scavenge": 1,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "bog_lurker"
+   ],
+   "features": [
+    "glow_reeds",
+    "witch_hut"
+   ],
+   "npcs": [
+    "margit"
+   ]
+  },
+  {
+   "id": "sunken_abbey",
+   "name": "Sunken Abbey",
+   "pos": [
+    38,
+    56
+   ],
+   "biome": "ruins",
+   "danger": 3,
+   "description": "A drowned abbey of the old faith, its bells still ringing underwater.",
+   "reason": "Magic relics and mana crystals; dangerous husks.",
+   "resources": {
+    "forage": [
+     "herbs"
+    ],
+    "ores": [],
+    "scavenge": 3,
+    "wood": 0,
+    "water": true,
+    "crystals": true
+   },
+   "enemies": [
+    "husk",
+    "husk"
+   ],
+   "features": [
+    "relic_altar",
+    "flooded_halls"
+   ]
+  },
+  {
+   "id": "greywood",
+   "name": "Greywood",
+   "pos": [
+    64,
+    36
+   ],
+   "biome": "forest",
+   "danger": 2,
+   "description": "Tall grey-barked trees over the road to Redwater.",
+   "reason": "Hardwood and bandit scouts with bounties on their heads.",
+   "resources": {
+    "forage": [
+     "berries",
+     "mushrooms",
+     "herbs"
+    ],
+    "ores": [],
+    "scavenge": 1,
+    "wood": 4,
+    "water": true
+   },
+   "enemies": [
+    "bandit_cutthroat",
+    "bandit_archer",
+    "wolf"
+   ],
+   "features": [
+    "hardwood"
+   ]
+  },
+  {
+   "id": "redrock_canyon",
+   "name": "Redrock Canyon",
+   "pos": [
+    78,
+    42
+   ],
+   "biome": "canyon",
+   "danger": 3,
+   "description": "Narrow red gorges \u2014 perfect for ambushes.",
+   "reason": "A Hollow bandit camp holding prisoners and loot.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "rustite",
+     "greyvein"
+    ],
+    "scavenge": 2,
+    "wood": 0,
+    "water": false
+   },
+   "enemies": [
+    "bandit_cutthroat",
+    "bandit_archer",
+    "hollow_captain"
+   ],
+   "features": [
+    "bandit_camp",
+    "prisoner_cage"
+   ],
+   "npcs": [
+    "nix"
+   ]
+  },
+  {
+   "id": "thornwild",
+   "name": "Thornwild",
+   "pos": [
+    82,
+    22
+   ],
+   "biome": "forest",
+   "danger": 3,
+   "description": "Thorn-choked forest claimed by the Murrok clans.",
+   "reason": "Thornwood, prime hides, and Thornblood hunting grounds.",
+   "resources": {
+    "forage": [
+     "berries",
+     "meat",
+     "herbs"
+    ],
+    "ores": [],
+    "scavenge": 1,
+    "wood": 4,
+    "water": true
+   },
+   "enemies": [
+    "thornblood_raider",
+    "wolf"
+   ],
+   "features": [
+    "thornwood",
+    "hunting_grounds"
+   ]
+  },
+  {
+   "id": "ashfall_crater",
+   "name": "Ashfall Crater",
+   "pos": [
+    94,
+    30
+   ],
+   "biome": "volcanic",
+   "danger": 4,
+   "description": "A steaming crater ringed with obsidian and black glass.",
+   "reason": "Voidglass deposits.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "greyvein",
+     "voidglass"
+    ],
+    "scavenge": 1,
+    "wood": 0,
+    "water": false
+   },
+   "enemies": [
+    "stone_brute",
+    "crystal_golem"
+   ],
+   "features": [
+    "ore_veins",
+    "vents"
+   ]
+  },
+  {
+   "id": "duskmoor",
+   "name": "Duskmoor",
+   "pos": [
+    64,
+    50
+   ],
+   "biome": "moor",
+   "danger": 3,
+   "description": "Fog-bound moorland where lost caravans are never found twice.",
+   "reason": "Abandoned wagons; husks walk at night.",
+   "resources": {
+    "forage": [
+     "herbs",
+     "fiber"
+    ],
+    "ores": [],
+    "scavenge": 3,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "husk",
+    "wolf"
+   ],
+   "features": [
+    "lost_wagons",
+    "standing_stones"
+   ]
+  },
+  {
+   "id": "shattered_spire",
+   "name": "The Shattered Spire",
+   "pos": [
+    92,
+    56
+   ],
+   "biome": "ruins",
+   "danger": 5,
+   "description": "A broken tower of the vanished builders, humming with old power.",
+   "reason": "Legendary equipment, Voidglass and the oldest secrets in the world.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "voidglass",
+     "sunsilver"
+    ],
+    "scavenge": 5,
+    "wood": 0,
+    "water": false,
+    "crystals": true
+   },
+   "enemies": [
+    "crystal_golem",
+    "husk",
+    "stone_brute"
+   ],
+   "features": [
+    "spire_vault",
+    "ore_veins"
+   ]
+  },
+  {
+   "id": "hollow_fort",
+   "name": "Hollow Fort",
+   "pos": [
+    54,
+    46
+   ],
+   "biome": "ruins",
+   "danger": 4,
+   "description": "A burned-out border fort rebuilt by the Hollow as their stronghold.",
+   "reason": "The Hollow's leadership and hoard.",
+   "resources": {
+    "forage": [],
+    "ores": [],
+    "scavenge": 3,
+    "wood": 1,
+    "water": true
+   },
+   "enemies": [
+    "bandit_cutthroat",
+    "bandit_archer",
+    "hollow_shieldbearer",
+    "hollow_captain"
+   ],
+   "features": [
+    "stronghold"
+   ],
+   "npcs": [
+    "black_ren"
+   ]
+  },
+  {
+   "id": "widows_crossing",
+   "name": "Widow's Crossing",
+   "pos": [
+    54,
+    38
+   ],
+   "biome": "grassland",
+   "danger": 2,
+   "description": "An abandoned hamlet at the heart of the region's roads.",
+   "reason": "The best site for an independent outpost; a wandering knight camps here.",
+   "resources": {
+    "forage": [
+     "berries",
+     "fiber"
+    ],
+    "ores": [],
+    "scavenge": 2,
+    "wood": 2,
+    "water": true
+   },
+   "enemies": [
+    "wolf",
+    "bandit_cutthroat"
+   ],
+   "features": [
+    "abandoned_houses",
+    "outpost_site"
+   ],
+   "npcs": [
+    "corin"
+   ]
+  },
+  {
+   "id": "starfall_basin",
+   "name": "Starfall Basin",
+   "pos": [
+    74,
+    6
+   ],
+   "biome": "crystal",
+   "danger": 4,
+   "description": "A valley glittering with fallen-star crystal, guarded by living stone.",
+   "reason": "Mana crystals and Voidglass shards.",
+   "resources": {
+    "forage": [],
+    "ores": [
+     "sunsilver",
+     "voidglass"
+    ],
+    "scavenge": 2,
+    "wood": 0,
+    "water": true,
+    "crystals": true
+   },
+   "enemies": [
+    "crystal_golem"
+   ],
+   "features": [
+    "crystal_spires",
+    "ore_veins"
+   ]
+  }
+ ],
+ "routes": [
+  [
+   "brackenford",
+   "meadowrun",
+   "grassland"
   ],
-  "wilderness": [
-    {"id": "meadowrun", "name": "Meadowrun Fields", "pos": [46, 30], "biome": "grassland", "danger": 1,
-     "description": "Rolling fields of wildflowers between Brackenford and the capital.",
-     "reason": "Easy foraging and hunting; safe place to learn the ropes.",
-     "resources": {"forage": ["berries", "fiber", "herbs"], "ores": [], "scavenge": 1, "wood": 1, "water": true},
-     "enemies": ["wolf"], "features": ["berry_bushes", "pond"]},
-    {"id": "old_mill_woods", "name": "Old Mill Woods", "pos": [36, 40], "biome": "forest", "danger": 1,
-     "description": "Quiet woods around a collapsed watermill.",
-     "reason": "Wood, herbs and the old mill's leftovers.",
-     "resources": {"forage": ["berries", "herbs", "mushrooms"], "ores": [], "scavenge": 2, "wood": 3, "water": true},
-     "enemies": ["wolf", "bandit_cutthroat"], "features": ["ruined_mill", "stream"]},
-    {"id": "rustback_hills", "name": "Rustback Hills", "pos": [38, 22], "biome": "hills", "danger": 1,
-     "description": "Red-streaked hills where Rustite pokes through the turf.",
-     "reason": "Surface Rustite veins — the classic way to earn your first marks.",
-     "resources": {"forage": ["fiber"], "ores": ["rustite"], "scavenge": 1, "wood": 1, "water": false},
-     "enemies": ["wolf"], "features": ["ore_veins"]},
-    {"id": "cinder_pass", "name": "Cinder Pass", "pos": [36, 16], "biome": "mountain", "danger": 2,
-     "description": "A switchback pass of black scree leading up to Cinderdeep.",
-     "reason": "Rustite and some Greyvein; ore haulers worth robbing — or protecting.",
-     "resources": {"forage": [], "ores": ["rustite", "greyvein"], "scavenge": 1, "wood": 0, "water": false},
-     "enemies": ["bandit_cutthroat", "bandit_archer"], "features": ["ore_veins", "rockfall"]},
-    {"id": "deep_galleries", "name": "The Deep Galleries", "pos": [28, 6], "biome": "cave", "danger": 3,
-     "description": "Abandoned lower galleries of the old mine, now home to skittering things.",
-     "reason": "Rich Greyvein and Sunsilver seams.",
-     "resources": {"forage": ["mushrooms"], "ores": ["greyvein", "sunsilver"], "scavenge": 2, "wood": 0, "water": true},
-     "enemies": ["cave_skitterer", "stone_brute"], "features": ["ore_veins", "underground_pool"]},
-    {"id": "frostfang_ridge", "name": "Frostfang Ridge", "pos": [48, 6], "biome": "snow", "danger": 3,
-     "description": "Wind-scoured snowfields between the two mountain towns.",
-     "reason": "Sunsilver veins and the solitary hunter who knows them.",
-     "resources": {"forage": [], "ores": ["greyvein", "sunsilver"], "scavenge": 1, "wood": 1, "water": true},
-     "enemies": ["ice_wolf"], "features": ["ore_veins", "hunter_camp"], "npcs": ["ysolde"]},
-    {"id": "kingsroad_verge", "name": "Kingsroad Verge", "pos": [62, 18], "biome": "grassland", "danger": 1,
-     "description": "The paved royal road north to Hammerlee, lined with milestones and toll posts.",
-     "reason": "Caravan traffic, toll patrol jobs, roadside trade.",
-     "resources": {"forage": ["berries", "fiber"], "ores": [], "scavenge": 1, "wood": 1, "water": true},
-     "enemies": ["bandit_cutthroat"], "features": ["toll_post", "milestones"]},
-    {"id": "saltwind_dunes", "name": "Saltwind Dunes", "pos": [22, 26], "biome": "desert", "danger": 2,
-     "description": "Pale dunes crusted with salt, littered with wrecked carts.",
-     "reason": "Salt deposits and the remains of lost caravans.",
-     "resources": {"forage": ["salt"], "ores": [], "scavenge": 3, "wood": 0, "water": false},
-     "enemies": ["sand_wurm", "bandit_archer"], "features": ["wrecked_carts", "salt_flats"]},
-    {"id": "wreckers_cove", "name": "Wrecker's Cove", "pos": [8, 42], "biome": "coast", "danger": 2,
-     "description": "A cove where storms and smugglers have left a graveyard of ships.",
-     "reason": "Shipwreck loot and smuggler stashes.",
-     "resources": {"forage": ["fish", "kelp"], "ores": [], "scavenge": 4, "wood": 2, "water": false},
-     "enemies": ["bandit_cutthroat", "hollow_shieldbearer"], "features": ["shipwreck", "smuggler_cache"]},
-    {"id": "mirelight_bog", "name": "Mirelight Bog", "pos": [20, 46], "biome": "swamp", "danger": 2,
-     "description": "Glowing reeds and sucking mud. Something big moves under the water.",
-     "reason": "Rare herbs and poison reagents; the bog-witch Margit.",
-     "resources": {"forage": ["mirelight_herb", "herbs", "mushrooms"], "ores": [], "scavenge": 1, "wood": 1, "water": true},
-     "enemies": ["bog_lurker"], "features": ["glow_reeds", "witch_hut"], "npcs": ["margit"]},
-    {"id": "sunken_abbey", "name": "Sunken Abbey", "pos": [38, 56], "biome": "ruins", "danger": 3,
-     "description": "A drowned abbey of the old faith, its bells still ringing underwater.",
-     "reason": "Magic relics and mana crystals; dangerous husks.",
-     "resources": {"forage": ["herbs"], "ores": [], "scavenge": 3, "wood": 0, "water": true, "crystals": true},
-     "enemies": ["husk", "husk"], "features": ["relic_altar", "flooded_halls"]},
-    {"id": "greywood", "name": "Greywood", "pos": [64, 36], "biome": "forest", "danger": 2,
-     "description": "Tall grey-barked trees over the road to Redwater.",
-     "reason": "Hardwood and bandit scouts with bounties on their heads.",
-     "resources": {"forage": ["berries", "mushrooms", "herbs"], "ores": [], "scavenge": 1, "wood": 4, "water": true},
-     "enemies": ["bandit_cutthroat", "bandit_archer", "wolf"], "features": ["hardwood"]},
-    {"id": "redrock_canyon", "name": "Redrock Canyon", "pos": [78, 42], "biome": "canyon", "danger": 3,
-     "description": "Narrow red gorges — perfect for ambushes.",
-     "reason": "A Hollow bandit camp holding prisoners and loot.",
-     "resources": {"forage": [], "ores": ["rustite", "greyvein"], "scavenge": 2, "wood": 0, "water": false},
-     "enemies": ["bandit_cutthroat", "bandit_archer", "hollow_captain"], "features": ["bandit_camp", "prisoner_cage"], "npcs": ["nix"]},
-    {"id": "thornwild", "name": "Thornwild", "pos": [82, 22], "biome": "forest", "danger": 3,
-     "description": "Thorn-choked forest claimed by the Murrok clans.",
-     "reason": "Thornwood, prime hides, and Thornblood hunting grounds.",
-     "resources": {"forage": ["berries", "meat", "herbs"], "ores": [], "scavenge": 1, "wood": 4, "water": true},
-     "enemies": ["thornblood_raider", "wolf"], "features": ["thornwood", "hunting_grounds"]},
-    {"id": "ashfall_crater", "name": "Ashfall Crater", "pos": [94, 30], "biome": "volcanic", "danger": 4,
-     "description": "A steaming crater ringed with obsidian and black glass.",
-     "reason": "Voidglass deposits.",
-     "resources": {"forage": [], "ores": ["greyvein", "voidglass"], "scavenge": 1, "wood": 0, "water": false},
-     "enemies": ["stone_brute", "crystal_golem"], "features": ["ore_veins", "vents"]},
-    {"id": "duskmoor", "name": "Duskmoor", "pos": [64, 50], "biome": "moor", "danger": 3,
-     "description": "Fog-bound moorland where lost caravans are never found twice.",
-     "reason": "Abandoned wagons; husks walk at night.",
-     "resources": {"forage": ["herbs", "fiber"], "ores": [], "scavenge": 3, "wood": 1, "water": true},
-     "enemies": ["husk", "wolf"], "features": ["lost_wagons", "standing_stones"]},
-    {"id": "shattered_spire", "name": "The Shattered Spire", "pos": [92, 56], "biome": "ruins", "danger": 5,
-     "description": "A broken tower of the vanished builders, humming with old power.",
-     "reason": "Legendary equipment, Voidglass and the oldest secrets in the world.",
-     "resources": {"forage": [], "ores": ["voidglass", "sunsilver"], "scavenge": 5, "wood": 0, "water": false, "crystals": true},
-     "enemies": ["crystal_golem", "husk", "stone_brute"], "features": ["spire_vault", "ore_veins"]},
-    {"id": "hollow_fort", "name": "Hollow Fort", "pos": [54, 46], "biome": "ruins", "danger": 4,
-     "description": "A burned-out border fort rebuilt by the Hollow as their stronghold.",
-     "reason": "The Hollow's leadership and hoard.",
-     "resources": {"forage": [], "ores": [], "scavenge": 3, "wood": 1, "water": true},
-     "enemies": ["bandit_cutthroat", "bandit_archer", "hollow_shieldbearer", "hollow_captain"], "features": ["stronghold"], "npcs": ["black_ren"]},
-    {"id": "widows_crossing", "name": "Widow's Crossing", "pos": [54, 38], "biome": "grassland", "danger": 2,
-     "description": "An abandoned hamlet at the heart of the region's roads.",
-     "reason": "The best site for an independent outpost; a wandering knight camps here.",
-     "resources": {"forage": ["berries", "fiber"], "ores": [], "scavenge": 2, "wood": 2, "water": true},
-     "enemies": ["wolf", "bandit_cutthroat"], "features": ["abandoned_houses", "outpost_site"], "npcs": ["corin"]},
-    {"id": "starfall_basin", "name": "Starfall Basin", "pos": [74, 6], "biome": "crystal", "danger": 4,
-     "description": "A valley glittering with fallen-star crystal, guarded by living stone.",
-     "reason": "Mana crystals and Voidglass shards.",
-     "resources": {"forage": [], "ores": ["sunsilver", "voidglass"], "scavenge": 2, "wood": 0, "water": true, "crystals": true},
-     "enemies": ["crystal_golem"], "features": ["crystal_spires", "ore_veins"]}
+  [
+   "meadowrun",
+   "velmora",
+   "road"
   ],
-  "routes": [
-    ["brackenford", "meadowrun", "grassland"],
-    ["meadowrun", "velmora", "road"],
-    ["brackenford", "old_mill_woods", "forest"],
-    ["old_mill_woods", "mirelight_bog", "swamp"],
-    ["old_mill_woods", "glimmerfen", "forest"],
-    ["brackenford", "rustback_hills", "hills"],
-    ["rustback_hills", "cinder_pass", "mountain"],
-    ["cinder_pass", "cinderdeep", "mountain"],
-    ["cinderdeep", "deep_galleries", "mountain"],
-    ["cinderdeep", "frostfang_ridge", "snow"],
-    ["frostfang_ridge", "hammerlee", "snow"],
-    ["velmora", "kingsroad_verge", "road"],
-    ["kingsroad_verge", "hammerlee", "road"],
-    ["brackenford", "saltwind_dunes", "desert"],
-    ["saltwind_dunes", "saltmarket", "desert"],
-    ["rustback_hills", "saltwind_dunes", "hills"],
-    ["saltmarket", "wreckers_cove", "coast"],
-    ["wreckers_cove", "mirelight_bog", "swamp"],
-    ["mirelight_bog", "glimmerfen", "swamp"],
-    ["glimmerfen", "sunken_abbey", "swamp"],
-    ["velmora", "widows_crossing", "road"],
-    ["meadowrun", "widows_crossing", "grassland"],
-    ["widows_crossing", "greywood", "forest"],
-    ["greywood", "redwater", "road"],
-    ["redwater", "redrock_canyon", "canyon"],
-    ["redrock_canyon", "duskreach", "canyon"],
-    ["redwater", "thornwild", "forest"],
-    ["thornwild", "thornhollow", "forest"],
-    ["thornhollow", "ashfall_crater", "volcanic"],
-    ["thornwild", "ashfall_crater", "volcanic"],
-    ["thornhollow", "starfall_basin", "hills"],
-    ["starfall_basin", "hammerlee", "hills"],
-    ["duskreach", "shattered_spire", "ruins"],
-    ["duskreach", "duskmoor", "moor"],
-    ["duskmoor", "hollow_fort", "moor"],
-    ["hollow_fort", "widows_crossing", "grassland"],
-    ["sunken_abbey", "duskmoor", "moor"]
+  [
+   "brackenford",
+   "old_mill_woods",
+   "forest"
+  ],
+  [
+   "old_mill_woods",
+   "mirelight_bog",
+   "swamp"
+  ],
+  [
+   "old_mill_woods",
+   "glimmerfen",
+   "forest"
+  ],
+  [
+   "brackenford",
+   "rustback_hills",
+   "hills"
+  ],
+  [
+   "rustback_hills",
+   "cinder_pass",
+   "mountain"
+  ],
+  [
+   "cinder_pass",
+   "cinderdeep",
+   "mountain"
+  ],
+  [
+   "cinderdeep",
+   "deep_galleries",
+   "mountain"
+  ],
+  [
+   "cinderdeep",
+   "frostfang_ridge",
+   "snow"
+  ],
+  [
+   "frostfang_ridge",
+   "hammerlee",
+   "snow"
+  ],
+  [
+   "velmora",
+   "kingsroad_verge",
+   "road"
+  ],
+  [
+   "kingsroad_verge",
+   "hammerlee",
+   "road"
+  ],
+  [
+   "brackenford",
+   "saltwind_dunes",
+   "desert"
+  ],
+  [
+   "saltwind_dunes",
+   "saltmarket",
+   "desert"
+  ],
+  [
+   "rustback_hills",
+   "saltwind_dunes",
+   "hills"
+  ],
+  [
+   "saltmarket",
+   "wreckers_cove",
+   "coast"
+  ],
+  [
+   "wreckers_cove",
+   "mirelight_bog",
+   "swamp"
+  ],
+  [
+   "mirelight_bog",
+   "glimmerfen",
+   "swamp"
+  ],
+  [
+   "glimmerfen",
+   "sunken_abbey",
+   "swamp"
+  ],
+  [
+   "velmora",
+   "widows_crossing",
+   "road"
+  ],
+  [
+   "meadowrun",
+   "widows_crossing",
+   "grassland"
+  ],
+  [
+   "widows_crossing",
+   "greywood",
+   "forest"
+  ],
+  [
+   "greywood",
+   "redwater",
+   "road"
+  ],
+  [
+   "redwater",
+   "redrock_canyon",
+   "canyon"
+  ],
+  [
+   "redrock_canyon",
+   "duskreach",
+   "canyon"
+  ],
+  [
+   "redwater",
+   "thornwild",
+   "forest"
+  ],
+  [
+   "thornwild",
+   "thornhollow",
+   "forest"
+  ],
+  [
+   "thornhollow",
+   "ashfall_crater",
+   "volcanic"
+  ],
+  [
+   "thornwild",
+   "ashfall_crater",
+   "volcanic"
+  ],
+  [
+   "thornhollow",
+   "starfall_basin",
+   "hills"
+  ],
+  [
+   "starfall_basin",
+   "hammerlee",
+   "hills"
+  ],
+  [
+   "duskreach",
+   "shattered_spire",
+   "ruins"
+  ],
+  [
+   "duskreach",
+   "duskmoor",
+   "moor"
+  ],
+  [
+   "duskmoor",
+   "hollow_fort",
+   "moor"
+  ],
+  [
+   "hollow_fort",
+   "widows_crossing",
+   "grassland"
+  ],
+  [
+   "sunken_abbey",
+   "duskmoor",
+   "moor"
   ]
+ ]
 }

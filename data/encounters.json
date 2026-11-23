@@ -1,0 +1,285 @@
+{
+ "_comment": "Encounter compositions. A template applies to wild areas whose enemy list contains its anchor. Counts grow with the area's danger: +1 to each max per 2 danger above 1. Optional 'biomes' limits a template to those biomes.",
+ "templates": [
+  {
+   "id": "wolf_pack",
+   "anchor": "wolf",
+   "weight": 3,
+   "members": [
+    [
+     "wolf",
+     3,
+     5
+    ]
+   ]
+  },
+  {
+   "id": "lone_wolves",
+   "anchor": "wolf",
+   "weight": 1,
+   "members": [
+    [
+     "wolf",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "hollow_raiders",
+   "anchor": "bandit_cutthroat",
+   "weight": 3,
+   "members": [
+    [
+     "bandit_cutthroat",
+     2,
+     3
+    ],
+    [
+     "bandit_archer",
+     1,
+     2
+    ],
+    [
+     "hollow_hexer",
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "hollow_ambushers",
+   "anchor": "bandit_cutthroat",
+   "weight": 2,
+   "members": [
+    [
+     "bandit_archer",
+     2,
+     3
+    ],
+    [
+     "bandit_cutthroat",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "hollow_patrol",
+   "anchor": "hollow_shieldbearer",
+   "weight": 3,
+   "min_danger": 3,
+   "members": [
+    [
+     "hollow_shieldbearer",
+     1,
+     2
+    ],
+    [
+     "bandit_cutthroat",
+     1,
+     2
+    ],
+    [
+     "hollow_stormcaller",
+     0,
+     1
+    ],
+    [
+     "hollow_captain",
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "hollow_warband",
+   "anchor": "hollow_captain",
+   "weight": 2,
+   "members": [
+    [
+     "hollow_captain",
+     1,
+     1
+    ],
+    [
+     "hollow_shieldbearer",
+     1,
+     2
+    ],
+    [
+     "bandit_archer",
+     1,
+     2
+    ],
+    [
+     "hollow_hexer",
+     1,
+     1
+    ],
+    [
+     "hollow_stormcaller",
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "thornblood_warband",
+   "anchor": "thornblood_raider",
+   "weight": 3,
+   "members": [
+    [
+     "thornblood_raider",
+     2,
+     4
+    ],
+    [
+     "thornblood_shaman",
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "frost_coven",
+   "anchor": "ice_wolf",
+   "weight": 2,
+   "members": [
+    [
+     "ice_wolf",
+     2,
+     3
+    ],
+    [
+     "frost_witch",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "frost_pack",
+   "anchor": "ice_wolf",
+   "weight": 2,
+   "members": [
+    [
+     "ice_wolf",
+     2,
+     4
+    ]
+   ]
+  },
+  {
+   "id": "barrow_dead",
+   "anchor": "husk",
+   "weight": 3,
+   "members": [
+    [
+     "husk",
+     3,
+     5
+    ],
+    [
+     "husk_mage",
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "deep_swarm",
+   "anchor": "cave_skitterer",
+   "weight": 3,
+   "members": [
+    [
+     "cave_skitterer",
+     4,
+     6
+    ]
+   ],
+   "biomes": [
+    "cave"
+   ]
+  },
+  {
+   "id": "deep_guardian",
+   "anchor": "stone_brute",
+   "weight": 2,
+   "members": [
+    [
+     "stone_brute",
+     1,
+     1
+    ],
+    [
+     "cave_skitterer",
+     1,
+     3
+    ]
+   ],
+   "biomes": [
+    "cave"
+   ]
+  },
+  {
+   "id": "crystal_host",
+   "anchor": "crystal_golem",
+   "weight": 2,
+   "members": [
+    [
+     "crystal_golem",
+     1,
+     2
+    ],
+    [
+     "husk_mage",
+     0,
+     1
+    ]
+   ],
+   "biomes": [
+    "crystal",
+    "ruins",
+    "cave",
+    "volcanic"
+   ]
+  },
+  {
+   "id": "bog_lurkers",
+   "anchor": "bog_lurker",
+   "weight": 2,
+   "members": [
+    [
+     "bog_lurker",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "wurm",
+   "anchor": "sand_wurm",
+   "weight": 2,
+   "members": [
+    [
+     "sand_wurm",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "stone_sentinel",
+   "anchor": "stone_brute",
+   "weight": 2,
+   "members": [
+    [
+     "stone_brute",
+     1,
+     2
+    ]
+   ]
+  }
+ ]
+}

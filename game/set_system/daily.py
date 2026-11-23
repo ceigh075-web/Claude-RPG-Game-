@@ -11,6 +11,9 @@ def new_day(state):
     from . import base, world_events
     msgs += world_events.daily(state, rng)
     msgs += base.daily(state, rng)
+    from . import crime, morale
+    msgs += morale.daily(state)
+    msgs += crime.daily(state, rng)
     for hook in EXTRA_HOOKS:
         msgs += hook(state, rng) or []
     return msgs

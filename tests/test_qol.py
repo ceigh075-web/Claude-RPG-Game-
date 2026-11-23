@@ -29,12 +29,12 @@ class TestMana(unittest.TestCase):
     def test_bigger_pool_that_grows(self):
         st = new_state()
         p = st.player
-        self.assertGreaterEqual(p.max_mana, 40)
+        self.assertGreaterEqual(p.max_mana, 80)
         base = p.max_mana
         p.skills["magic"] = 50
-        self.assertEqual(p.max_mana, base + 60)
+        self.assertEqual(p.max_mana, base + 100)
         p.xp_total = 40 * 4 * 4      # level 5
-        self.assertEqual(p.max_mana, base + 60 + 12)
+        self.assertEqual(p.max_mana, base + 100 + 20)
 
     def test_passive_regen_faster_out_of_combat(self):
         st, m, w, pc = world()
@@ -72,12 +72,13 @@ class TestMana(unittest.TestCase):
         self.assertEqual(st.player.mana, 0)
 
     def test_magic_stays_limited(self):
-        """A starter spell can't be spammed: costs outpace combat regen."""
+        """Casting freely is possible for a while, but mana runs out: costs outpace combat regeneration."""
         st = new_state()
         p = spells.compute(DATA, st.spellbook[0], 0)
         per_sec = spells.regen_per_second(st.player, True)
-        self.assertGreater(p["mana"] / max(0.01, p["cooldown"]), per_sec)
-        self.assertLess(spells.mana_from_hit(1000, "melee"), 9)
+        casts_per_sec = 1 / max(0.12, p["cooldown"])
+        self.assertGreater(p["mana"] * casts_per_sec, per_sec * 3)
+        self.assertLess(spells.mana_from_hit(1000, "melee"), 13)
 
     def test_cast_failure_explains(self):
         st, m, w, pc = world()

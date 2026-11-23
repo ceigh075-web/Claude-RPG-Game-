@@ -257,17 +257,18 @@ def townsfolk(data, rng, specialty, race_id=None):
 
 # ----------------------------------------------------------------------------- enemies
 ENEMY_ROLE = {"bandit_cutthroat": "rogue", "bandit_archer": "hunter", "hollow_shieldbearer": "guard",
-              "hollow_captain": "warrior", "thornblood_raider": "raider"}
+              "hollow_captain": "warrior", "thornblood_raider": "raider", "hollow_hexer": "witch",
+              "hollow_stormcaller": "mage", "thornblood_shaman": "shaman", "frost_witch": "witch"}
 
 
 def enemy_variant(data, enemy_id, seed):
     """A varied look for one humanoid enemy (stable per spawned combatant)."""
     rng = stable_rng("enemy_look", enemy_id, seed)
     role = ENEMY_ROLE.get(enemy_id, "rogue")
-    race = "murrok" if enemy_id == "thornblood_raider" else rng.choice(["human", "human", "kethari", "murrok", "sylth"])
+    race = "murrok" if enemy_id in ("thornblood_raider", "thornblood_shaman") else rng.choice(["human", "human", "kethari", "murrok", "sylth"])
     pron = rng.choice(["he/him", "she/her", "they/them"])
     look = build(rng, data.races[race], race, role, "hollow" if enemy_id.startswith("hollow") else
-                 ("thornblood" if enemy_id == "thornblood_raider" else None), rng.randint(20, 55), pron)
+                 ("thornblood" if enemy_id.startswith("thornblood") else None), rng.randint(20, 55), pron)
     if enemy_id == "bandit_cutthroat":
         look["hat"] = rng.choice(["hood_up", "hood_up", "bandana", None])
         look["hat_col"] = list(rng.choice([(78, 58, 46), (60, 50, 44), (90, 40, 36), (50, 50, 56)]))
@@ -292,7 +293,17 @@ def enemy_variant(data, enemy_id, seed):
         look["smear"] = [255, 150, 150]
         if look["helm"] is None:
             look.pop("helm")
-    elif enemy_id == "thornblood_raider":
+    elif enemy_id == "frost_witch":
+        look["hat"] = rng.choice(["wizard", "hood_up"])
+        look["hat_col"] = list(rng.choice([(200, 220, 240), (120, 150, 190)]))
+        look["outfit"], look["outfit_col"] = "robe", list(rng.choice([(170, 200, 230), (110, 140, 190)]))
+        look["hair"] = [230, 236, 245]
+    elif enemy_id in ("hollow_hexer", "hollow_stormcaller"):
+        look["outfit"], look["outfit_col"] = "robe", [52, 50, 60]
+        look["hat"] = "hood_up" if enemy_id == "hollow_hexer" else "wizard"
+        look["hat_col"] = [40, 38, 46] if enemy_id == "hollow_hexer" else [70, 80, 110]
+        look["smear"] = [190, 150, 255]
+    elif enemy_id in ("thornblood_raider", "thornblood_shaman"):
         look["skin"] = list(rng.choice(data.races["murrok"]["skin"]))
         look.setdefault("warpaint", [170, 40, 40])
     return look

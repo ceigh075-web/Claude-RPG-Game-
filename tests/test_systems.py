@@ -30,8 +30,8 @@ class TestData(unittest.TestCase):
         self.assertEqual(len(DATA.ores), 4)
         self.assertEqual(sum(w["class"] == "melee" for w in DATA.weapons.values()), 12)
         self.assertEqual(sum(w["class"] == "ranged" for w in DATA.weapons.values()), 4)
-        self.assertEqual(len(DATA.magic["elements"]), 4)
-        self.assertEqual(len(DATA.magic["subelements"]), 16)
+        self.assertEqual(len(DATA.magic["elements"]), 5)        # fire, water, earth, air, light
+        self.assertEqual(len(DATA.magic["subelements"]), 18)
         self.assertTrue(40 <= len(DATA.npcs) <= 50)
 
     def test_every_npc_recruitable(self):

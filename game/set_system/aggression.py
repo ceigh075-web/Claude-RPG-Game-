@@ -141,7 +141,9 @@ def on_assault(state, npc_id=None, label="a stranger", is_companion=False, witne
                         + (", a companion," if is_companion else "") + f" in {state.data.location(state.location)['name']}.",
                         importance=3, related=["player"] + ([npc_id] if npc_id else []), location=state.location,
                         **_stamp(state))
-    return [f"You attacked {name}!"]
+    from . import crime
+    extra = crime.add_bounty(state, crime.town_of(state), crime.FINES["assault"], f"attacking {name}") if witnessed else []
+    return [f"You attacked {name}!"] + extra
 
 
 def on_defeat(state, npc_id=None, label="a stranger", by_player=True):
@@ -169,6 +171,9 @@ def on_kill(state, npc_id=None, label="a stranger", witnessed=True):
     npc = state.data.npcs.get(npc_id) if npc_id else None
     name = npc["name"] if npc else label
     msgs = [f"{name} is dead."]
+    from . import crime
+    if witnessed:
+        msgs += crime.add_bounty(state, crime.town_of(state), crime.FINES["murder"], f"killing {name}")
     rel.note(state, "cruelty", 6)
     state.stats["murders"] = state.stats.get("murders", 0) + 1
     _crime_rep(state, npc, town_faction(state), 15, f"killed {name}", witnessed)

@@ -106,7 +106,7 @@ Writes go to a temp file then `os.replace` for atomic saves.
 | Layer | Modules |
 |---|---|
 | core | `game`, `scene`, `save` (versioned, autosave and backups), `state`, `clock`, `rng`, `events`, `data` |
-| set_system (rules) | `aggression` (reactions & consequences of violence), `stats`, `needs`, `inventory`, `items`, `economy`, `factions`, `timeflow`, `daily`, `combat`, `skirmish`, `spells`, `crafting`, `relationships`, `favors`, `recruitment`, `companions`, `world_events`, `jobs`, `base` |
+| set_system (rules) | `aggression` (reactions & consequences of violence), `morale` (morale, surrender, prisoners, retainers), `crime` (bounties, guards, theft, seizing towns), `encounters` (group composition), `stats`, `needs`, `inventory`, `items`, `economy`, `factions`, `timeflow`, `daily`, `combat`, `skirmish`, `spells`, `crafting`, `relationships`, `favors`, `recruitment`, `companions`, `world_events`, `jobs`, `base` |
 | set_ai (memory) | `memory` (append-only records and facts, prunable chatter) |
 | local_ai (dialogue) | `client`, `context`, `personality`, `actions` (whitelist bridge), `dialogue` (engine: thread does HTTP only), `fallback` |
 | world | `worldmap`, `mapgen`, `travel`, `effects`, `weather` |

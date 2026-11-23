@@ -82,9 +82,10 @@ class TestPresentationIsReadOnly(unittest.TestCase):
 class TestArt(unittest.TestCase):
     def test_every_subelement_has_its_own_style(self):
         subs = DATA.magic["subelements"]
-        self.assertEqual(set(subs), set(vfx.ELEMENT))
-        sigs = {(s.glyph, s.beam, s.ground, s.particle) for s in vfx.ELEMENT.values()}
-        self.assertEqual(len(sigs), len(vfx.ELEMENT), "two sub-elements share the same look")
+        self.assertTrue(set(subs) <= set(vfx.ELEMENT), set(subs) - set(vfx.ELEMENT))
+        self.assertTrue(set(DATA.magic["elements"]) <= set(vfx.ELEMENT))   # element-only spells have a look too
+        sigs = {(vfx.ELEMENT[k].glyph, vfx.ELEMENT[k].beam, vfx.ELEMENT[k].ground, vfx.ELEMENT[k].particle) for k in subs}
+        self.assertEqual(len(sigs), len(subs), "two sub-elements share the same look")
 
     def test_every_enemy_has_animation_frames(self):
         for eid, e in DATA.enemies.items():

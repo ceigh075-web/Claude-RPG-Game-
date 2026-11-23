@@ -115,8 +115,9 @@ class GameState:
         s.settings = d["settings"]
         s.stats = d["stats"]
         s.log = d["log"]
-        s.spellbook = d.get("spellbook", starter_spellbook())
-        s.spell_drafts = d.get("spell_drafts", [])
+        from ..set_system.spells import migrate
+        s.spellbook = migrate(data, d.get("spellbook", starter_spellbook()))
+        s.spell_drafts = migrate(data, d.get("spell_drafts", []))
         s.known_recipes = d.get("known_recipes", [])
         s.relationships = d.get("relationships", {})
         s.favors = d.get("favors", {})

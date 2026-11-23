@@ -52,6 +52,12 @@ def violence_facts(state, npc):
                 heard.append(m["description"])
     if heard:
         out.append("Known violence by the player: " + " ".join(heard[:3]))
+    from ..set_system import crime
+    owed = crime.bounty(state, npc["home"]) if npc["home"] in state.data.towns else 0
+    if owed:
+        out.append(f"The player is WANTED in {state.data.location(npc['home'])['name']} ({owed}-mark bounty).")
+    if npc["home"] in state.data.towns and crime.owner(state, npc["home"]) == "player":
+        out.append(f"The player has seized {state.data.location(npc['home'])['name']} and now rules it.")
     kills = state.stats.get("murders", 0)
     if kills:
         out.append(f"The player has killed {kills} innocent {'person' if kills == 1 else 'people'}.")

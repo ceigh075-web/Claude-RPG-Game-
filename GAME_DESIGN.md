@@ -162,6 +162,42 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## Combat overhaul (magic, enemies, towns, morale)
+
+- **Tempo:** attack cycles run 30% faster, ranged weapons reload in about half the time, recoveries can be cut
+  short by the next action after 30%, casts take 0.12 s and flow straight into attacks, and wind-ups and bow
+  draws can be cancelled into spells. Dodge cooldown is 0.45 s. Enemy wind-ups stay at least 0.18 s so they're readable.
+- **Mana:** 80 + 2 × Magic + 5 per level. Regeneration is 5%/s out of combat and 2.5%/s in it; weapon hits
+  restore 40% of damage dealt (max 12). Spells only need a split-second recast (0.12–1.2 s): mana is the limit.
+- **Elements** (data/magic.json): Fire (power: burning, explosive damage), Water (recovery: healing, slows),
+  Earth (defense: shields, barriers, knockback, durability), Air (speed: fast missiles, haste, chains),
+  Light (healing: the strongest heals and protection). Each has an attribute, strengths, weaknesses, a base
+  status, effect affinities and a favoured focus. Sub-elements are optional and now sit logically under
+  their element: Fire - Magma, Plasma, Ash; Water - Ice, Steam, Blood, Poison; Earth - Metal, Crystal, Sand,
+  Nature, Gravity; Air - Wind, Lightning, Sound; Light - Radiance, Mending, Sanctuary.
+- **Spell design:** element, optional sub-element, 14 movement classes (bolt, seeker, beam, wave, explosion,
+  persistent field, orbit, ward, aura, burst, chain, trap, barrier, self), effect, focus (balanced, power,
+  speed, range, duration, area, efficiency, control), size slider (0.5–3.0: area, hit radius, power and visuals
+  grow; mana grows faster, by movement class), tier. Live cost and footprint preview. Areas are capped per
+  movement class and each caster can keep at most 3 traps, fields, wards or barriers.
+- **Enemies:** threat-based sticky targeting (who hurt them, the weak, spread across the party), casters who
+  keep their distance and pick spells by situation (heal the hurt, buff, area spells on clusters, root foes who
+  rush them, bolts otherwise), projectile dodging, regrouping when hurt, rousing nearby kin. New casters:
+  Hollow Hexer, Hollow Stormcaller, Thornblood Shaman, Frost Witch, Husk Channeler. They use the player's
+  spell framework.
+- **Encounters** (data/encounters.json): mixed groups per region (raiders with archers and a hexer, warbands with a
+  captain, a witch with her wolves, the dead with a channeler...). Every enemy kind listed for an area gets a
+  group, dangerous areas get extra roaming groups, counts grow with danger, max 9 per group.
+- **Towns:** an equipment shop in every town (Outfitter where there was none), stocked by town size and
+  faction; coin loot scales with danger; guards in every town; theft from barrels, crates and others' chests and
+  robbing the fallen are crimes when witnessed (reputation, witnesses remember, bounty); guards challenge and
+  fight wanted criminals; fines clear bounties; beat a town's guards to seize it (daily taxes, 15% discount,
+  faction hostility, possible retaking unless 3 retainers hold it).
+- **Morale & prisoners:** human foes' morale falls with wounds, fallen allies and a fallen leader; broken foes
+  flee or surrender. Surrendered foes can be taken prisoner (needs a house/outpost), recruited if willing, robbed
+  or released. Prisoners' loyalty and resentment change daily with treatment; loyal ones become retainers
+  (daily marks, help hold towns); resentful ones escape. All of it is recorded in the Set AI history.
+
 ## Quality of life (mana, feel, guidance)
 
 - **Mana:** capacity is 40 + 1.2 × Magic skill + 3 per level. Mana regenerates in real time (3% of max per

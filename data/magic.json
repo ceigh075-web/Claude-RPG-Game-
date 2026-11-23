@@ -1,51 +1,879 @@
 {
-  "elements": {
-    "fire":  {"name": "Fire",  "color": [230, 100, 40],  "subs": ["lightning", "plasma", "magma", "ash"]},
-    "water": {"name": "Water", "color": [60, 130, 220],  "subs": ["ice", "steam", "blood", "poison"]},
-    "earth": {"name": "Earth", "color": [140, 110, 60],  "subs": ["metal", "crystal", "sand", "nature"]},
-    "air":   {"name": "Air",   "color": [200, 220, 230], "subs": ["wind", "sound", "gravity", "light"]}
+ "elements": {
+  "fire": {
+   "name": "Fire",
+   "color": [
+    236,
+    104,
+    40
+   ],
+   "subs": [
+    "magma",
+    "plasma",
+    "ash"
+   ],
+   "identity": "Power",
+   "attribute": "strength",
+   "desc": "Raw heat and destruction. Hits hardest of all elements.",
+   "strengths": "Highest damage; burning; explosive areas",
+   "weaknesses": "Poor at healing and protection; costly",
+   "power": 1.2,
+   "speed": 1.0,
+   "mana": 1.1,
+   "status": "burn",
+   "effects": [
+    "damage",
+    "affliction",
+    "knockback",
+    "strength"
+   ],
+   "focus_affinity": "power",
+   "affinity": {
+    "damage": 1.2,
+    "affliction": 1.15,
+    "heal": 0.7,
+    "defense": 0.75
+   }
   },
-  "subelements": {
-    "lightning": {"element": "fire",  "name": "Lightning", "power": 1.15, "speed": 1.6,  "mana": 1.15, "status": "shock",    "stats": ["damage", "speed", "affliction", "knockback"], "color": [250, 240, 120], "note": "Very fast; shocks interrupt attacks."},
-    "plasma":    {"element": "fire",  "name": "Plasma",    "power": 1.35, "speed": 1.0,  "mana": 1.35, "status": "burn",     "stats": ["damage", "affliction", "strength"],          "color": [240, 120, 240], "note": "Highest raw damage, expensive."},
-    "magma":     {"element": "fire",  "name": "Magma",     "power": 1.2,  "speed": 0.6,  "mana": 1.1,  "status": "burn",     "stats": ["damage", "defense", "root", "affliction"],   "color": [230, 80, 30],   "note": "Slow, lingers and burns."},
-    "ash":       {"element": "fire",  "name": "Ash",       "power": 0.85, "speed": 0.9,  "mana": 0.85, "status": "blind",    "stats": ["damage", "affliction", "defense"],           "color": [120, 110, 110], "note": "Cheap; blinds enemies (they miss)."},
-    "ice":       {"element": "water", "name": "Ice",       "power": 1.0,  "speed": 1.0,  "mana": 1.0,  "status": "chill",    "stats": ["damage", "root", "defense", "affliction"],   "color": [170, 220, 250], "note": "Slows and freezes."},
-    "steam":     {"element": "water", "name": "Steam",     "power": 0.9,  "speed": 0.8,  "mana": 0.9,  "status": "scald",    "stats": ["damage", "affliction", "speed", "heal"],     "color": [220, 230, 235], "note": "Clouds; mild healing mists."},
-    "blood":     {"element": "water", "name": "Blood",     "power": 1.1,  "speed": 1.0,  "mana": 0.8,  "status": "bleed",    "stats": ["damage", "heal", "strength", "affliction"],  "color": [170, 20, 40],   "note": "Cheap mana but costs a little HP to cast."},
-    "poison":    {"element": "water", "name": "Poison",    "power": 0.7,  "speed": 0.9,  "mana": 0.9,  "status": "poison",   "stats": ["damage", "affliction", "dexterity"],         "color": [110, 200, 60],  "note": "Low hit, strong damage over time."},
-    "metal":     {"element": "earth", "name": "Metal",     "power": 1.15, "speed": 1.1,  "mana": 1.05, "status": "bleed",    "stats": ["damage", "defense", "strength", "knockback"],"color": [170, 175, 185], "note": "Shards and plating."},
-    "crystal":   {"element": "earth", "name": "Crystal",   "power": 1.05, "speed": 1.0,  "mana": 1.1,  "status": "pierce",   "stats": ["damage", "defense", "heal", "dexterity"],    "color": [150, 230, 220], "note": "Piercing shards; protective prisms."},
-    "sand":      {"element": "earth", "name": "Sand",      "power": 0.8,  "speed": 1.0,  "mana": 0.8,  "status": "blind",    "stats": ["damage", "root", "affliction", "speed"],     "color": [220, 200, 140], "note": "Cheap control."},
-    "nature":    {"element": "earth", "name": "Nature",    "power": 0.9,  "speed": 0.8,  "mana": 0.95, "status": "entangle", "stats": ["heal", "root", "health", "strength", "defense"], "color": [70, 170, 70],  "note": "Healing and roots."},
-    "wind":      {"element": "air",   "name": "Wind",      "power": 0.8,  "speed": 1.5,  "mana": 0.85, "status": "none",     "stats": ["knockback", "speed", "damage", "dexterity"], "color": [210, 240, 230], "note": "Fast, huge knockback."},
-    "sound":     {"element": "air",   "name": "Sound",     "power": 0.9,  "speed": 1.3,  "mana": 0.95, "status": "stagger",  "stats": ["damage", "knockback", "affliction", "speed"],"color": [240, 200, 250], "note": "Staggers in an area."},
-    "gravity":   {"element": "air",   "name": "Gravity",   "power": 1.1,  "speed": 0.7,  "mana": 1.25, "status": "pull",     "stats": ["root", "knockback", "damage", "defense"],    "color": [80, 60, 120],   "note": "Pulls and pins."},
-    "light":     {"element": "air",   "name": "Light",     "power": 1.0,  "speed": 1.8,  "mana": 1.05, "status": "blind",    "stats": ["heal", "damage", "dexterity", "defense"],    "color": [255, 250, 200], "note": "Fast beams, healing radiance."}
+  "water": {
+   "name": "Water",
+   "color": [
+    64,
+    140,
+    226
+   ],
+   "subs": [
+    "ice",
+    "steam",
+    "blood",
+    "poison"
+   ],
+   "identity": "Recovery",
+   "attribute": "health",
+   "desc": "Flowing, adaptable magic of renewal. Heals, slows and wears foes down.",
+   "strengths": "Healing; slows; efficient over time",
+   "weaknesses": "Modest burst damage",
+   "power": 1.0,
+   "speed": 1.0,
+   "mana": 0.9,
+   "status": "chill",
+   "effects": [
+    "heal",
+    "damage",
+    "root",
+    "health",
+    "affliction"
+   ],
+   "focus_affinity": "efficiency",
+   "affinity": {
+    "heal": 1.2,
+    "health": 1.15,
+    "root": 1.1,
+    "damage": 0.9
+   }
   },
-  "movements": {
-    "projectile": {"name": "Projectile",        "mana": 1.0, "range": 220, "speed": 260, "area": 6,  "duration": 0.0, "cooldown": 0.6, "power": 1.0,  "desc": "A bolt fired in a straight line."},
-    "homing":     {"name": "Tracking Projectile","mana": 1.4, "range": 240, "speed": 200, "area": 6,  "duration": 0.0, "cooldown": 1.0, "power": 0.85, "desc": "Seeks the nearest enemy."},
-    "beam":       {"name": "Beam",              "mana": 1.3, "range": 160, "speed": 0,   "area": 4,  "duration": 0.4, "cooldown": 1.2, "power": 1.2,  "desc": "Instant straight-line strike that hits everything in its path."},
-    "wave":       {"name": "Expanding Wave",    "mana": 1.5, "range": 90,  "speed": 160, "area": 90, "duration": 0.5, "cooldown": 2.0, "power": 0.8,  "desc": "A ring expanding out from the caster."},
-    "area":       {"name": "Area Placement",    "mana": 1.6, "range": 180, "speed": 0,   "area": 40, "duration": 0.6, "cooldown": 2.5, "power": 1.1,  "desc": "Bursts at a target point after a short delay."},
-    "ground":     {"name": "Ground Effect",     "mana": 1.3, "range": 120, "speed": 0,   "area": 32, "duration": 4.0, "cooldown": 3.0, "power": 0.35, "desc": "A zone on the ground affecting anything inside it each second."},
-    "orbit":      {"name": "Orbiting",          "mana": 1.4, "range": 26,  "speed": 0,   "area": 8,  "duration": 6.0, "cooldown": 4.0, "power": 0.4,  "desc": "Motes circling the caster, hitting what they touch."},
-    "ward":       {"name": "Stationary Ward",   "mana": 1.5, "range": 60,  "speed": 0,   "area": 48, "duration": 10.0,"cooldown": 6.0, "power": 0.3,  "desc": "A totem that pulses its effect around itself."},
-    "aura":       {"name": "Self Aura",         "mana": 1.2, "range": 0,   "speed": 0,   "area": 0,  "duration": 8.0, "cooldown": 5.0, "power": 1.0,  "desc": "Affects the caster (and close allies at tier 3)."}
+  "earth": {
+   "name": "Earth",
+   "color": [
+    150,
+    116,
+    64
+   ],
+   "subs": [
+    "metal",
+    "crystal",
+    "sand",
+    "nature",
+    "gravity"
+   ],
+   "identity": "Defense",
+   "attribute": "health",
+   "desc": "Stone, metal and growth. Shields, endures and holds the line.",
+   "strengths": "Shields and barriers; long durations; knockback",
+   "weaknesses": "Slow projectiles",
+   "power": 1.05,
+   "speed": 0.8,
+   "mana": 1.0,
+   "status": "stagger",
+   "effects": [
+    "defense",
+    "damage",
+    "root",
+    "health",
+    "strength",
+    "knockback"
+   ],
+   "focus_affinity": "duration",
+   "affinity": {
+    "defense": 1.3,
+    "health": 1.15,
+    "knockback": 1.15,
+    "speed": 0.7
+   }
   },
-  "stats": {
-    "damage":     {"name": "Damage",             "mana": 1.0, "base": 14, "target": "enemy", "desc": "Deals elemental damage."},
-    "heal":       {"name": "Healing",            "mana": 1.3, "base": 16, "target": "ally",  "desc": "Restores health."},
-    "strength":   {"name": "Strength Boost",     "mana": 1.2, "base": 6,  "target": "ally",  "desc": "Temporarily raises Strength."},
-    "speed":      {"name": "Speed Boost",        "mana": 1.1, "base": 6,  "target": "ally",  "desc": "Temporarily raises Speed."},
-    "dexterity":  {"name": "Dexterity Boost",    "mana": 1.1, "base": 6,  "target": "ally",  "desc": "Temporarily raises Dexterity."},
-    "health":     {"name": "Vitality",           "mana": 1.2, "base": 10, "target": "ally",  "desc": "Temporarily raises max health."},
-    "defense":    {"name": "Defense",            "mana": 1.1, "base": 5,  "target": "ally",  "desc": "Absorbs incoming damage."},
-    "knockback":  {"name": "Knockback",          "mana": 0.9, "base": 120,"target": "enemy", "desc": "Hurls enemies away."},
-    "root":       {"name": "Movement Restriction","mana": 1.2, "base": 2,  "target": "enemy", "desc": "Slows or roots enemies (seconds)."},
-    "affliction": {"name": "Status Effect",      "mana": 1.0, "base": 4,  "target": "enemy", "desc": "Applies the sub-element's status (damage over time, blind, shock...)."}
+  "air": {
+   "name": "Air",
+   "color": [
+    206,
+    230,
+    236
+   ],
+   "subs": [
+    "wind",
+    "lightning",
+    "sound"
+   ],
+   "identity": "Speed",
+   "attribute": "speed",
+   "desc": "Wind and storm. Fast, far-reaching and hard to pin down.",
+   "strengths": "Fastest spells; haste; displacement; chains",
+   "weaknesses": "Lower raw power",
+   "power": 0.9,
+   "speed": 1.4,
+   "mana": 0.95,
+   "status": "shock",
+   "effects": [
+    "speed",
+    "knockback",
+    "damage",
+    "dexterity",
+    "root"
+   ],
+   "focus_affinity": "speed",
+   "affinity": {
+    "speed": 1.3,
+    "dexterity": 1.2,
+    "knockback": 1.2,
+    "damage": 0.95
+   }
   },
-  "tiers": {"1": {"power": 1.0, "mana": 1.0, "level": 1}, "2": {"power": 1.7, "mana": 1.9, "level": 5}, "3": {"power": 2.6, "mana": 3.2, "level": 10}},
-  "spellbook": {"base_capacity": 2, "per_levels": 3, "max_capacity": 12, "replace_cost_item": "mana_crystal"}
+  "light": {
+   "name": "Light",
+   "color": [
+    255,
+    246,
+    196
+   ],
+   "subs": [
+    "light",
+    "mending",
+    "sanctuary"
+   ],
+   "identity": "Healing",
+   "attribute": "health",
+   "desc": "Radiance that mends and protects. The strongest healing magic.",
+   "strengths": "Best healing; protective auras; blinds the wicked",
+   "weaknesses": "Weak direct damage",
+   "power": 1.0,
+   "speed": 1.1,
+   "mana": 1.0,
+   "status": "blind",
+   "effects": [
+    "heal",
+    "defense",
+    "health",
+    "damage",
+    "affliction"
+   ],
+   "focus_affinity": "efficiency",
+   "affinity": {
+    "heal": 1.35,
+    "health": 1.2,
+    "defense": 1.1,
+    "damage": 0.8
+   }
+  }
+ },
+ "subelements": {
+  "lightning": {
+   "element": "air",
+   "name": "Lightning",
+   "power": 1.15,
+   "speed": 1.6,
+   "mana": 1.15,
+   "status": "shock",
+   "stats": [
+    "damage",
+    "speed",
+    "affliction",
+    "knockback"
+   ],
+   "color": [
+    250,
+    240,
+    120
+   ],
+   "note": "Very fast; shocks interrupt attacks."
+  },
+  "plasma": {
+   "element": "fire",
+   "name": "Plasma",
+   "power": 1.35,
+   "speed": 1.0,
+   "mana": 1.35,
+   "status": "burn",
+   "stats": [
+    "damage",
+    "affliction",
+    "strength"
+   ],
+   "color": [
+    240,
+    120,
+    240
+   ],
+   "note": "Highest raw damage, expensive."
+  },
+  "magma": {
+   "element": "fire",
+   "name": "Magma",
+   "power": 1.2,
+   "speed": 0.6,
+   "mana": 1.1,
+   "status": "burn",
+   "stats": [
+    "damage",
+    "defense",
+    "root",
+    "affliction"
+   ],
+   "color": [
+    230,
+    80,
+    30
+   ],
+   "note": "Slow, lingers and burns."
+  },
+  "ash": {
+   "element": "fire",
+   "name": "Ash",
+   "power": 0.85,
+   "speed": 0.9,
+   "mana": 0.85,
+   "status": "blind",
+   "stats": [
+    "damage",
+    "affliction",
+    "defense"
+   ],
+   "color": [
+    120,
+    110,
+    110
+   ],
+   "note": "Cheap; blinds enemies (they miss)."
+  },
+  "ice": {
+   "element": "water",
+   "name": "Ice",
+   "power": 1.0,
+   "speed": 1.0,
+   "mana": 1.0,
+   "status": "chill",
+   "stats": [
+    "damage",
+    "root",
+    "defense",
+    "affliction"
+   ],
+   "color": [
+    170,
+    220,
+    250
+   ],
+   "note": "Slows and freezes."
+  },
+  "steam": {
+   "element": "water",
+   "name": "Steam",
+   "power": 0.9,
+   "speed": 0.8,
+   "mana": 0.9,
+   "status": "scald",
+   "stats": [
+    "damage",
+    "affliction",
+    "speed",
+    "heal"
+   ],
+   "color": [
+    220,
+    230,
+    235
+   ],
+   "note": "Clouds; mild healing mists."
+  },
+  "blood": {
+   "element": "water",
+   "name": "Blood",
+   "power": 1.1,
+   "speed": 1.0,
+   "mana": 0.8,
+   "status": "bleed",
+   "stats": [
+    "damage",
+    "heal",
+    "strength",
+    "affliction"
+   ],
+   "color": [
+    170,
+    20,
+    40
+   ],
+   "note": "Cheap mana but costs a little HP to cast."
+  },
+  "poison": {
+   "element": "water",
+   "name": "Poison",
+   "power": 0.7,
+   "speed": 0.9,
+   "mana": 0.9,
+   "status": "poison",
+   "stats": [
+    "damage",
+    "affliction",
+    "dexterity"
+   ],
+   "color": [
+    110,
+    200,
+    60
+   ],
+   "note": "Low hit, strong damage over time."
+  },
+  "metal": {
+   "element": "earth",
+   "name": "Metal",
+   "power": 1.15,
+   "speed": 1.1,
+   "mana": 1.05,
+   "status": "bleed",
+   "stats": [
+    "damage",
+    "defense",
+    "strength",
+    "knockback"
+   ],
+   "color": [
+    170,
+    175,
+    185
+   ],
+   "note": "Shards and plating."
+  },
+  "crystal": {
+   "element": "earth",
+   "name": "Crystal",
+   "power": 1.05,
+   "speed": 1.0,
+   "mana": 1.1,
+   "status": "pierce",
+   "stats": [
+    "damage",
+    "defense",
+    "heal",
+    "dexterity"
+   ],
+   "color": [
+    150,
+    230,
+    220
+   ],
+   "note": "Piercing shards; protective prisms."
+  },
+  "sand": {
+   "element": "earth",
+   "name": "Sand",
+   "power": 0.8,
+   "speed": 1.0,
+   "mana": 0.8,
+   "status": "blind",
+   "stats": [
+    "damage",
+    "root",
+    "affliction",
+    "speed"
+   ],
+   "color": [
+    220,
+    200,
+    140
+   ],
+   "note": "Cheap control."
+  },
+  "nature": {
+   "element": "earth",
+   "name": "Nature",
+   "power": 0.9,
+   "speed": 0.8,
+   "mana": 0.95,
+   "status": "entangle",
+   "stats": [
+    "heal",
+    "root",
+    "health",
+    "strength",
+    "defense"
+   ],
+   "color": [
+    70,
+    170,
+    70
+   ],
+   "note": "Healing and roots."
+  },
+  "wind": {
+   "element": "air",
+   "name": "Wind",
+   "power": 0.8,
+   "speed": 1.5,
+   "mana": 0.85,
+   "status": "none",
+   "stats": [
+    "knockback",
+    "speed",
+    "damage",
+    "dexterity"
+   ],
+   "color": [
+    210,
+    240,
+    230
+   ],
+   "note": "Fast, huge knockback."
+  },
+  "sound": {
+   "element": "air",
+   "name": "Sound",
+   "power": 0.9,
+   "speed": 1.3,
+   "mana": 0.95,
+   "status": "stagger",
+   "stats": [
+    "damage",
+    "knockback",
+    "affliction",
+    "speed"
+   ],
+   "color": [
+    240,
+    200,
+    250
+   ],
+   "note": "Staggers in an area."
+  },
+  "gravity": {
+   "element": "earth",
+   "name": "Gravity",
+   "power": 1.1,
+   "speed": 0.7,
+   "mana": 1.25,
+   "status": "pull",
+   "stats": [
+    "root",
+    "knockback",
+    "damage",
+    "defense"
+   ],
+   "color": [
+    80,
+    60,
+    120
+   ],
+   "note": "Pulls and pins."
+  },
+  "light": {
+   "element": "light",
+   "name": "Radiance",
+   "power": 1.0,
+   "speed": 1.8,
+   "mana": 1.05,
+   "status": "blind",
+   "stats": [
+    "heal",
+    "damage",
+    "dexterity",
+    "defense"
+   ],
+   "color": [
+    255,
+    250,
+    200
+   ],
+   "note": "Blinding holy light; heals allies and sears the wicked."
+  },
+  "mending": {
+   "element": "light",
+   "name": "Mending",
+   "power": 1.15,
+   "speed": 1.0,
+   "mana": 0.9,
+   "status": "none",
+   "stats": [
+    "heal",
+    "health",
+    "defense",
+    "speed"
+   ],
+   "color": [
+    255,
+    214,
+    150
+   ],
+   "note": "Pure restoration: the most efficient healing in the world."
+  },
+  "sanctuary": {
+   "element": "light",
+   "name": "Sanctuary",
+   "power": 1.0,
+   "speed": 0.9,
+   "mana": 1.0,
+   "status": "blind",
+   "stats": [
+    "defense",
+    "heal",
+    "root",
+    "knockback"
+   ],
+   "color": [
+    230,
+    236,
+    255
+   ],
+   "note": "Hallowed ground and wards that shelter allies and hold foes back."
+  }
+ },
+ "movements": {
+  "projectile": {
+   "name": "Projectile",
+   "mana": 1.0,
+   "range": 220,
+   "speed": 260,
+   "area": 6,
+   "duration": 0.0,
+   "cooldown": 0.12,
+   "power": 1.0,
+   "desc": "A bolt fired in a straight line.",
+   "size_cost": 0.8,
+   "max_area": 14
+  },
+  "homing": {
+   "name": "Tracking Projectile",
+   "mana": 1.4,
+   "range": 240,
+   "speed": 200,
+   "area": 6,
+   "duration": 0.0,
+   "cooldown": 0.25,
+   "power": 0.85,
+   "desc": "Seeks the nearest enemy.",
+   "size_cost": 0.9,
+   "max_area": 14
+  },
+  "beam": {
+   "name": "Beam",
+   "mana": 1.3,
+   "range": 160,
+   "speed": 0,
+   "area": 4,
+   "duration": 0.4,
+   "cooldown": 0.3,
+   "power": 1.2,
+   "desc": "Instant straight-line strike that hits everything in its path.",
+   "size_cost": 1.0,
+   "max_area": 14
+  },
+  "wave": {
+   "name": "Expanding Wave",
+   "mana": 1.5,
+   "range": 90,
+   "speed": 160,
+   "area": 90,
+   "duration": 0.5,
+   "cooldown": 0.45,
+   "power": 0.8,
+   "desc": "A ring expanding out from the caster.",
+   "size_cost": 1.2,
+   "max_area": 200
+  },
+  "area": {
+   "name": "Explosion",
+   "mana": 1.6,
+   "range": 180,
+   "speed": 0,
+   "area": 40,
+   "duration": 0.6,
+   "cooldown": 0.5,
+   "power": 1.1,
+   "desc": "Detonates at a target point after a short fuse.",
+   "size_cost": 1.3,
+   "max_area": 130
+  },
+  "ground": {
+   "name": "Persistent Field",
+   "mana": 1.3,
+   "range": 120,
+   "speed": 0,
+   "area": 32,
+   "duration": 4.0,
+   "cooldown": 0.8,
+   "power": 0.35,
+   "desc": "A lasting field on the ground that affects anything inside it.",
+   "size_cost": 1.4,
+   "max_area": 110
+  },
+  "orbit": {
+   "name": "Orbiting",
+   "mana": 1.4,
+   "range": 26,
+   "speed": 0,
+   "area": 8,
+   "duration": 6.0,
+   "cooldown": 1.0,
+   "power": 0.4,
+   "desc": "Motes circling the caster, hitting what they touch.",
+   "size_cost": 1.0,
+   "max_area": 20
+  },
+  "ward": {
+   "name": "Stationary Ward",
+   "mana": 1.5,
+   "range": 60,
+   "speed": 0,
+   "area": 48,
+   "duration": 10.0,
+   "cooldown": 1.2,
+   "power": 0.3,
+   "desc": "A totem that pulses its effect around itself.",
+   "size_cost": 1.2,
+   "max_area": 140
+  },
+  "aura": {
+   "name": "Self Aura",
+   "mana": 1.2,
+   "range": 0,
+   "speed": 0,
+   "area": 0,
+   "duration": 8.0,
+   "cooldown": 0.8,
+   "power": 1.0,
+   "desc": "Affects the caster (and close allies at tier 3).",
+   "size_cost": 1.1,
+   "max_area": 90
+  },
+  "burst": {
+   "name": "Burst",
+   "mana": 1.25,
+   "range": 0,
+   "speed": 0,
+   "area": 42,
+   "duration": 0.3,
+   "cooldown": 0.35,
+   "power": 0.95,
+   "size_cost": 1.2,
+   "max_area": 150,
+   "desc": "An instant nova around the caster."
+  },
+  "chain": {
+   "name": "Chain",
+   "mana": 1.35,
+   "range": 170,
+   "speed": 0,
+   "area": 70,
+   "duration": 0.35,
+   "cooldown": 0.35,
+   "power": 0.85,
+   "size_cost": 0.9,
+   "max_area": 140,
+   "desc": "Strikes the nearest foe, then leaps to others nearby."
+  },
+  "trap": {
+   "name": "Trap",
+   "mana": 1.2,
+   "range": 110,
+   "speed": 0,
+   "area": 34,
+   "duration": 25.0,
+   "cooldown": 0.6,
+   "power": 1.3,
+   "size_cost": 1.1,
+   "max_area": 110,
+   "desc": "A hidden glyph that bursts when a foe steps on it."
+  },
+  "barrier": {
+   "name": "Barrier",
+   "mana": 1.4,
+   "range": 26,
+   "speed": 0,
+   "area": 40,
+   "duration": 6.0,
+   "cooldown": 1.0,
+   "power": 0.5,
+   "size_cost": 1.2,
+   "max_area": 120,
+   "desc": "A wall of force ahead of you that stops missiles and repels foes."
+  },
+  "self": {
+   "name": "Self",
+   "mana": 0.8,
+   "range": 0,
+   "speed": 0,
+   "area": 16,
+   "duration": 0.0,
+   "cooldown": 0.25,
+   "power": 1.1,
+   "size_cost": 0.6,
+   "max_area": 40,
+   "desc": "Takes effect on the caster alone (or a tiny pulse around them)."
+  }
+ },
+ "stats": {
+  "damage": {
+   "name": "Damage",
+   "mana": 1.0,
+   "base": 14,
+   "target": "enemy",
+   "desc": "Deals elemental damage."
+  },
+  "heal": {
+   "name": "Healing",
+   "mana": 1.3,
+   "base": 16,
+   "target": "ally",
+   "desc": "Restores health."
+  },
+  "strength": {
+   "name": "Strength Boost",
+   "mana": 1.2,
+   "base": 6,
+   "target": "ally",
+   "desc": "Temporarily raises Strength."
+  },
+  "speed": {
+   "name": "Speed Boost",
+   "mana": 1.1,
+   "base": 6,
+   "target": "ally",
+   "desc": "Temporarily raises Speed."
+  },
+  "dexterity": {
+   "name": "Dexterity Boost",
+   "mana": 1.1,
+   "base": 6,
+   "target": "ally",
+   "desc": "Temporarily raises Dexterity."
+  },
+  "health": {
+   "name": "Vitality",
+   "mana": 1.2,
+   "base": 10,
+   "target": "ally",
+   "desc": "Temporarily raises max health."
+  },
+  "defense": {
+   "name": "Defense",
+   "mana": 1.1,
+   "base": 5,
+   "target": "ally",
+   "desc": "Absorbs incoming damage."
+  },
+  "knockback": {
+   "name": "Knockback",
+   "mana": 0.9,
+   "base": 120,
+   "target": "enemy",
+   "desc": "Hurls enemies away."
+  },
+  "root": {
+   "name": "Control",
+   "mana": 1.2,
+   "base": 2,
+   "target": "enemy",
+   "desc": "Slows or roots enemies (seconds)."
+  },
+  "affliction": {
+   "name": "Status Effect",
+   "mana": 1.0,
+   "base": 4,
+   "target": "enemy",
+   "desc": "Applies the sub-element's status (damage over time, blind, shock...)."
+  }
+ },
+ "tiers": {
+  "1": {
+   "power": 1.0,
+   "mana": 1.0,
+   "level": 1
+  },
+  "2": {
+   "power": 1.7,
+   "mana": 1.9,
+   "level": 5
+  },
+  "3": {
+   "power": 2.6,
+   "mana": 3.2,
+   "level": 10
+  }
+ },
+ "spellbook": {
+  "base_capacity": 2,
+  "per_levels": 3,
+  "max_capacity": 12,
+  "replace_cost_item": "mana_crystal"
+ },
+ "focuses": {
+  "balanced": {
+   "name": "Balanced",
+   "desc": "No specialisation."
+  },
+  "power": {
+   "name": "Power",
+   "power": 1.3,
+   "mana": 1.25,
+   "desc": "Hits harder, costs more."
+  },
+  "speed": {
+   "name": "Speed",
+   "speed": 1.6,
+   "power": 0.9,
+   "desc": "Much faster missiles and waves."
+  },
+  "range": {
+   "name": "Range",
+   "range": 1.5,
+   "mana": 1.1,
+   "desc": "Reaches much further."
+  },
+  "duration": {
+   "name": "Duration",
+   "duration": 1.6,
+   "mana": 1.15,
+   "desc": "Lasts longer (fields, buffs, statuses)."
+  },
+  "area": {
+   "name": "Area",
+   "area": 1.4,
+   "mana": 1.2,
+   "desc": "Covers a wider area."
+  },
+  "efficiency": {
+   "name": "Efficiency",
+   "mana": 0.7,
+   "power": 0.85,
+   "desc": "Much cheaper to cast, a little weaker."
+  },
+  "control": {
+   "name": "Control",
+   "control": 1.5,
+   "mana": 1.1,
+   "desc": "Stronger slows, roots, statuses and knockback."
+  }
+ },
+ "sizes": {
+  "min": 0.5,
+  "max": 3.0,
+  "step": 0.25
+ }
 }

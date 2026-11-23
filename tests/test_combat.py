@@ -176,7 +176,7 @@ class TestRealtime(unittest.TestCase):
     def test_every_spell_movement(self):
         for mv in DATA.magic["movements"]:
             st, m, w, pc = setup_world()
-            dist = 24 if mv in ("orbit", "aura") else 40
+            dist = {"orbit": 24, "aura": 24, "barrier": 26, "self": 14}.get(mv, 40)
             e = w.spawn_enemy("bandit_cutthroat", pc.x + dist, pc.y)
             e.ai = None
             st.player.mana = 999
@@ -204,8 +204,9 @@ class TestRealtime(unittest.TestCase):
         self.assertFalse(ok)
         st.player.mana = 100
         self.assertTrue(w.cast(pc, spells.STARTER_SPELLS[0])[0])
+        self.assertFalse(w.cast(pc, spells.STARTER_SPELLS[0])[0])  # a split-second recast between casts
         run(w, m, 0.3)
-        self.assertFalse(w.cast(pc, spells.STARTER_SPELLS[0])[0])  # still cooling down
+        self.assertTrue(w.cast(pc, spells.STARTER_SPELLS[0])[0])   # ...and no long cooldown after that
 
     def test_each_archetype_engages(self):
         for eid, e in DATA.enemies.items():
@@ -264,7 +265,12 @@ class TestRealtime(unittest.TestCase):
         foe.alerted = True
         foe.hp = foe.max_hp * 0.1
         run(w, m, 10)
-        self.assertEqual(foe.ai.mode, "flee")
+        self.assertIn(foe.ai.mode, ("flee", "cower"))      # humans: morale decides between running and yielding
+        wolf = w.spawn_enemy("wolf", pc.x + 40, pc.y)
+        wolf.alerted = True
+        wolf.hp = wolf.max_hp * 0.1
+        run(w, m, 2)
+        self.assertEqual(wolf.ai.mode, "flee")              # beasts still bolt when badly hurt
 
     def test_neutral_until_provoked(self):
         st, m, w, pc = setup_world()

@@ -42,6 +42,7 @@ class GameData:
         self.magic = _load("magic.json")
         self.items = {k: v for k, v in _load("items.json").items() if not k.startswith("_")}
         self.enemies = _load("enemies.json")
+        self.encounters = _load("encounters.json")["templates"]
         self.npcs = {n["id"]: n for n in _load("npcs.json")}
         self.schedules = {k: v for k, v in _load("schedules.json").items() if not k.startswith("_")}
         self.shops = {k: v for k, v in _load("shops.json").items() if not k.startswith("_")}
@@ -159,10 +160,16 @@ class GameData:
         melee = [w for w in self.weapons.values() if w["class"] == "melee"]
         ranged = [w for w in self.weapons.values() if w["class"] == "ranged"]
         need(len(melee) == 12 and len(ranged) == 4, "expected 12 melee + 4 ranged weapon types")
-        need(len(self.magic["elements"]) == 4, "expected 4 elements")
-        need(len(self.magic["subelements"]) == 16, "expected 16 sub-elements")
+        need(len(self.magic["elements"]) >= 4, "expected at least 4 elements")
+        need(len(self.magic["subelements"]) >= 16, "expected at least 16 sub-elements")
+        for sid, sub in self.magic["subelements"].items():
+            need(sid in self.magic["elements"].get(sub["element"], {}).get("subs", []), f"sub {sid} missing from its element")
         for eid, el in self.magic["elements"].items():
-            need(len(el["subs"]) == 4, f"element {eid} needs 4 subs")
+            for k in ("power", "speed", "mana", "status", "effects", "affinity", "focus_affinity"):
+                need(k in el, f"element {eid} lacks {k}")
+            need(el["focus_affinity"] in self.magic["focuses"], f"element {eid} has unknown focus affinity")
+        for eid, el in self.magic["elements"].items():
+            need(len(el["subs"]) >= 2, f"element {eid} needs at least 2 subs")
             for s in el["subs"]:
                 need(self.magic["subelements"].get(s, {}).get("element") == eid, f"sub {s} not linked to {eid}")
         need(40 <= len(self.npcs) <= 50, f"NPC count {len(self.npcs)} outside 40-50")
@@ -197,6 +204,17 @@ class GameData:
         for e in self.enemies.values():
             for it in e["loot"]:
                 need(it == "marks" or it in self.items, f"enemy loot unknown {it}")
+        from ..set_system import spells as _spells
+        for eid, e in self.enemies.items():
+            for sp in e.get("spells", []):
+                try:
+                    _spells.validate(self, sp)
+                except _spells.SpellError as err:
+                    need(False, f"enemy {eid} spell {sp.get('name')}: {err}")
+        for t in self.encounters:
+            need(t["anchor"] in self.enemies, f"encounter {t['id']} anchor unknown")
+            for eid, lo, hi in t["members"]:
+                need(eid in self.enemies and 0 <= lo <= hi, f"encounter {t['id']} member {eid}")
         # graph connectivity
         adj = {i: set() for i in ids}
         for a, b, _ in self.routes:

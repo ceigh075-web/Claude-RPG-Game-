@@ -41,13 +41,22 @@ def chapters(scene):
     regen_c = spells.regen_per_second(p, False)
     regen_f = spells.regen_per_second(p, True)
     out.append(("Magic & Mana", [
-        ("Your mana", f"You hold {p.max_mana} mana (40 + 1.2 per Magic skill point + 3 per level). The blue bar shows it; "
+        ("Your mana", f"You hold {p.max_mana} mana (80 + 2 per Magic skill point + 5 per level). The blue bar shows it; "
                       f"white ticks on the bar mark what each hotbar spell costs."),
+        ("Elements", "Fire is power and destruction; Water is recovery and slowing; Earth is defense, shields and "
+                     "durability; Air is speed, reach and displacement; Light is the strongest healing and "
+                     "protection. You can cast with an element alone - a sub-element (Ice, Lightning, Mending...) "
+                     "is an optional specialisation."),
+        ("Shaping spells", "Movement: bolt, seeker, beam, wave, explosion, field, orbit, ward, aura, burst (nova), "
+                           "chain, trap, barrier or self. Focus: power, speed, range, duration, area, efficiency or "
+                           "control - each element favours one (+10%). Size: from a pinpoint to a vast blast; "
+                           "bigger costs much more mana. The designer shows the cost as you go."),
         ("Refilling", f"Mana refills by itself: {regen_c:.1f}/s out of combat, {regen_f:.1f}/s while fighting. "
                       f"Every weapon hit you land restores {int(spells.HIT_MANA_RATIO * 100)}% of the damage as mana "
                       f"(up to {int(spells.HIT_MANA_CAP)} per hit). Resting and Mana Crystals also help."),
-        ("Designing spells", "Open the spell book (B) anywhere. N designs a new spell from element, sub-element, "
-                             "movement, effect and tier; E edits any spell; Enter inscribes a draft. It's free."),
+        ("Designing spells", "Open the spell book (B) anywhere. N designs a new spell, E edits any spell; Enter "
+                             "inscribes a draft. It's free. Spells only need a split second between casts: mana is "
+                             "the real limit."),
         ("Your book", "Inscribed spells go on the 1-4 hotbar. The book holds more spells as you level up. "
                       "Practice yards (barracks, arenas, your house) let you test drafts safely."),
     ]))
@@ -69,6 +78,27 @@ def chapters(scene):
     stations.append(("How", "Use a station (E) to see recipes. Missing ingredients are listed in red, along with "
                             "where to get them. Smelt ore into bars at a furnace, then forge at an anvil."))
     out.append(("Crafting", stations))
+    out.append(("Law, Crime & Conquest", [
+        ("Crime", "Stealing from barrels, crates and other people's chests, robbing the fallen, and attacking or "
+                  "killing people in town are crimes if anyone sees. You lose standing and the town puts a bounty on "
+                  "you. In the wilds, searching containers is fair game."),
+        ("Guards", "Every town has guards. They challenge wanted criminals ('Pay your fine!') and fight if you refuse "
+                   "or walk away. Pay a guard (E) or the job board to clear your name."),
+        ("Seizing a town", "Beat a town's guards and you can seize it at its job board. It pays you taxes every day "
+                           "and its merchants give you 15% better prices, but its old faction turns on you and may "
+                           "take it back unless you keep at least 3 retainers."),
+        ("Equipment shops", "Every town sells weapons and armour (Armorer, Smithy or Outfitter). Bigger towns stock "
+                            "better ore; each faction's towns carry their favourite gear."),
+    ]))
+    out.append(("Morale & Prisoners", [
+        ("Morale", "Human foes lose heart when badly hurt, when allies fall or their leader goes down. Then they "
+                   "flee, or yield if they're cornered. Beasts and the dead never yield."),
+        ("When they yield", "Approach (E): take them prisoner (needs a house or an outpost), ask them to join if "
+                            "they're willing, demand their purse, or let them go (their faction remembers mercy)."),
+        ("Prisoners", "Open the Tab menu, Prisoners. Captives grow loyal with time, kindness (a ration a day) and "
+                      "talk; hungry, resentful captives escape. Loyal captives become retainers who earn marks daily "
+                      "and help hold seized towns."),
+    ]))
     out.append(("Companions & People", [
         ("Recruiting", "Everyone can join you. Ask them what it would take: some want marks, standing, a duel or "
                        "a favor. Up to 4 travel with you; others can wait, work or guard your outpost."),

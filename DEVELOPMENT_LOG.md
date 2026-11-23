@@ -30,6 +30,34 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Universal targeting & consequences | ✅ Done |
 | NPC & enemy visual variety | ✅ Done |
 | Quality of life update | ✅ Done |
+| Major combat overhaul | ✅ Done |
+
+## Session 8 — Major combat overhaul
+
+- Audit first: attack phases (32/14/54% of a cycle, slow-weapon "reloads" ~1.8 s), 0.6–6 s spell cooldowns plus a
+  0.25 s cast lock, 16 fixed sub-elements with no element-only spells, one enemy type per spawn point (many
+  dropped at map generation), five towns without gear shops.
+- Faster combat: tempo ×1.3, shorter ranged recovery, recovery cancels, cast/attack chaining, wind-up/draw
+  cancel into spells, movement while acting, quicker dodges.
+- Mana: 80 + 2/Magic + 5/level, 5% / 2.5% regeneration per second, 40% hit recovery (cap 12).
+- Magic rebuilt (data-driven): 5 elements with identities and affinities (Light added; Lightning to Air,
+  Gravity to Earth, new Mending and Sanctuary), optional sub-elements, 5 new movement classes (burst, chain,
+  trap, barrier, self), focuses, size slider, cost model by size × movement, per-caster limits. Old saved
+  spells migrate automatically (`spells.normalize/migrate`). New designer UI with live cost and footprint; VFX
+  for the new classes and element-only spells.
+- Enemy AI: threat targeting, morale, missile dodging, spellcasting through the same framework, caster
+  spacing, regrouping, calls for help. Five new caster enemies; data-driven encounter templates
+  (`data/encounters.json`, `set_system/encounters.py`).
+- Towns: outfitters in 6 towns, town-scaled and faction stock (`economy.stock_def`), coin loot by danger,
+  guards, crime and bounties, theft and robbery, fines, seizing towns with taxes, discounts and retaking
+  (`set_system/crime.py`).
+- Morale, surrender, prisoners and retainers (`set_system/morale.py`, Prisoners screen in the Tab menu).
+- Local AI context: bounties and seized towns as hard facts. The model still decides nothing.
+- Bug caught in testing: the town-guard flag reused the name of the block-stamina meter (`guard`); renamed
+  to `is_guard`.
+- Performance: a 43-combatant fight with continuous spells averages 13.6 ms/frame (p95 21 ms) headless.
+- Tests: `tests/test_overhaul.py` (30). Old tests updated where rules changed intentionally (element and
+  sub-element counts, short recasts, morale-based fleeing). 187 tests in total.
 
 ## Session 7 — Quality of life: mana, movement, UI and guidance
 

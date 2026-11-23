@@ -110,8 +110,12 @@ class ShopScene(Scene):
             if getattr(self, "_use_key", None) != sel:
                 self._use_key, self._use = sel, knowledge.uses(st, sel)
             use = self._use
-            ui.ink_block(screen, it.get("desc", "") + ("  " + use[0] + "." if use else ""), (box.x + 12, box.y + 32,
-                                                                                         box.w - 24, 30), 18, ui.INK_DIM)
+            cmp_ = knowledge.compare_line(st, sel)
+            if cmp_:
+                ui.ink(screen, cmp_[0], (box.x + 12, box.y + 34), 19, ui.INK_GREEN if cmp_[1] else ui.INK_RED, bold=True)
+            else:
+                ui.ink_block(screen, it.get("desc", "") + ("  " + use[0] + "." if use else ""),
+                             (box.x + 12, box.y + 32, box.w - 24, 30), 18, ui.INK_DIM)
         ui.text(screen, f"Your marks: {st.gold}", (70, 646), 24, ui.ACCENT)
         ui.text(screen, f"Merchant's marks: {s['cash']}", (W - 70, 646), 24, ui.TEXT, right=True)
         ui.text(screen, "[Tab] switch   [Enter] trade 1   [Shift+Enter] trade 5   [Esc] leave",

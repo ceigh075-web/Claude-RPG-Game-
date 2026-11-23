@@ -4,14 +4,37 @@ import math
 from . import factions
 
 
+def town_tier(state, location_id):
+    """1 = village, 2 = town, 3 = city (by population)."""
+    loc = state.data.locations.get(location_id, {})
+    pop = loc.get("population", 0)
+    return 1 if pop < 250 else (2 if pop < 600 else 3)
+
+
+def stock_def(state, location_id, shop_id):
+    """A shop's stock list for this town: base stock + what a town this size carries + its faction's specialities."""
+    sdef = state.data.shops[shop_id]
+    out = dict(sdef["stock"])
+    tier = town_tier(state, location_id)
+    for t, extra in sdef.get("tier_stock", {}).items():
+        if int(t) <= tier:
+            out.update(extra)
+    fac = _faction_of(state, location_id)
+    out.update(sdef.get("faction_stock", {}).get(fac, {}))
+    return {k: v for k, v in out.items() if k in state.data.items}
+
+
+def shop_cash(state, location_id, shop_id):
+    return int(state.data.shops[shop_id]["cash"] * (0.8 + 0.3 * town_tier(state, location_id)))
+
+
 def shop_state(state, location_id, shop_id):
     """Get (creating on first visit) the persistent state of a shop in a location."""
     ls = state.location_state(location_id)
     shops = ls.setdefault("shops", {})
     if shop_id not in shops:
-        sdef = state.data.shops[shop_id]
-        shops[shop_id] = {"stock": {k: v[0] for k, v in sdef["stock"].items()}, "cash": sdef["cash"],
-                          "week": state.clock.week_index}
+        shops[shop_id] = {"stock": {k: v[0] for k, v in stock_def(state, location_id, shop_id).items()},
+                          "cash": shop_cash(state, location_id, shop_id), "week": state.clock.week_index}
     restock(state, location_id, shop_id)
     return shops[shop_id]
 
@@ -22,9 +45,10 @@ def restock(state, location_id, shop_id):
     weeks = state.clock.week_index - s["week"]
     if weeks <= 0:
         return
-    for item, (base, per_week) in sdef["stock"].items():
+    for item, (base, per_week) in stock_def(state, location_id, shop_id).items():
         s["stock"][item] = min(base, s["stock"].get(item, 0) + per_week * weeks)
-    s["cash"] = max(s["cash"], min(sdef["cash"], s["cash"] + sdef["cash"] // 2 * weeks))
+    cap = shop_cash(state, location_id, shop_id)
+    s["cash"] = max(s["cash"], min(cap, s["cash"] + cap // 2 * weeks))
     s["week"] = state.clock.week_index
 
 
@@ -47,6 +71,8 @@ def buy_price(state, location_id, shop_id, item_id):
     value = state.data.item(item_id)["value"]
     trade = state.player.skills["trading"]
     p = value * sdef["markup"] * (1 - trade / 400) * factions.price_factor(state, _faction_of(state, location_id))
+    from . import crime
+    p *= crime.price_factor(state, location_id)            # your own town's merchants give you a better deal
     return max(1, math.ceil(p * regional(state, location_id, item_id)))
 
 
@@ -55,6 +81,8 @@ def sell_price(state, location_id, shop_id, item_id):
     value = state.data.item(item_id)["value"]
     trade = state.player.skills["trading"]
     p = value * sdef["sell_rate"] * (1 + trade / 300) / factions.price_factor(state, _faction_of(state, location_id))
+    from . import crime
+    p /= crime.price_factor(state, location_id)
     return max(0, math.floor(p * regional(state, location_id, item_id)))
 
 

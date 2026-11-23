@@ -139,9 +139,10 @@ class SpellbookScene(Scene):
 
 
 class SpellCraftScene(Scene):
-    """Design a spell from Element > Sub-element > Movement > Effect > Tier. Free; saves a draft."""
+    """Design (or edit) a spell: Element > optional Sub-element > Movement > Effect > Focus > Size > Tier.
+    Free, possible anywhere; the live preview shows the mana cost and every number as you change things."""
     overlay = True
-    FIELDS = ["Element", "Sub-element", "Movement", "Effect", "Tier", "Name", "Save draft"]
+    FIELDS = ["Element", "Sub-element", "Movement", "Effect", "Focus", "Size", "Tier", "Name", "Save"]
 
     def __init__(self, game, book_scene, edit=None):
         super().__init__(game)
@@ -150,29 +151,35 @@ class SpellCraftScene(Scene):
         m = self.data.magic
         self.elements = list(m["elements"])
         self.moves = list(m["movements"])
-        self.el, self.sub, self.mv, self.eff, self.tier = 0, 0, 0, 0, 1
+        self.focuses = list(m["focuses"])
+        self.el, self.sub, self.mv, self.eff, self.foc, self.tier = 0, 0, 0, 0, 0, 1
+        self.size = 1.0
         self.field = 0
         self.custom_name = None
         if edit:
-            sp = (self.state.spellbook if edit[0] == "book" else self.state.spell_drafts)[edit[1]]
-            el = m["subelements"][sp["sub"]]["element"]
-            self.el = self.elements.index(el)
-            self.sub = self.subs().index(sp["sub"])
+            sp = spells.normalize(self.data, (self.state.spellbook if edit[0] == "book" else self.state.spell_drafts)[edit[1]])
+            self.el = self.elements.index(sp["element"])
+            self.sub = (self.subs().index(sp["sub"]) + 1) if sp["sub"] else 0
             self.mv = self.moves.index(sp["move"])
             self.eff = self.effects().index(sp["stat"]) if sp["stat"] in self.effects() else 0
+            self.foc = self.focuses.index(sp["focus"])
+            self.size = sp["size"]
             self.tier = min(sp["tier"], self.max_tier())
             self.custom_name = sp["name"]
 
     def subs(self):
         return self.data.magic["elements"][self.elements[self.el]]["subs"]
 
+    def sub_id(self):
+        return self.subs()[self.sub - 1] if self.sub else None
+
     def effects(self):
-        return self.data.magic["subelements"][self.subs()[self.sub]]["stats"]
+        return spells.allowed_effects(self.data, self.elements[self.el], self.sub_id())
 
     def spell(self):
-        sub = self.subs()[self.sub]
         eff = self.effects()[self.eff % len(self.effects())]
-        sp = {"sub": sub, "move": self.moves[self.mv], "stat": eff, "tier": self.tier}
+        sp = {"element": self.elements[self.el], "sub": self.sub_id(), "move": self.moves[self.mv], "stat": eff,
+              "tier": self.tier, "focus": self.focuses[self.foc], "size": self.size}
         sp["name"] = self.custom_name or auto_name(self.data, sp)
         return sp
 
@@ -193,31 +200,37 @@ class SpellCraftScene(Scene):
         if k in (pygame.K_DOWN, pygame.K_TAB):
             self.field = (self.field + 1) % len(self.FIELDS)
             return
-        if self.field == 5:  # name typing
+        if self.field == 7:  # name typing
             if k == pygame.K_BACKSPACE:
                 self.custom_name = (self.custom_name or self.spell()["name"])[:-1] or None
             elif k == pygame.K_RETURN:
-                self.field = 6
-            elif ev.unicode and ev.unicode.isprintable() and len(self.custom_name or "") < 22:
+                self.field = 8
+            elif ev.unicode and ev.unicode.isprintable() and len(self.custom_name or "") < 24:
                 self.custom_name = (self.custom_name or "") + ev.unicode
             return
         step = {pygame.K_LEFT: -1, pygame.K_a: -1, pygame.K_RIGHT: 1, pygame.K_d: 1}.get(k)
         if step:
+            m = self.data.magic
             if self.field == 0:
-                self.el = (self.el + step) % 4
+                self.el = (self.el + step) % len(self.elements)
                 self.sub = 0
                 self.eff = 0
             elif self.field == 1:
-                self.sub = (self.sub + step) % 4
+                self.sub = (self.sub + step) % (len(self.subs()) + 1)
                 self.eff = 0
             elif self.field == 2:
                 self.mv = (self.mv + step) % len(self.moves)
             elif self.field == 3:
                 self.eff = (self.eff + step) % len(self.effects())
             elif self.field == 4:
+                self.foc = (self.foc + step) % len(self.focuses)
+            elif self.field == 5:
+                sz = m["sizes"]
+                self.size = max(sz["min"], min(sz["max"], round(self.size + step * sz["step"], 2)))
+            elif self.field == 6:
                 self.tier = (self.tier - 1 + step) % self.max_tier() + 1
             return
-        if k in (pygame.K_RETURN, pygame.K_SPACE) and self.field == 6:
+        if k in (pygame.K_RETURN, pygame.K_SPACE) and self.field == 8:
             try:
                 if self.edit:
                     ok, msg = spells.revise(self.state, self.edit[0], self.edit[1], self.spell())
@@ -233,45 +246,98 @@ class SpellCraftScene(Scene):
 
     def draw(self, screen):
         m = self.data.magic
+        st = self.state
         ui.dim(screen, 120)
-        r = ui.panel(screen, (140, 60, 1000, 600), "Edit Spell" if self.edit else "Design a Spell")
+        r = ui.panel(screen, (60, 30, 1160, 660), "Edit Spell" if self.edit else "Design a Spell")
         sp = self.spell()
-        vals = [m["elements"][self.elements[self.el]]["name"], m["subelements"][sp["sub"]]["name"],
-                m["movements"][sp["move"]]["name"], m["stats"][sp["stat"]]["name"], f"Tier {self.tier} (max {self.max_tier()})",
-                sp["name"] + ("_" if self.field == 5 else ""), "Save changes" if self.edit else "Save as draft (free)"]
-        y = r.y + 64
+        el = m["elements"][sp["element"]]
+        vals = [el["name"] + f"  ({el['identity']})",
+                m["subelements"][sp["sub"]]["name"] if sp["sub"] else f"None - pure {el['name']}",
+                m["movements"][sp["move"]]["name"], m["stats"][sp["stat"]]["name"],
+                m["focuses"][sp["focus"]]["name"] + ("  *" if sp["focus"] == el["focus_affinity"] and sp["focus"] != "balanced" else ""),
+                None, f"Tier {self.tier} (max {self.max_tier()})", sp["name"] + ("_" if self.field == 7 else ""),
+                "Save changes" if self.edit else "Save as draft (free)"]
+        y = r.y + 60
         for i, (f, v) in enumerate(zip(self.FIELDS, vals)):
             sel = i == self.field
             if sel:
-                pygame.draw.rect(screen, ui.PANEL_LIGHT, (r.x + 24, y - 5, 460, 36), border_radius=4)
-                pygame.draw.rect(screen, ui.BORDER_HI, (r.x + 24, y - 5, 460, 36), 1, border_radius=4)
-            ui.text(screen, f, (r.x + 36, y), 24, ui.TEXT_DIM)
-            ui.text(screen, (f"<  {v}  >" if i < 5 else v), (r.x + 190, y), 24, ui.ACCENT if sel else ui.TEXT)
-            y += 46
-        p = spells.compute(self.data, sp, self.state.player.skills["magic"])
-        x = r.x + 520
-        ui.text(screen, "Preview", (x, r.y + 64), 28, tuple(p["color"]), bold=True)
-        ui.text_block(screen, m["subelements"][sp["sub"]]["note"], (x, r.y + 100, 440, 50), 22, ui.TEXT_DIM)
-        ui.text_block(screen, p["description"], (x, r.y + 150, 440, 110), 22)
-        rows = [("Mana", p["mana"]), ("Power", p["power"]), ("Range", p["range"]), ("Area", p["area"]),
-                ("Speed", p["speed"]), ("Duration", f"{p['duration']}s"), ("Cooldown", f"{p['cooldown']}s")]
+                pygame.draw.rect(screen, ui.PANEL_LIGHT, (r.x + 20, y - 5, 520, 36), border_radius=4)
+                pygame.draw.rect(screen, ui.BORDER_HI, (r.x + 20, y - 5, 520, 36), 1, border_radius=4)
+            ui.text(screen, f, (r.x + 32, y), 23, ui.TEXT_DIM)
+            if i == 5:     # size slider
+                sz = m["sizes"]
+                bx, bw = r.x + 170, 300
+                frac = (self.size - sz["min"]) / (sz["max"] - sz["min"])
+                pygame.draw.rect(screen, (30, 20, 12), (bx, y + 8, bw, 8), border_radius=4)
+                pygame.draw.rect(screen, tuple(el["color"]), (bx, y + 8, int(bw * frac), 8), border_radius=4)
+                kx = bx + int(bw * frac)
+                pygame.draw.circle(screen, ui.BORDER_HI if sel else ui.BORDER, (kx, y + 12), 9)
+                pygame.draw.circle(screen, (40, 26, 16), (kx, y + 12), 5)
+                ui.text(screen, f"x{self.size:.2f}", (bx + bw + 14, y), 23, ui.ACCENT if sel else ui.TEXT)
+            else:
+                ui.text(screen, (f"<  {v}  >" if i < 7 else v), (r.x + 170, y), 23, ui.ACCENT if sel else ui.TEXT)
+            y += 44
+        # what the selected field means
+        hint = {0: f"{el['desc']} Strengths: {el['strengths']}. Weaknesses: {el['weaknesses']}.",
+                1: (m["subelements"][sp["sub"]]["note"] if sp["sub"] else
+                    f"No sub-element: a pure {el['name']} spell with the element's own identity."),
+                2: m["movements"][sp["move"]]["desc"], 3: m["stats"][sp["stat"]]["desc"],
+                4: m["focuses"][sp["focus"]]["desc"] + (f"  ({el['name']} favours {m['focuses'][el['focus_affinity']]['name']}: +10%.)"),
+                5: "Bigger spells cover more ground and hit a little harder, but cost much more mana.",
+                6: "Higher tiers unlock as you level up: more power, more mana.", 7: "Type to rename.",
+                8: "Spell creation is free and works anywhere."}[self.field]
+        box = pygame.Rect(r.x + 20, y + 6, 520, r.bottom - y - 60)
+        ui.parchment(screen, box)
+        ui.ink_block(screen, hint, (box.x + 12, box.y + 10, box.w - 24, box.h - 16), 20, ui.INK)
+        # live preview
+        try:
+            p = spells.compute(self.data, sp, st.player.skills["magic"])
+        except spells.SpellError as e:
+            ui.text_block(screen, str(e), (r.x + 580, r.y + 70, 540, 60), 22, ui.TEXT_BAD)
+            return
+        x = r.x + 580
+        ui.text(screen, "Preview", (x, r.y + 60), 28, tuple(p["color"]), bold=True)
+        # visual size preview: the spell's footprint drawn to scale
+        cx, cy = x + 420, r.y + 150
+        pygame.draw.circle(screen, (36, 24, 14), (cx, cy), 64)
+        rad = max(3, min(62, int(p["area"] * 0.45 if p["area"] > 14 else p["radius"] * 2.5)))
+        col = tuple(p["color"])
+        pygame.draw.circle(screen, tuple(int(c * 0.5) for c in col), (cx, cy), rad)
+        pygame.draw.circle(screen, col, (cx, cy), rad, 2)
+        pygame.draw.circle(screen, ui.BORDER, (cx, cy), 64, 1)
+        ui.text(screen, "footprint", (cx, cy + 68), 16, ui.TEXT_DIM, center=True)
+        cost_col = ui.TEXT_GOOD if p["mana"] <= st.player.mana else ui.TEXT_BAD
+        ui.text(screen, f"{p['mana']} mana", (x, r.y + 100), 34, cost_col, bold=True)
+        ui.text(screen, f"you have {st.player.mana:.0f}/{st.player.max_mana}", (x, r.y + 138), 20, ui.TEXT_DIM)
+        ui.text_block(screen, p["description"], (x, r.y + 230, 540, 90), 21)
+        rows = [("Power", p["power"]), ("Range", p["range"]), ("Area", p["area"]), ("Speed", p["speed"]),
+                ("Duration", f"{p['duration']}s"), ("Lasts (fields/traps)", f"{p['zone_duration']}s"),
+                ("Recast", f"{p['cooldown']}s")]
+        if p["move"] == "chain":
+            rows.append(("Chain jumps", p["chain_jumps"]))
         if p["hp_cost"]:
             rows.append(("Health cost", p["hp_cost"]))
-        yy = r.y + 270
+        yy = r.y + 330
         for k, v in rows:
             ui.text(screen, k, (x, yy), 22, ui.TEXT_DIM)
-            ui.text(screen, str(v), (x + 200, yy), 22)
+            ui.text(screen, str(v), (x + 230, yy), 22)
             yy += 26
         ui.text(screen, "Up/Down field   Left/Right change   type a name   Enter save   Esc back",
                 (r.centerx, r.bottom - 32), 21, ui.TEXT_DIM, center=True)
 
 
+MOVE_WORD = {"projectile": "Bolt", "homing": "Seeker", "beam": "Lance", "wave": "Wave", "area": "Blast",
+             "ground": "Field", "orbit": "Halo", "ward": "Ward", "aura": "Mantle", "burst": "Nova", "chain": "Arc",
+             "trap": "Snare", "barrier": "Wall", "self": "Blessing"}
+
+
 def auto_name(data, sp):
     m = data.magic
-    move_word = {"projectile": "Bolt", "homing": "Seeker", "beam": "Lance", "wave": "Nova", "area": "Burst",
-                 "ground": "Field", "orbit": "Halo", "ward": "Ward", "aura": "Mantle"}[sp["move"]]
+    sp = spells.normalize(data, sp)
     stat_word = {"damage": "", "heal": "Mending ", "strength": "Mighty ", "speed": "Swift ", "dexterity": "Deft ",
                  "health": "Vital ", "defense": "Warding ", "knockback": "Hurling ", "root": "Binding ",
                  "affliction": "Cursed "}[sp["stat"]]
     tier = {1: "", 2: "Greater ", 3: "Grand "}[int(sp["tier"])]
-    return f"{tier}{stat_word}{m['subelements'][sp['sub']]['name']} {move_word}"
+    big = "Vast " if sp["size"] >= 2.25 else ("Wide " if sp["size"] >= 1.5 else ("Small " if sp["size"] <= 0.75 else ""))
+    src = m["subelements"][sp["sub"]]["name"] if sp["sub"] else m["elements"][sp["element"]]["name"]
+    return f"{tier}{big}{stat_word}{src} {MOVE_WORD.get(sp['move'], sp['move'].title())}"

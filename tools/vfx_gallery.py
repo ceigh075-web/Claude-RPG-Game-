@@ -16,8 +16,9 @@ from game.set_system import spells as spell_rules  # noqa: E402
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "vfx_gallery.png"
 DT = 1 / 60
-MOVES = [("projectile", 0.22), ("homing", 0.3), ("beam", 0.06), ("wave", 0.25), ("area", 0.45), ("area", 0.66),
-         ("ground", 0.7), ("orbit", 0.5), ("ward", 0.6), ("aura", 0.4)]
+MOVES = [("projectile", 0.22), ("homing", 0.3), ("beam", 0.06), ("wave", 0.25), ("area", 0.66), ("ground", 0.7),
+         ("orbit", 0.5), ("ward", 0.6), ("aura", 0.4), ("burst", 0.1), ("chain", 0.1), ("trap", 0.6), ("barrier", 0.3),
+         ("self", 0.2)]
 CW, CH = 120, 84
 
 
@@ -40,7 +41,8 @@ def main():
     pc.x, pc.y = sp["x"] * 16 - 120, sp["y"] * 16
     pc.facing, pc.aim = "right", (1.0, 0.0)
     magic = g.data.magic
-    subs = list(magic["subelements"])
+    only = sys.argv[2].split(",") if len(sys.argv) > 2 else None
+    subs = [k for k in list(magic["elements"]) + list(magic["subelements"]) if not only or k in only]
     sheet = pygame.Surface((CW * len(MOVES) + 70, CH * len(subs) + 20))
     sheet.fill((20, 20, 26))
     from game.presentation.ui import widgets as ui
@@ -48,18 +50,24 @@ def main():
         ui.text(sheet, mv, (70 + j * CW + 4, 2), 16, (230, 230, 230))
     for i, sub in enumerate(subs):
         ui.text(sheet, sub, (4, 20 + i * CH + CH // 2), 16, (230, 230, 230))
-        stats = magic["subelements"][sub]["stats"]
+        is_el = sub in magic["elements"]
+        stats = magic["elements"][sub]["effects"] if is_el else magic["subelements"][sub]["stats"]
         for j, (mv, when) in enumerate(MOVES):
             w.projectiles.clear()
             w.effects.clear()
             for c in list(w.enemies()):
                 w.combatants.remove(c)
-            dummy = w.spawn_enemy("training_dummy", pc.x + 50, pc.y)
+            dummy = w.spawn_enemy("training_dummy", pc.x + (28 if mv in ("barrier", "self") else 50), pc.y)
             dummy.hp = dummy.max_hp
             stat = "damage" if "damage" in stats else stats[0]
             if mv == "aura" and "heal" in stats:
                 stat = "heal"
-            spell = {"name": "t", "sub": sub, "move": mv, "stat": stat, "tier": 2}
+            spell = {"name": "t", "move": mv, "stat": stat, "tier": 2}
+            if is_el:
+                spell["element"] = sub
+                spell["sub"] = None
+            else:
+                spell["sub"] = sub
             try:
                 p = spell_rules.compute(g.data, spell, 40, 0.0)
             except Exception as e:  # noqa: BLE001 - gallery tolerates invalid combos

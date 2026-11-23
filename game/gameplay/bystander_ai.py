@@ -21,6 +21,14 @@ def civilian_def(name):
             "loot": {}, "xp": 5, "color": [120, 120, 120], "shape": "humanoid", "blocks": False}
 
 
+def guard_def():
+    """Town guards: trained, armoured, and they hold their ground."""
+    return {"name": "Town Guard", "archetype": "defensive", "faction": None, "hp": 85, "damage": 10.0,
+            "weapon": "longsword", "speed": 80, "armor": 4.0, "attack_range": 26, "aggro": 600, "flee_below": 0,
+            "pack": [1, 1], "loot": {"marks": [4, 12]}, "xp": 20, "color": [120, 120, 130], "shape": "humanoid",
+            "blocks": True}
+
+
 class BystanderAI:
     def __init__(self, c, rng, anchor_radius=4, stationary=False, wary=False):
         self.c = c
@@ -42,6 +50,10 @@ class BystanderAI:
     # ------------------------------------------------------------ events from the combat runtime
     def provoked(self, world, src):
         c = self.c
+        if getattr(c, "is_guard", False):
+            self._bark(world, "Stand down!")
+            self._set("fight")
+            return
         kind = aggression.reaction(c.npc, c.hp / max(1.0, c.max_hp), cornered=self._cornered(world))
         if kind == "call_help":
             self._bark(world, "Help! Guards!")
@@ -90,7 +102,7 @@ class BystanderAI:
                 continue
             if o.ai.mode not in ("calm", "wary") or math.hypot(o.x - self.c.x, o.y - self.c.y) > aggression.HELP_RADIUS:
                 continue
-            resp = aggression.bystander_response(st, o.npc, self.c.npc)
+            resp = "help" if getattr(o, "is_guard", False) else aggression.bystander_response(st, o.npc, self.c.npc)
             if resp == "help":
                 o.ai.join(world, attacker)
                 o.ai._bark(world, "Leave them be!")
@@ -161,6 +173,26 @@ class BystanderAI:
                 c.facing = facing_from(c.aim)
             world.set_block(c, True)
             return
+        if getattr(c, "is_guard", False) and self.mode == "calm":
+            from ..set_system import crime
+            town = crime.town_of(world.state)
+            owed = crime.bounty(world.state, town)
+            p = world.player
+            if owed > 0 and p is not None and p.alive and math.hypot(p.x - c.x, p.y - c.y) < 110:
+                self.challenge_t = getattr(self, "challenge_t", 0.0) + dt
+                c.aim = norm(p.x - c.x, p.y - c.y)
+                c.facing = facing_from(c.aim)
+                c.moving = False
+                if not getattr(self, "challenged", False):
+                    self.challenged = True
+                    self._bark(world, f"Halt! Pay {owed} marks!")
+                    world.events.append(f"A guard demands your {owed}-mark fine. Talk to them (E) to pay, or walk away and fight.")
+                if self.challenge_t > 6.0:
+                    c.grudge.add(p.cid)
+                    self._bark(world, "Then by force!")
+                    self._set("fight")
+                return
+            self.challenge_t = 0.0
         if self.mode == "wary":
             p = world.player
             dp = math.hypot(p.x - c.x, p.y - c.y)
@@ -204,3 +236,37 @@ class BystanderAI:
         self._steer(lmap, tx - c.x, ty - c.y, dt, CALM_SPEED)
         if (c.x, c.y) == before:
             self.target = None
+
+
+class SurrenderedAI:
+    """Kneels with hands raised until the player decides; attacked again, they run."""
+
+    def __init__(self, c):
+        self.c = c
+        self.mode = "cower"
+        self.fighting = False
+        self.mode_t = 0.0
+
+    def provoked(self, world, src):
+        self.mode, self.mode_t = "flee", 0.0
+        world.floaters.append(["Mercy!", self.c.x, self.c.y - 34, 0.0, (255, 235, 160)])
+
+    def update(self, world, lmap, dt):
+        c = self.c
+        self.mode_t += dt
+        if c.state in ("dead", "stagger", "dodge"):
+            return
+        p = world.player
+        if self.mode == "flee" and p is not None:
+            dx, dy = c.x - p.x, c.y - p.y
+            d = math.hypot(dx, dy) or 1
+            c.speed = c.enemy["speed"] * c.move_mult()
+            c.move(lmap, dx / d, dy / d, dt)
+            if d > FLEE_GONE or self.mode_t > 8:
+                c.fled = True
+            return
+        c.moving = False
+        if p is not None:
+            c.aim = norm(p.x - c.x, p.y - c.y)
+            c.facing = facing_from(c.aim)
+        world.set_block(c, True)

@@ -14,8 +14,9 @@ from .entity import Actor
 
 FRICTION = 9.0          # knockback velocity decay per second (exponential)
 PICKUP_RADIUS = 14
-SPEED_MULT = {"idle": 1.0, "windup": 0.3, "active": 0.2, "recovery": 0.55, "stagger": 0.0, "dodge": 0.0,
-              "draw": 0.45, "dead": 0.0, "cast": 0.4}
+SPEED_MULT = {"idle": 1.0, "windup": 0.5, "active": 0.35, "recovery": 0.8, "stagger": 0.0, "dodge": 0.0,
+              "draw": 0.6, "dead": 0.0, "cast": 0.85}
+CAST_TIME = 0.12        # brief casting pose; can be cancelled into anything
 DIRS = {"right": (1, 0), "left": (-1, 0), "down": (0, 1), "up": (0, -1)}
 
 
@@ -220,16 +221,19 @@ class CombatWorld:
         self.combatants.append(c)
         return c
 
-    def add_townsfolk(self, npc, x, y, look, rng, anchor_radius=4, stationary=False, name=None):
-        """A non-hostile character (named NPC or anonymous shopkeeper) who can still be attacked."""
-        from .bystander_ai import BystanderAI, civilian_def
-        e = npc_fighter(self.data, npc) if npc else civilian_def(name or "Townsperson")
+    def add_townsfolk(self, npc, x, y, look, rng, anchor_radius=4, stationary=False, name=None, guard=False):
+        """A non-hostile character (named NPC, shopkeeper, townsperson or guard) who can still be attacked."""
+        from .bystander_ai import BystanderAI, civilian_def, guard_def
+        e = npc_fighter(self.data, npc) if npc else (guard_def() if guard else civilian_def(name or "Townsperson"))
         c = Combatant(x, y, look, 34.0, npc["name"] if npc else (name or "Townsperson"), team="npc", enemy=e,
                       race=self.data.races.get(npc["race"]) if npc else None)
         c.npc = npc
         c.enemy_id = None
         c.hostile = False
         c.stationary = stationary
+        c.is_guard = guard
+        if guard:
+            c.mass, c.poise = 1.6, 0.5
         wary = bool(npc) and aggression.grudge_active(self.state, npc["id"])
         c.ai = BystanderAI(c, rng, anchor_radius, stationary, wary=wary)
         self.combatants.append(c)
@@ -334,11 +338,19 @@ class CombatWorld:
         """Start (or queue the next combo hit of) an attack."""
         if not c.alive or c.state in ("stagger", "dodge", "dead"):
             return False
-        if c.state in ("windup", "active", "draw", "cast"):
+        if c.state in ("windup", "active", "draw"):
             c.queued = True
             return False
+        if c.state == "cast":
+            c.set_state("idle")              # a cast flows straight into an attack
         if c.state == "recovery":
-            if c.combo_window <= 0 or c.combo >= rules.COMBO_MAX:
+            p0 = c.profile or {}
+            if c.combo_window > 0 and c.combo < rules.COMBO_MAX:
+                pass
+            elif c.state_t >= p0.get("recovery", 0.3) * rules.CANCEL_AFTER:
+                c.combo = 0                  # cut the recovery short with a fresh attack
+                c.set_state("idle")
+            else:
                 c.queued = True
                 return False
         if c is self.player and profile is None:
@@ -412,8 +424,12 @@ class CombatWorld:
         key = (c.cid, spell["name"])
         if self.spell_cd.get(key, 0) > 0:
             return False, f"{spell['name']} is recharging ({self.spell_cd[key]:.1f}s)."
-        if not c.alive or c.state in ("stagger", "dodge", "windup", "active", "draw"):
+        if not c.alive or c.state in ("stagger", "dodge", "active"):
             return False, None
+        if c.state in ("windup", "draw"):
+            c.profile = None                 # cancel a wind-up or bow draw into the spell
+            c.charge = 0.0
+            c.set_state("idle")
         conduct = 0.0
         if c.char:
             wt, item = self.player_weapon()
@@ -445,7 +461,8 @@ class CombatWorld:
         if mv in ("projectile", "homing"):
             spd = max(120, p["speed"])
             pr = Projectile(x + aim[0] * 8, y + aim[1] * 8, aim[0] * spd, aim[1] * spd, c.team, c, rng_left=p["range"],
-                            kind="spell", color=p["color"], radius=4, payload=p, homing=3.0 if mv == "homing" else 0.0)
+                            kind="spell", color=p["color"], radius=p.get("radius", 4), payload=p,
+                            homing=3.0 if mv == "homing" else 0.0)
             self.projectiles.append(pr)
         elif mv == "beam":
             ex, ey = x + aim[0] * p["range"], y + aim[1] * p["range"]
@@ -463,11 +480,49 @@ class CombatWorld:
             self.effects.append(SpellEffect("area", c, p, tx, ty, 0.7))
         elif mv == "ground":
             tx, ty = self._target_point(c, p["range"], aim)
+            self._limit_persistent(c, "ground")
             self.effects.append(SpellEffect("ground", c, p, tx, ty, p["zone_duration"]))
         elif mv == "orbit":
             self.effects.append(SpellEffect("orbit", c, p, x, y, p["zone_duration"]))
         elif mv == "ward":
+            self._limit_persistent(c, "ward")
             self.effects.append(SpellEffect("ward", c, p, c.x, c.y, p["zone_duration"]))
+        elif mv == "burst" or (mv == "self" and p["target"] != "ally"):
+            eff = SpellEffect("burst", c, p, c.x, c.y - 6, 0.3)
+            self.effects.append(eff)
+            for o in self._spell_targets(c, p):
+                if (o is not c or p["target"] == "ally") and math.hypot(o.x - c.x, o.y - 6 - (c.y - 6)) <= p["area"]:
+                    self.apply_payload(c, o, p, (c.x, c.y - 6))
+            self.shake = max(self.shake, 1.0 + p["area"] / 80)
+        elif mv == "self":
+            self.apply_payload(c, c, p, (c.x, c.y))
+            self.effects.append(SpellEffect("aura_flash", c, p, c.x, c.y, 0.5))
+        elif mv == "chain":
+            pts = [(x, y)]
+            hit = []
+            cur = self._chain_first(c, p, aim)
+            power = 1.0
+            while cur is not None and len(hit) < p["chain_jumps"]:
+                hit.append(cur)
+                pts.append((cur.x, cur.y - 8))
+                self.apply_payload(c, cur, dict(p, power=round(p["power"] * power, 1)), pts[-2])
+                power *= 0.85
+                cur = min((o for o in self._spell_targets(c, p) if o not in hit and o is not c
+                           and math.hypot(o.x - cur.x, o.y - cur.y) <= p["area"]),
+                          key=lambda o: math.hypot(o.x - cur.x, o.y - cur.y), default=None)
+            if len(pts) == 1:
+                pts.append((x + aim[0] * p["range"] * 0.6, y + aim[1] * p["range"] * 0.6))
+            eff = SpellEffect("chain", c, p, x, y, 0.35, aim)
+            eff.points = pts
+            self.effects.append(eff)
+        elif mv == "trap":
+            tx, ty = self._target_point(c, p["range"], aim)
+            self._limit_persistent(c, "trap")
+            self.effects.append(SpellEffect("trap", c, p, tx, ty + 4, p["zone_duration"]))
+        elif mv == "barrier":
+            self._limit_persistent(c, "barrier")
+            eff = SpellEffect("barrier", c, p, c.x + aim[0] * p["range"], c.y - 4 + aim[1] * p["range"], p["zone_duration"], aim)
+            self.effects.append(eff)
         elif mv == "aura":
             if p["target"] == "ally":
                 self.apply_payload(c, c, p, (c.x, c.y))
@@ -475,6 +530,22 @@ class CombatWorld:
             else:
                 self.effects.append(SpellEffect("aura", c, p, c.x, c.y, max(3.0, p["zone_duration"])))
         self._burst(x, y, p["color"], 8)
+
+    def _limit_persistent(self, c, kind):
+        """Keep at most MAX_PERSISTENT lingering effects of one kind per caster (oldest fades first)."""
+        mine = [e for e in self.effects if e.caster is c and e.kind == kind and not e.dead]
+        for e in mine[:max(0, len(mine) - spell_rules.MAX_PERSISTENT + 1)]:
+            e.dead = True
+
+    def _chain_first(self, c, p, aim):
+        best, bd = None, p["range"]
+        for o in self._spell_targets(c, p):
+            if o is c:
+                continue
+            d = math.hypot(o.x - c.x, o.y - c.y)
+            if d < bd and rules.angle_between(aim, (o.x - c.x, o.y - c.y)) < 40:
+                best, bd = o, d
+        return best
 
     def _spell_targets(self, c, p):
         if p["target"] == "ally":
@@ -639,7 +710,23 @@ class CombatWorld:
         for o in near:
             if o.npc:
                 aggression.witness(st, o.npc["id"], tgt.name or "a stranger")
+        if witnessed or getattr(tgt, "is_guard", False):
+            self.guards_respond(tgt.x, tgt.y)
         self._companions_react(tgt, killed=False)
+
+    def guards_respond(self, x, y, radius=280):
+        """Town guards who see or hear a crime come for the player (not in a town the player holds)."""
+        from ..set_system import crime
+        if crime.owner(self.state, crime.town_of(self.state)) == "player" or self.player is None:
+            return 0
+        n = 0
+        for o in self.combatants:
+            if getattr(o, "is_guard", False) and o.alive and math.hypot(o.x - x, o.y - y) <= radius \
+                    and hasattr(o.ai, "join") and self.player.cid not in o.grudge:
+                o.ai.join(self, self.player)
+                o.ai._bark(self, "Halt, criminal!")
+                n += 1
+        return n
 
     def _companions_react(self, victim, killed):
         st = self.state
@@ -702,6 +789,35 @@ class CombatWorld:
         self._companions_react(tgt, killed=True)
         return True
 
+    def alert_near(self, c, radius):
+        """An alerted enemy rouses others of its kind nearby (same faction, or the same creature)."""
+        for o in self.enemies():
+            if o is c or o.alerted or not o.hostile:
+                continue
+            same = (c.enemy.get("faction") and o.enemy.get("faction") == c.enemy.get("faction")) or \
+                getattr(o, "enemy_id", None) == getattr(c, "enemy_id", None)
+            if same and math.hypot(o.x - c.x, o.y - c.y) <= radius:
+                o.alerted = True
+                self.alert_group(o)
+
+    def surrender(self, c):
+        """A broken human foe yields: stops fighting, joins the neutral side, waits for the player's decision."""
+        from .bystander_ai import SurrenderedAI
+        c.surrendered = True
+        c.hostile = False
+        c.alerted = False
+        c.team = "npc"
+        c.grudge = set()
+        for o in self.combatants:
+            o.grudge.discard(c.cid)
+        c.blocking = False
+        c.profile = None
+        c.set_state("idle")
+        self.tokens.discard(c.cid)
+        c.ai = SurrenderedAI(c)
+        self.floaters.append(["I yield!", c.x, c.y - 34, 0.0, (255, 235, 160)])
+        self.events.append(f"{c.name} surrenders! Approach and press E to decide their fate.")
+
     def alert_group(self, c):
         for o in self.enemies():
             if o.group == c.group and o.group is not None:
@@ -762,8 +878,11 @@ class CombatWorld:
             jobs.on_elite_killed(st, e["elite_event"])
             self.events.append(f"{e['name']} is slain!")
         # loot drops
+        wealth = 1.0 + 0.15 * self.data.location(st.location).get("danger", 1) if st.location in self.data.locations else 1.0
         for item, (lo, hi) in e["loot"].items():
             n = self.rng.randint(lo, hi)
+            if item == "marks":
+                n = int(round(n * wealth))      # richer pickings in more dangerous places
             if n > 0:
                 ang = self.rng.uniform(0, math.tau)
                 self.pickups.append({"item": item, "qty": n, "x": tgt.x + math.cos(ang) * 8, "y": tgt.y + math.sin(ang) * 6})
@@ -906,8 +1025,11 @@ class CombatWorld:
         elif c.state == "draw":
             c.charge += dt
         elif c.state == "cast":
-            if c.state_t >= 0.25:
+            if c.state_t >= CAST_TIME:
                 c.set_state("idle")
+                if c.queued and c is self.player:
+                    c.queued = False
+                    self.attack(c)
         elif c.state == "windup" and p:
             if c.state_t >= p["windup"]:
                 c.set_state("active")
@@ -1022,6 +1144,15 @@ class CombatWorld:
             if lmap.solid(int(pr.x // TILE), int(pr.y // TILE)) or pr.range_left <= 0:
                 self._projectile_end(pr)
                 continue
+            blocked = False
+            for e in self.effects:
+                if e.kind == "barrier" and pr.owner is not None and pr.owner is not e.caster \
+                        and self.hostile_between(pr.owner, e.caster) and self._barrier_dist(e, pr.x, pr.y) < 5:
+                    blocked = True
+                    break
+            if blocked:
+                self._projectile_end(pr)
+                continue
             for o in self.combatants:
                 if not o.alive or o.cid in pr.hit or not self.can_hit(pr.owner, o, pr.team):
                     continue
@@ -1081,6 +1212,35 @@ class CombatWorld:
                     for o in self._spell_targets(c, p):
                         if math.hypot(o.x - e.x, o.y - 6 - e.y) <= rad:
                             self.apply_payload(c, o, p, (e.x, e.y))
+            elif e.kind == "trap":
+                if not e.hit and e.t > 0.4:
+                    trigger = [o for o in self.foes_of(c) if math.hypot(o.x - e.x, o.y - e.y) <= p["area"] * 0.6]
+                    if trigger:
+                        e.hit.add(-1)
+                        for o in self._spell_targets(c, p):
+                            if (o is not c or p["target"] == "ally") and math.hypot(o.x - e.x, o.y - 6 - e.y) <= p["area"]:
+                                self.apply_payload(c, o, p, (e.x, e.y))
+                        self._burst(e.x, e.y, p["color"], 14)
+                        self.shake = max(self.shake, 1.5)
+                        e.duration = e.t + 0.35          # linger briefly for the burst visual
+                        e.sprung = True
+            elif e.kind == "barrier":
+                e.tick += dt
+                if e.tick >= 0.4:
+                    e.tick = 0.0
+                    for o in self._spell_targets(c, p):
+                        if o is not c and self._barrier_dist(e, o.x, o.y - 6) < 8:
+                            if p["target"] == "ally":
+                                if e.cooldowns.get(o.cid, 0) <= e.t:
+                                    e.cooldowns[o.cid] = e.t + 2.0
+                                    self.apply_payload(c, o, p, (e.x, e.y))
+                            else:
+                                nx, ny = norm(o.x - e.x, o.y - e.y)
+                                o.kvx += nx * 120
+                                o.kvy += ny * 120
+                                if e.cooldowns.get(o.cid, 0) <= e.t:
+                                    e.cooldowns[o.cid] = e.t + 1.0
+                                    self.apply_payload(c, o, p, (e.x, e.y))
             elif e.kind == "orbit":
                 e.x, e.y = c.x, c.y - 8
                 for k in range(3):
@@ -1092,9 +1252,20 @@ class CombatWorld:
                         if e.cooldowns.get(o.cid, 0) <= e.t and math.hypot(o.x - mx, o.y - 6 - my) < p["area"] + 6:
                             e.cooldowns[o.cid] = e.t + 0.6
                             self.apply_payload(c, o, p, (mx, my))
-            if e.t >= e.duration or not c.alive:
+            if e.t >= e.duration or (not c.alive and e.kind not in ("trap", "barrier", "ground", "ward")):
                 e.dead = True
         self.effects = [e for e in self.effects if not e.dead]
+
+    @staticmethod
+    def _barrier_ends(e):
+        """The barrier is a straight wall across the caster's aim, `area` long."""
+        px, py = -e.aim[1], e.aim[0]
+        half = e.spell["area"] / 2
+        return (e.x - px * half, e.y - py * half), (e.x + px * half, e.y + py * half)
+
+    def _barrier_dist(self, e, x, y):
+        (ax, ay), (bx, by) = self._barrier_ends(e)
+        return _seg_dist(ax, ay, bx, by, x, y)
 
     def _collect_pickups(self):
         p = self.player

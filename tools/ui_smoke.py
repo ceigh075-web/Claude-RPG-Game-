@@ -61,7 +61,7 @@ def main():
     for k in (pygame.K_RIGHT, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_RIGHT):
         key(g, k)
     shot(g, "p4_spell_design")
-    for _ in range(4):
+    for _ in range(6):          # Movement -> Effect -> Focus -> Size -> Tier -> Name -> Save
         key(g, pygame.K_DOWN)
     key(g, pygame.K_RETURN)
     assert st.spell_drafts, "draft not saved"

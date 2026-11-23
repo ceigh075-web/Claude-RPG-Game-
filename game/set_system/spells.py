@@ -1,16 +1,23 @@
-"""Spell rules: a spell is sub-element + movement class + stat class + power tier.
+"""Spell rules. A spell is: element (+ optional sub-element) + movement class + effect + tier, tuned with a
+focus (specialisation) and a size. Spells made with only an element use the element's own identity.
 
-The Set System computes every number (mana, power, range, speed, area, duration, cooldown) from data
-multipliers, so all combinations are balanced by the same formula. Only stat classes listed for a
-sub-element are allowed.
+The Set System computes every number (mana, power, range, speed, area, duration, recast) from data
+multipliers (data/magic.json), so every combination is balanced by the same formula. Only effects listed for
+the element (or the chosen sub-element) are allowed.
+
+Old saves stored spells as {sub, move, stat, tier}; `normalize` fills in element, focus and size so they keep
+working unchanged.
 """
 from .combat import status_info
 
 MANA_BASE = 8.0
+MAX_PERSISTENT = 3          # traps / fields / wards / barriers a caster may keep active at once
 
 STARTER_SPELLS = [
-    {"name": "Ash Dart", "sub": "ash", "move": "projectile", "stat": "damage", "tier": 1},
-    {"name": "Mending Light", "sub": "light", "move": "aura", "stat": "heal", "tier": 1},
+    {"name": "Ash Dart", "element": "fire", "sub": "ash", "move": "projectile", "stat": "damage", "tier": 1,
+     "focus": "balanced", "size": 1.0},
+    {"name": "Mending Light", "element": "light", "sub": "light", "move": "aura", "stat": "heal", "tier": 1,
+     "focus": "balanced", "size": 1.0},
 ]
 
 
@@ -18,57 +25,115 @@ class SpellError(Exception):
     pass
 
 
+def normalize(data, spell):
+    """Fill in fields missing from older spells (element from sub-element, balanced focus, size 1)."""
+    out = dict(spell)
+    m = data.magic
+    sub = out.get("sub")
+    if sub in ("", "none"):
+        sub = out["sub"] = None
+    if not out.get("element"):
+        if sub is None or sub not in m["subelements"]:
+            raise SpellError("spell has neither element nor sub-element")
+        out["element"] = m["subelements"][sub]["element"]
+    out.setdefault("sub", None)
+    out.setdefault("focus", "balanced")
+    out["size"] = float(out.get("size", 1.0))
+    return out
+
+
+def allowed_effects(data, element, sub=None):
+    m = data.magic
+    if sub:
+        return list(m["subelements"][sub]["stats"])
+    return list(m["elements"][element]["effects"])
+
+
 def validate(data, spell, level=None):
     m = data.magic
-    if spell["sub"] not in m["subelements"]:
-        raise SpellError(f"unknown sub-element {spell['sub']}")
-    if spell["move"] not in m["movements"]:
-        raise SpellError(f"unknown movement {spell['move']}")
-    if spell["stat"] not in m["stats"]:
-        raise SpellError(f"unknown stat class {spell['stat']}")
-    if str(spell["tier"]) not in m["tiers"]:
-        raise SpellError(f"unknown tier {spell['tier']}")
-    if spell["stat"] not in m["subelements"][spell["sub"]]["stats"]:
-        raise SpellError(f"{m['subelements'][spell['sub']]['name']} cannot carry {m['stats'][spell['stat']]['name']}")
-    if level is not None and level < m["tiers"][str(spell["tier"])]["level"]:
-        raise SpellError(f"Tier {spell['tier']} spells need level {m['tiers'][str(spell['tier'])]['level']}")
+    sp = normalize(data, spell)
+    if sp["element"] not in m["elements"]:
+        raise SpellError(f"unknown element {sp['element']}")
+    if sp["sub"] is not None:
+        if sp["sub"] not in m["subelements"]:
+            raise SpellError(f"unknown sub-element {sp['sub']}")
+        if m["subelements"][sp["sub"]]["element"] != sp["element"]:
+            raise SpellError(f"{m['subelements'][sp['sub']]['name']} is not a kind of {m['elements'][sp['element']]['name']}")
+    if sp["move"] not in m["movements"]:
+        raise SpellError(f"unknown movement {sp['move']}")
+    if sp["stat"] not in m["stats"]:
+        raise SpellError(f"unknown effect {sp['stat']}")
+    if str(sp["tier"]) not in m["tiers"]:
+        raise SpellError(f"unknown tier {sp['tier']}")
+    if sp["focus"] not in m["focuses"]:
+        raise SpellError(f"unknown focus {sp['focus']}")
+    lo, hi = m["sizes"]["min"], m["sizes"]["max"]
+    if not lo <= sp["size"] <= hi:
+        raise SpellError(f"size must be between {lo} and {hi}")
+    if sp["stat"] not in allowed_effects(data, sp["element"], sp["sub"]):
+        src = m["subelements"][sp["sub"]]["name"] if sp["sub"] else m["elements"][sp["element"]]["name"]
+        raise SpellError(f"{src} cannot carry {m['stats'][sp['stat']]['name']}")
+    if level is not None and level < m["tiers"][str(sp["tier"])]["level"]:
+        raise SpellError(f"Tier {sp['tier']} spells need level {m['tiers'][str(sp['tier'])]['level']}")
     return True
 
 
 def compute(data, spell, magic_skill=0.0, mana_conduct=0.0):
     """All gameplay numbers for a spell."""
     validate(data, spell)
+    sp = normalize(data, spell)
     m = data.magic
-    sub = m["subelements"][spell["sub"]]
-    mv = m["movements"][spell["move"]]
-    sc = m["stats"][spell["stat"]]
-    tier = int(spell["tier"])
+    el = m["elements"][sp["element"]]
+    src = m["subelements"][sp["sub"]] if sp["sub"] else el       # the source of power/speed/mana/status/colour
+    mv = m["movements"][sp["move"]]
+    sc = m["stats"][sp["stat"]]
+    fc = m["focuses"][sp["focus"]]
+    tier = int(sp["tier"])
     td = m["tiers"][str(tier)]
+    size = sp["size"]
+    aff = el["affinity"].get(sp["stat"], 1.0)
+    focus_bonus = 1.1 if sp["focus"] == el["focus_affinity"] and sp["focus"] != "balanced" else 1.0
     skill_mult = 1 + magic_skill / 100.0
-    power = sc["base"] * sub["power"] * mv["power"] * td["power"] * skill_mult * (1 + mana_conduct)
-    mana = MANA_BASE * sub["mana"] * mv["mana"] * sc["mana"] * td["mana"] * (1 - min(0.3, magic_skill / 300.0))
-    rng = mv["range"] * (1 + 0.2 * (tier - 1))
-    area = mv["area"] * (1 + 0.25 * (tier - 1))
-    speed = mv["speed"] * sub["speed"]
-    if spell["stat"] in ("strength", "speed", "dexterity", "health", "defense"):
-        duration = 8.0 + 4.0 * tier
-    elif spell["stat"] in ("root", "affliction"):
-        kind, mag, dur = status_info(sub["status"] if spell["stat"] == "affliction" else "root")
-        duration = (dur or 1.5) * (1 + 0.3 * (tier - 1))
+    elem_power = (el["power"] if sp["sub"] else 1.0)
+    power = (sc["base"] * src["power"] * elem_power * mv["power"] * td["power"] * skill_mult * (1 + mana_conduct)
+             * aff * fc.get("power", 1.0) * (0.7 + 0.3 * size))
+    if fc.get("power", 1.0) > 1:
+        power *= focus_bonus
+    mana = (MANA_BASE * src["mana"] * mv["mana"] * sc["mana"] * td["mana"] * (size ** mv["size_cost"])
+            * fc.get("mana", 1.0) * (1 - min(0.3, magic_skill / 300.0)))
+    if fc.get("mana", 1.0) < 1:
+        mana /= focus_bonus
+    rng = mv["range"] * (1 + 0.2 * (tier - 1)) * fc.get("range", 1.0) * (focus_bonus if "range" in fc else 1.0)
+    area = min(mv["max_area"], mv["area"] * (1 + 0.25 * (tier - 1)) * size * fc.get("area", 1.0)
+               * (focus_bonus if "area" in fc else 1.0))
+    speed = mv["speed"] * src["speed"] * (el["speed"] if sp["sub"] else 1.0) * fc.get("speed", 1.0) * \
+        (focus_bonus if "speed" in fc else 1.0)
+    dur_mult = fc.get("duration", 1.0) * (focus_bonus if "duration" in fc else 1.0)
+    control = fc.get("control", 1.0) * (focus_bonus if "control" in fc else 1.0)
+    status = src["status"] if src["status"] != "none" else el["status"]
+    if sp["stat"] in ("strength", "speed", "dexterity", "health", "defense"):
+        duration = (8.0 + 4.0 * tier) * dur_mult
+    elif sp["stat"] in ("root", "affliction"):
+        kind, mag, dur = status_info(status if sp["stat"] == "affliction" else "root")
+        duration = (dur or 1.5) * (1 + 0.3 * (tier - 1)) * dur_mult * control
     else:
         duration = mv["duration"]
-    zone_duration = mv["duration"] * (1 + 0.25 * (tier - 1))
-    cooldown = mv["cooldown"] * (1 + 0.25 * (tier - 1)) * (0.8 + 0.2 * sub["mana"])
-    status = sub["status"]
-    if spell["stat"] == "root":
+    if sp["stat"] == "knockback":
+        power *= control
+    zone_duration = mv["duration"] * (1 + 0.25 * (tier - 1)) * dur_mult
+    cooldown = mv["cooldown"] * (0.85 + 0.15 * tier)
+    if sp["stat"] == "root":
         status = "root"
+    style = sp["sub"] or sp["element"]
     out = {
-        "name": spell.get("name") or describe_name(data, spell), "sub": spell["sub"], "move": spell["move"],
-        "stat": spell["stat"], "tier": tier, "element": sub["element"], "color": tuple(sub["color"]),
+        "name": sp.get("name") or describe_name(data, sp), "sub": style, "sub_id": sp["sub"],
+        "element": sp["element"], "move": sp["move"], "stat": sp["stat"], "tier": tier, "focus": sp["focus"],
+        "size": size, "color": tuple(src["color"]),
         "power": round(power, 1), "mana": max(1, round(mana)), "range": round(rng), "area": round(area),
-        "speed": round(speed), "duration": round(duration, 1), "zone_duration": round(zone_duration, 1),
-        "cooldown": round(cooldown, 2), "status": status, "target": sc["target"],
-        "hp_cost": round(mana * 0.3) if spell["sub"] == "blood" else 0,
+        "radius": round(4 * size ** 0.5, 1), "speed": round(speed), "duration": round(duration, 1),
+        "zone_duration": round(zone_duration, 1), "cooldown": round(cooldown, 2), "status": status,
+        "target": sc["target"], "chain_jumps": 2 + tier,
+        "hp_cost": round(mana * 0.3) if sp["sub"] == "blood" else 0,
     }
     out["description"] = describe(data, out)
     return out
@@ -76,15 +141,19 @@ def compute(data, spell, magic_skill=0.0, mana_conduct=0.0):
 
 def describe_name(data, spell):
     m = data.magic
-    return f"{m['subelements'][spell['sub']]['name']} {m['movements'][spell['move']]['name']}"
+    sp = normalize(data, spell)
+    src = m["subelements"][sp["sub"]]["name"] if sp["sub"] else m["elements"][sp["element"]]["name"]
+    big = " Great" if sp["size"] >= 2 else (" Lesser" if sp["size"] <= 0.75 else "")
+    return f"{src}{big} {m['movements'][sp['move']]['name']}".replace("  ", " ")
 
 
 def describe(data, p):
     m = data.magic
     stat = m["stats"][p["stat"]]["name"]
     mv = m["movements"][p["move"]]["desc"]
+    kind = m["subelements"][p["sub_id"]]["name"].lower() if p["sub_id"] else m["elements"][p["element"]]["name"].lower()
     eff = {
-        "damage": f"deals {p['power']:.0f} {p['sub']} damage", "heal": f"heals {p['power']:.0f}",
+        "damage": f"deals {p['power']:.0f} {kind} damage", "heal": f"heals {p['power']:.0f}",
         "strength": f"+{p['power']:.0f} Strength for {p['duration']:.0f}s",
         "speed": f"+{p['power']:.0f} Speed for {p['duration']:.0f}s",
         "dexterity": f"+{p['power']:.0f} Dexterity for {p['duration']:.0f}s",
@@ -94,11 +163,22 @@ def describe(data, p):
         "affliction": f"inflicts {p['status']} for {p['duration']:.1f}s",
     }[p["stat"]]
     cost = f"{p['mana']} mana" + (f" + {p['hp_cost']} health" if p["hp_cost"] else "")
-    return f"{mv} It {eff}. ({stat}; {cost}; cooldown {p['cooldown']:.1f}s)"
+    return f"{mv} It {eff}. ({stat}; {cost}; size {p['size']:.2g}; area {p['area']})"
 
 
 def starter_spellbook():
     return [dict(s) for s in STARTER_SPELLS]
+
+
+def migrate(data, spells_list):
+    """Upgrade spells saved by older versions in place (element / focus / size)."""
+    out = []
+    for sp in spells_list:
+        try:
+            out.append(normalize(data, sp))
+        except SpellError:
+            continue
+    return out
 
 
 def capacity(data, level):
@@ -134,10 +214,10 @@ def save_draft(state, spell):
 
 
 # ------------------------------------------------------------------ mana economy (real-time)
-REGEN_CALM = 0.03          # fraction of max mana restored per second out of combat
-REGEN_COMBAT = 0.012       # ...and while fighting
-HIT_MANA_RATIO = 0.3       # weapon damage dealt -> mana
-HIT_MANA_CAP = 8.0         # most mana one weapon hit can restore
+REGEN_CALM = 0.05          # fraction of max mana restored per second out of combat
+REGEN_COMBAT = 0.025       # ...and while fighting
+HIT_MANA_RATIO = 0.4       # weapon damage dealt -> mana
+HIT_MANA_CAP = 12.0        # most mana one weapon hit can restore
 
 
 def regen_per_second(char, in_combat):

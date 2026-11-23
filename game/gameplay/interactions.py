@@ -197,7 +197,16 @@ def for_object(state, loc_key, obj, lmap=None):
         return Interaction("Manage the outpost" if state.base.get("founded") is not None else "Found an outpost here",
                            kind="scene")
     if k == "chest":
-        return Interaction("Open your storage chest", kind="scene")
+        own = loc_key in getattr(state, "property", {}) or "/" in loc_key and \
+            loc_key.split("/")[0] in getattr(state, "property", {}) and \
+            state.property[loc_key.split("/")[0]]["building"] == loc_key.split("/")[1]
+        return Interaction("Open your storage chest" if own else "Steal from the chest", kind="scene")
+    if k in ("barrel", "crate"):
+        searched = state.location_state(loc_key).get("searched", {}).get(obj["key"]) == state.clock.day_index
+        if searched:
+            return Interaction(f"Search the {k}", kind="refuse", message="Already searched today.")
+        wild = lmap is not None and lmap.kind == "wild"
+        return Interaction(f"{'Search' if wild else 'Steal from'} the {k}", kind="scene")
     if k == "base_well":
         def run(s):
             s.player.water = 100.0

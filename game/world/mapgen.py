@@ -18,7 +18,7 @@ BUILDING_SIZES = {
     "general_store": (7, 4), "market": (8, 5), "warehouse": (7, 5), "barracks": (8, 5), "palace": (11, 7),
     "temple": (6, 6), "guild_hall": (9, 6), "mage_tower": (5, 7), "enchanter": (5, 4), "apothecary": (5, 4),
     "arena": (9, 6), "longhouse": (9, 5), "shaman_hut": (5, 4), "tannery": (6, 4), "watchtower": (4, 6),
-    "scavenger_shop": (6, 4), "chapel": (5, 5), "mine_entrance": (6, 4), "property_for_sale": (5, 4),
+    "scavenger_shop": (6, 4), "chapel": (5, 5), "mine_entrance": (6, 4), "property_for_sale": (5, 4), "outfitter": (6, 4),
 }
 BUILDING_LABELS = {
     "inn": "Inn", "provisioner": "Provisions", "armorer": "Armorer", "assayer": "Assayer", "smithy": "Smithy",
@@ -27,11 +27,11 @@ BUILDING_LABELS = {
     "guild_hall": "Guild Hall", "mage_tower": "Mage Tower", "enchanter": "Enchanter", "apothecary": "Apothecary",
     "arena": "Fighting Pit", "longhouse": "Longhouse", "shaman_hut": "Shaman's Hut", "tannery": "Tannery",
     "watchtower": "Watchtower", "scavenger_shop": "Scavenger's Den", "chapel": "Chapel",
-    "mine_entrance": "Mine", "property_for_sale": "House (for sale)", "house": "House",
+    "mine_entrance": "Mine", "property_for_sale": "House (for sale)", "house": "House", "outfitter": "Outfitter",
     "farmhouse": "Farmhouse", "barn": "Barn",
 }
 SHOP_BUILDINGS = {"inn", "provisioner", "armorer", "assayer", "smithy", "workshop", "general_store", "market",
-                  "enchanter", "apothecary", "tannery", "scavenger_shop"}
+                  "enchanter", "apothecary", "tannery", "scavenger_shop", "outfitter"}
 ORE_VEIN_COUNT = {"rustite": 9, "greyvein": 6, "sunsilver": 4, "voidglass": 3}
 BORDER_OBJECT = {
     "grassland": "tree", "forest": "tree", "hills": "rock", "mountain": "rock", "snow": "pine", "desert": "rock",

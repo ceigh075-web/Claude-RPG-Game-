@@ -77,6 +77,19 @@ ELEMENT = {
                      ground="well", glow=0.9, trail_rate=45),
     "light": Style((255, 250, 200), (255, 255, 255), (230, 190, 90), "glint", "star", beam="radiant",
                    ground="halo", glow=1.5, trail_rate=40, rise=-15),
+    # pure-element spells (no sub-element) and the light family's new sub-elements
+    "fire": Style((240, 120, 40), (255, 220, 120), (120, 40, 20), "ember", "cinder", beam="molten", ground="lava",
+                  glow=1.3, trail_rate=55, rise=-20),
+    "water": Style((70, 150, 230), (200, 235, 255), (30, 70, 140), "drop", "drop", beam="tendril", ground="pool",
+                   glow=0.6, trail_rate=45, gravity=120),
+    "earth": Style((150, 116, 70), (210, 180, 120), (80, 60, 36), "grain", "rock", beam="spikes", ground="spikes",
+                   glow=0.3, trail_rate=40, gravity=80),
+    "air": Style((215, 238, 240), (255, 255, 255), (140, 190, 200), "streak", "crescent", beam="gust", ground="whirl",
+                 glow=0.4, trail_rate=60),
+    "mending": Style((255, 214, 150), (255, 250, 220), (220, 160, 80), "glint", "star", beam="radiant", ground="pulse",
+                     glow=1.4, trail_rate=45, rise=-25),
+    "sanctuary": Style((228, 234, 255), (255, 255, 255), (150, 160, 210), "ring", "gem", beam="prism", ground="halo",
+                       glow=1.1, trail_rate=25),
 }
 DEFAULT = ELEMENT["light"]
 
@@ -682,6 +695,19 @@ def _aura_flash(fx, e, sub):
 def _effect_emit(fx, e, sub, flags, dt):
     st = style(sub)
     k = e.kind
+    if k == "burst" and not flags["burst"]:
+        flags["burst"] = True
+        burst(fx, sub, e.x, e.y, 18, 60 + e.spell["area"] * 1.5)
+        return
+    if k == "chain" and not flags["burst"]:
+        flags["burst"] = True
+        for px, py in getattr(e, "points", [])[1:]:
+            burst(fx, sub, px, py, 6, 50, ring=False)
+        return
+    if k == "trap" and getattr(e, "sprung", False) and not flags["burst"]:
+        flags["burst"] = True
+        burst(fx, sub, e.x, e.y, 20, 90)
+        return
     if k == "area":
         if e.t >= 0.6 and not flags["burst"]:
             flags["burst"] = True
@@ -801,6 +827,17 @@ def draw_under(canvas, world, camx, camy, t):
             _dashed_ellipse(canvas, x, y, r, st.core, t * 0.5)
             pulse = (t * 0.8) % 1.0
             ellipse_alpha(canvas, (x - r * pulse, y - r * pulse * 0.5, r * 2 * pulse, r * pulse), st.bright, 140 * (1 - pulse), 1)
+        elif k == "trap":
+            r = e.spell["area"] * 0.6
+            if getattr(e, "sprung", False):
+                f = min(1.0, (e.t - (e.duration - 0.35)) / 0.35)
+                ellipse_alpha(canvas, (x - r * 1.6, y - r * 0.8, r * 3.2, r * 1.6), st.bright, 220 * (1 - f), 3)
+            else:
+                pulse = 0.5 + 0.5 * math.sin(t * 3 + id(e) % 7)
+                ellipse_alpha(canvas, (x - r, y - r * 0.45, r * 2, r * 0.9), st.core, 50 + 40 * pulse, 1)
+                for j in range(5):
+                    a = t * 0.8 + j * math.tau / 5
+                    canvas.fill(st.core, (int(x + math.cos(a) * r * 0.6), int(y + math.sin(a) * r * 0.27), 1, 1))
         elif k == "aura":
             cx, cy = e.caster.x - camx, e.caster.y - camy
             r = 18 + 2 * math.sin(t * 5)
@@ -934,6 +971,53 @@ def draw(canvas, world, camx, camy, t):
                 glyph(canvas, sub, ox, oy, 2.5, a + math.pi / 2, t)
         elif k == "ward":
             _ward_totem(canvas, sub, x, y, t)
+        elif k == "burst":
+            f = e.t / max(0.01, e.duration)
+            r = e.spell["area"] * (0.35 + 0.65 * f)
+            ellipse_alpha(canvas, (x - r, y - r * 0.6, r * 2, r * 1.2), st.bright, 230 * (1 - f), 3)
+            ellipse_alpha(canvas, (x - r * 0.8, y - r * 0.48, r * 1.6, r * 0.96), st.core, 160 * (1 - f), 2)
+            n = max(6, int(r / 5))
+            for i in range(n):
+                a = i * math.tau / n
+                glyph(canvas, sub, x + math.cos(a) * r, y + math.sin(a) * r * 0.6, 2 + r / 40, a, t)
+            add_glow(canvas, x, y, 10 + r * 0.4, st.core, (1 - f) * st.glow)
+        elif k == "chain":
+            pts = [(px - camx, py - camy) for px, py in getattr(e, "points", [])]
+            f = max(0.0, 1 - e.t / max(0.01, e.duration))
+            rr = random.Random(int(t * 30))
+            for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+                line = jagged(ax, ay, bx, by, 5 if st.beam == "lightning" else 2.5, rr)
+                pygame.draw.lines(canvas, st.dark, False, line, 3)
+                pygame.draw.lines(canvas, st.core, False, line, 2)
+                pygame.draw.lines(canvas, st.bright, False, line, 1)
+                add_glow(canvas, bx, by, 9, st.core, f * st.glow)
+                glyph(canvas, sub, bx, by, 2.5, 0, t)
+        elif k == "barrier":
+            px, py = -e.aim[1], e.aim[0]
+            half = e.spell["area"] / 2
+            ax, ay, bx, by = x - px * half, y - py * half, x + px * half, y + py * half
+            fade = min(1.0, (e.duration - e.t) / 0.5)
+            n = max(4, int(half / 4))
+            for i in range(n + 1):
+                q = i / n
+                gx, gy = ax + (bx - ax) * q, ay + (by - ay) * q
+                hgt = 10 + 3 * math.sin(t * 6 + i)
+                pygame.draw.line(canvas, st.core, (gx, gy), (gx, gy - hgt), 2)
+                canvas.fill(st.bright, (int(gx), int(gy - hgt), 2, 2))
+            pygame.draw.line(canvas, st.bright, (ax, ay), (bx, by), 2)
+            if st.glow > 0.4:
+                add_glow(canvas, x, y - 6, half * 0.6, st.core, 0.25 * fade * st.glow)
+        elif k == "trap":
+            r = e.spell["area"] * 0.6
+            if getattr(e, "sprung", False):
+                f = min(1.0, (e.t - (e.duration - 0.35)) / 0.35)
+                ellipse_alpha(canvas, (x - r * 1.6, y - r * 0.8, r * 3.2, r * 1.6), st.bright, 220 * (1 - f), 3)
+            else:
+                pulse = 0.5 + 0.5 * math.sin(t * 3 + id(e) % 7)
+                ellipse_alpha(canvas, (x - r, y - r * 0.45, r * 2, r * 0.9), st.core, 50 + 40 * pulse, 1)
+                for j in range(5):
+                    a = t * 0.8 + j * math.tau / 5
+                    canvas.fill(st.core, (int(x + math.cos(a) * r * 0.6), int(y + math.sin(a) * r * 0.27), 1, 1))
         elif k == "aura":
             cx, cy = e.caster.x - camx, e.caster.y - camy
             for j in range(4):
@@ -954,14 +1038,15 @@ def draw(canvas, world, camx, camy, t):
         if pr.kind == "spell":
             sub = pr.payload.get("sub") if pr.payload else None
             st = style(sub)
-            add_glow(canvas, x, y, 11, st.core, 0.6 * st.glow)
+            size = pr.payload.get("size", 1.0) if pr.payload else 1.0
+            add_glow(canvas, x, y, 11 * size ** 0.5, st.core, 0.6 * st.glow)
             if pr.homing:
                 # homing spells leave a fluid ribbon
                 for j in range(1, 6):
                     tx = x - pr.vx * 0.012 * j + math.sin(t * 20 + j) * 1.5
                     ty = y - pr.vy * 0.012 * j + math.cos(t * 20 + j) * 1.5
                     canvas.fill(st.core if j % 2 else st.dark, (int(tx), int(ty), 2, 2))
-            glyph(canvas, sub, x, y, 3.2, ang, t)
+            glyph(canvas, sub, x, y, 3.2 * size ** 0.5, ang, t)
         elif pr.kind in ("arrow", "bolt"):
             ca, sa = math.cos(ang), math.sin(ang)
             ln = 8 if pr.kind == "arrow" else 6

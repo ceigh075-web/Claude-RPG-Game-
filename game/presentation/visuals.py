@@ -72,7 +72,7 @@ def weapon_for(c, data, state=None):
             if w:
                 return w
         return None
-    if c.enemy and c.team == "enemy":
+    if c.enemy and (c.team == "enemy" or getattr(c, "surrendered", False)):
         e = c.enemy
         if e.get("shape") != "humanoid" or e.get("weapon") == "fists":
             return None
@@ -148,11 +148,12 @@ def combatant_entries(world, art, camx, camy, t, state=None):
         shape = e.get("shape", "humanoid") if e else "humanoid"
         eid = getattr(c, "enemy_id", "")
         shadow_w = 12
-        if e and eid == "husk":
+        if e and eid in ("husk", "husk_mage"):
             out += _husk(c, art, camx, camy, t)
             shadow_w = 12
         elif shape == "humanoid":
-            look = enemy_look(c, data) if e and c.team == "enemy" else dress(c.look, c.char, data)
+            look = enemy_look(c, data) if e and (c.team == "enemy" or getattr(c, "surrendered", False)) \
+                else dress(c.look, c.char, data)
             out += animator.humanoid_entries(c, look, weapon_for(c, data, state), t, camx, camy, art, art.white)
         else:
             cshape = creatures.shape_for(eid, e)
@@ -245,7 +246,7 @@ def _husk(c, art, camx, camy, t):
     """Husks are pack skeletons (base / rogue / warrior / mage, fixed per spawn). The sheets only have idle,
     run and death, so attacks are a wind-up lean and a lunge, hits a recoil, using the same timing as everyone."""
     st = c.state
-    variant = c.cid % len(creatures.SKELETONS)
+    variant = 4 if getattr(c, "enemy_id", "") == "husk_mage" else c.cid % 4
     if st == "dead":
         anim, idx = "death", min(7, int(c.dead_t / 0.1))
     elif c.moving or st in ("windup", "active", "recovery"):

@@ -150,6 +150,8 @@ def money_methods(state):
         ("Loot", "Enemies drop hides, meat, coins and gear. Bandits and Hollow soldiers carry marks."),
         ("Favors", "Named NPCs ask for favors; finishing them earns gifts, trust and sometimes marks."),
         ("Your outpost", "Later, an outpost's farms and workshops produce goods every day."),
+        ("Coin loot", "Human enemies carry marks: more in dangerous places, and leaders carry the most."),
+        ("Retainers and towns", "Recruited prisoners bring in a few marks a day; a town you hold pays daily taxes."),
     ]
     work = [(t["name"], a) for t in data.towns.values() for a in t.get("activities", []) if "pay" in a.lower()
             or "work" in a.lower() or "bount" in a.lower()]
@@ -215,3 +217,27 @@ def station_places(state, station):
     if station == "campfire":
         return "campsites in the wilds, or rest anywhere on the road"
     return _places(state, towns, 5) if towns else "nowhere you know of yet"
+
+
+def compare_line(state, item_id):
+    """'vs your Rustite Dagger: damage +4.0, speed -0.20' for weapons/armour, with whether it's an upgrade."""
+    data = state.data
+    it = data.item(item_id)
+    p = state.player
+    if it["type"] == "weapon":
+        from ..set_system import items as items_mod
+        slot = items_mod.weapon_slot(data, item_id)
+        cur = p.equipment.get(slot)
+        if not cur or cur == item_id:
+            return (f"Damage {it['damage']}, speed {it['speed']}/s" + ("" if cur else " (you have nothing in that slot)"), True)
+        c = data.item(cur)
+        dd, ds = it["damage"] - c["damage"], it["speed"] - c["speed"]
+        better = it["damage"] * it["speed"] > c["damage"] * c["speed"]
+        return f"vs your {c['name']}: damage {dd:+.1f}, speed {ds:+.2f}", better
+    if it["type"] == "armor":
+        cur = p.equipment.get(it["slot"])
+        if not cur or cur == item_id:
+            return f"Armour {it['armor']} ({it['slot']})", True
+        da = it["armor"] - data.item(cur)["armor"]
+        return f"vs your {data.item(cur)['name']}: armour {da:+.1f}", da > 0
+    return None

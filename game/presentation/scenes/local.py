@@ -114,26 +114,43 @@ class LocalScene(Scene):
         if m.kind != "wild" or st.sub_location:
             return
         groups = st.location_state(self.loc_key).setdefault("groups", {})
-        st.location_state(self.loc_key)["group_count"] = len(m.spawns)
+        st.location_state(self.loc_key)["group_count"] = max(len(m.spawns), len(self.data.location(st.location).get(
+            "enemies", []))) + max(0, self.data.location(st.location).get("danger", 1) - 2)
         now = st.clock.total_minutes
-        for i, sp in enumerate(m.spawns):
+        from ...set_system import encounters
+        danger = self.data.location(st.location).get("danger", 1)
+        points = list(m.spawns)
+        erng = stable_rng("extra-groups", st.location)
+        cx, cy = m.w // 2, m.h // 2
+        listed = self.data.location(st.location).get("enemies", [])
+        # every enemy kind listed for the area gets a group, plus roaming groups on dangerous ground
+        wanted = [e for e in listed if e not in {p["enemy"] for p in points}]
+        wanted += [listed[k % len(listed)] for k in range(encounters.extra_groups(danger))] if listed else []
+        for eid in wanted:
+            for _ in range(30):
+                x, y = erng.randint(5, m.w - 6), erng.randint(4, m.h - 5)
+                if abs(x - cx) + abs(y - cy) > 14 and not m.solid(x, y):
+                    points.append({"enemy": eid, "x": x, "y": y})
+                    break
+        for i, sp in enumerate(points):
             gid = f"{st.location}:{i}"
             g = groups.get(gid, {})
             if g.get("until", 0) > now:
                 continue
-            e = self.data.enemies[sp["enemy"]]
             rng = stable_rng("pack", gid, st.clock.day_index)
-            n = rng.randint(*e["pack"])
-            fac = e.get("faction")
-            if fac and "hostile_rep" in e:
-                hostile = st.reputation.get(fac, 0) < e["hostile_rep"]
-            else:
-                hostile = factions.is_hostile(st, fac) if fac else True
-            if fac == "hollow" and st.flags.get("hollow_broken"):
-                n = max(1, n // 2)
-            for _ in range(n):
+            members = encounters.compose(self.data, sp["enemy"], danger, rng, m.biome)
+            fac0 = self.data.enemies[sp["enemy"]].get("faction")
+            if fac0 == "hollow" and st.flags.get("hollow_broken"):
+                members = members[:max(1, len(members) // 2)]
+            for eid in members:
+                e = self.data.enemies[eid]
+                fac = e.get("faction")
+                if fac and "hostile_rep" in e:
+                    hostile = st.reputation.get(fac, 0) < e["hostile_rep"]
+                else:
+                    hostile = factions.is_hostile(st, fac) if fac else True
                 tx, ty = m.find_open_near(sp["x"] + rng.randint(-2, 2), sp["y"] + rng.randint(-2, 2), 4)
-                c = self.combat.spawn_enemy(sp["enemy"], tx * T + 8, ty * T + 12, group=gid, hostile=hostile)
+                c = self.combat.spawn_enemy(eid, tx * T + 8, ty * T + 12, group=gid, hostile=hostile)
                 c.remembers = bool(g.get("remembers"))
             self.active_groups.add(gid)
         self.spawn_world_enemies(groups, now)
@@ -175,7 +192,7 @@ class LocalScene(Scene):
                              related=["player"], location=st.location)
         self.combat.escaped = []
         for gid in list(self.active_groups):
-            members = [c for c in self.combat.combatants if c.group == gid]
+            members = [c for c in self.combat.combatants if c.group == gid and not getattr(c, "surrendered", False)]
             if any(c.alive for c in members):
                 continue
             self.active_groups.discard(gid)
@@ -286,15 +303,68 @@ class LocalScene(Scene):
                    "\"Heard the roads are bad lately.\"", "\"Prices keep climbing.\"", "\"Safe travels, stranger.\"",
                    "They nod politely.", "They eye your weapon and keep walking."]
 
+    def spawn_guards(self, keep):
+        """Town guards patrol the streets day and night (more in bigger towns)."""
+        st, m = self.state, self.map
+        town = self.data.towns.get(st.location)
+        if m.kind != "town" or m.building is not None or town is None:
+            return
+        from ..looks import build
+        n = min(5, 2 + town.get("population", 100) // 300) - sum(1 for a in keep if getattr(a, "is_guard", False))
+        spots = list(m.npc_spots) or [m.entry]
+        for i in range(max(0, n)):
+            rng = stable_rng("guard", st.location, i)
+            race = rng.choice(self.CROWD_RACES.get(st.location, ["human"] * 6 + ["kethari", "murrok"]))
+            look = build(rng, self.data.races[race], race, "guard", town.get("faction"), rng.randint(22, 50),
+                         rng.choice(["he/him", "she/her", "they/them"]))
+            sx, sy = spots[(i * 3 + 1) % len(spots)]
+            sx, sy = m.find_open_near(sx + rng.randint(-3, 3), sy + rng.randint(-2, 2), 4)
+            a = self.combat.add_townsfolk(None, sx * T + 8, sy * T + 14, look, rng, anchor_radius=7, name="Town Guard",
+                                          guard=True)
+            a.citizen = True
+            self.npcs.append(a)
+            self.guards_seen = getattr(self, "guards_seen", 0) + 1
+
+    def guards_standing(self):
+        return sum(1 for a in self.combat.combatants if getattr(a, "is_guard", False) and a.alive)
+
+    def witnesses(self, x, y, radius=150):
+        """Townsfolk who can see a spot (alive, not fleeing or surrendered)."""
+        out = []
+        for a in self.combat.combatants:
+            if a.team != "npc" or not a.alive or a.fled or getattr(a, "surrendered", False):
+                continue
+            if math.hypot(a.x - x, a.y - y) <= radius:
+                out.append(a)
+        return out
+
+    def report_crime(self, kind, value, x, y, label="someone"):
+        """Witnessed? Then it's a crime (Set System) and nearby guards come running."""
+        from ...set_system import crime
+        if crime.owner(self.state, crime.town_of(self.state)) == "player":
+            return False
+        seen = self.witnesses(x, y)
+        if not seen:
+            return False
+        ids = [a.npc["id"] for a in seen if a.npc]
+        self.game.notify(crime.crime(self.state, kind, value, ids, label))
+        for a in seen:
+            if a.ai is not None and hasattr(a.ai, "_bark") and not getattr(a, "is_guard", False):
+                a.ai._bark(self.combat, "Thief!" if kind in ("theft", "robbery") else "Murder!")
+                break
+        self.combat.guards_respond(x, y, 320)
+        return True
+
     def spawn_crowd(self, keep):
         """Anonymous townsfolk dressed for their town's trade: daytime only, outdoors in towns (purely ambient)."""
+        self.spawn_guards(keep)
         st, m = self.state, self.map
         town = self.data.towns.get(st.location)
         if m.kind != "town" or m.building is not None or town is None or not 7 <= st.clock.hour < 21:
             return
         from ..looks import townsfolk
         n = min(7, 3 + town.get("population", 200) // 250)
-        n -= sum(1 for a in keep if getattr(a, "citizen", False))
+        n -= sum(1 for a in keep if getattr(a, "citizen", False) and not getattr(a, "is_guard", False))
         races = self.CROWD_RACES.get(st.location, ["human"] * 6 + ["kethari", "sylth", "murrok"])
         spots = list(m.npc_spots) or [m.entry]
         for i in range(max(0, n)):
@@ -306,6 +376,85 @@ class LocalScene(Scene):
                                           name=self.ROLE_NAMES.get(role, "Townsperson"))
             a.citizen = True
             self.npcs.append(a)
+
+    def decide_surrendered(self, c):
+        """Choices for a foe who yielded (Set System: morale.options / morale.resolve)."""
+        from ...set_system import morale
+        from .common import ChoiceScene
+        eid = getattr(c, "enemy_id", None)
+        if eid not in self.data.enemies:
+            c.fled = True
+            return
+        lo, hi = self.data.enemies[eid]["loot"].get("marks", [0, 0])
+        purse = (lo + hi) // 2
+        opts = [(label, key, ok, why) for label, key, ok, why in morale.options(self.state, eid)]
+
+        def choose(key):
+            self.game.notify(morale.resolve(self.state, eid, key, purse))
+            if key == "release" and c.ai is not None:
+                c.ai.mode, c.ai.mode_t = "flee", 0.0
+            elif key == "rob":
+                c.ai.mode, c.ai.mode_t = "flee", 0.0
+                if self.map.kind != "wild":
+                    self.report_crime("robbery", purse, c.x, c.y, f"a surrendered {c.name}")
+            else:
+                c.fled = True                    # led away to your holdings
+        self.game.scenes.push(ChoiceScene(self.game, f"The {c.name} yields",
+                                          opts, choose, body=f"Willing to serve you: {morale.willingness(self.state, eid)}/100. "
+                                          "Prisoners need a house or an outpost to hold them."))
+
+    def search_body(self, a):
+        """Take what the fallen carried; robbery if anyone sees it."""
+        rng = stable_rng("body", a.cid, self.state.clock.day_index)
+        a.looted = True
+        marks = rng.randint(2, 10) + (10 if a.npc and a.npc.get("personality", {}).get("greed", 5) >= 7 else 0)
+        if getattr(a, "is_guard", False):
+            marks += rng.randint(4, 12)
+        self.state.gold += marks
+        self.game.notify(f"You take {marks} marks from {a.name}.")
+        if self.map.kind != "wild":
+            self.report_crime("robbery", marks, a.x, a.y, a.name)
+
+    def steal(self, o):
+        """Barrels, crates and other people's chests (once a day each)."""
+        from ...set_system import crime
+        msgs, value = crime.loot_container(self.state, self.loc_key, o["key"], chest=o["kind"] == "chest")
+        self.game.notify(msgs)
+        if self.map.kind != "wild" and value > 0:
+            x, y = o["x"] * T + 8, o["y"] * T + 8
+            if not self.report_crime("theft", value, x, y, "the townsfolk"):
+                self.game.toast("No one saw you.")
+
+    def board_menu(self, o):
+        """The town's job board: jobs, paying off a bounty, or seizing the town once its guards are beaten."""
+        from ...set_system import crime
+        from .common import ChoiceScene
+        town = crime.town_of(self.state)
+        owed = crime.bounty(self.state, town)
+        ok, why = crime.can_seize(self.state, town, self.guards_standing(), getattr(self, "guards_seen", 0))
+        opts = [("Read the job board", "jobs", True, "")]
+        if owed:
+            opts.append((f"Pay your bounty ({owed} marks)", "fine", self.state.gold >= owed, f"you have {self.state.gold}"))
+        if crime.owner(self.state, town) != "player":
+            opts.append((f"Seize control of {self.data.location(town)['name']}", "seize", ok, why))
+        else:
+            opts.append(("This town is yours: taxes come in daily", "noop", False, ""))
+        if len(opts) == 1:
+            return False
+
+        def choose(v):
+            if v == "jobs":
+                self.read_board()
+            elif v == "fine":
+                self.game.notify(crime.pay_fine(self.state, town)[1])
+            elif v == "seize":
+                self.game.notify(crime.seize(self.state, town))
+                for a in self.npcs:
+                    if a.ai is not None and getattr(a.ai, "mode", "") in ("calm", "wary") and not a.npc:
+                        a.ai._bark(self.combat, "As you command.")
+                        break
+        self.game.scenes.push(ChoiceScene(self.game, "Job board", opts, choose))
+        return True
 
     def refusal(self, a):
         mode = getattr(a.ai, "mode", "")
@@ -434,7 +583,8 @@ class LocalScene(Scene):
         opts = [("Inventory", "inv", True, "I"), ("Character & factions", "char", True, "C"),
                 ("Spell book", "book", True, "B"), ("Company (squad)", "party", True, "P"),
                 ("Relationships", "rel", True, "R"), ("Journal", "journal", True, "J"),
-                ("Adventurer's Guide", "guide", True, "H"), ("World map", "map", True, "M"),
+                ("Adventurer's Guide", "guide", True, "H"), ("Prisoners & retainers", "prisoners", True, ""),
+                ("World map", "map", True, "M"),
                 ("Quick save", "save", True, "F5"), ("Pause menu (options, load, quit)", "pause", True, "Esc")]
 
         def go(v):
@@ -443,12 +593,14 @@ class LocalScene(Scene):
             from .inventory import InventoryScene
             from .journal import JournalScene
             from .party import PartyScene, RelationshipsScene
+            from .prisoners import PrisonersScene
             from .spellbook import SpellbookScene
             push = self.game.scenes.push
             {"inv": lambda: push(InventoryScene(self.game)), "char": lambda: push(CharacterScene(self.game)),
              "book": lambda: push(SpellbookScene(self.game)), "party": lambda: push(PartyScene(self.game)),
              "rel": lambda: push(RelationshipsScene(self.game)), "journal": lambda: push(JournalScene(self.game)),
              "guide": lambda: push(GuideScene(self.game)),
+             "prisoners": lambda: push(PrisonersScene(self.game)),
              "map": lambda: self.open_map(leaving=self.map.kind != "interior"),
              "save": lambda: self.game.save_game(1), "pause": lambda: push(PauseScene(self.game))}[v]()
         self.game.scenes.push(ChoiceScene(self.game, "Menu", opts, go))
@@ -467,6 +619,14 @@ class LocalScene(Scene):
         fx, fy = self.player.facing_vec()
         qx, qy = px + fx * 10, py + fy * 10
         best, best_d = None, INTERACT_RANGE
+        for a in self.combat.combatants:
+            if getattr(a, "surrendered", False) and a.alive and not a.fled and \
+                    math.hypot(a.x - qx, (a.y - 6) - qy) < best_d + 8:
+                return ("surrendered", a)
+        for a in self.npcs:
+            if a in self.combat.combatants and a.state == "dead" and not getattr(a, "looted", False) and \
+                    math.hypot(a.x - qx, a.y - qy) < best_d:
+                best, best_d = ("body", a), math.hypot(a.x - qx, a.y - qy)
         for a in self.npcs:
             if not a.alive or a.fled or a not in self.combat.combatants:
                 continue
@@ -500,6 +660,16 @@ class LocalScene(Scene):
     def prompt(self, tgt):
         if tgt is None:
             return None
+        if tgt[0] == "surrendered":
+            return f"Decide the fate of the {tgt[1].name}"
+        if tgt[0] == "body":
+            return f"Search {tgt[1].name}'s belongings" + (" (others are watching!)" if self.map.kind != "wild" and
+                                                           self.witnesses(tgt[1].x, tgt[1].y) else "")
+        if tgt[0] == "npc" and getattr(tgt[1], "is_guard", False) and tgt[1].alive:
+            from ...set_system import crime
+            owed = crime.bounty(self.state, crime.town_of(self.state))
+            if owed and not tgt[1].grudge:
+                return f"Pay the guard your {owed}-mark fine"
         if tgt[0] == "npc":
             a = tgt[1]
             if not self.talkable(a):
@@ -532,6 +702,24 @@ class LocalScene(Scene):
         tgt = self.target()
         if tgt is None:
             return
+        if tgt[0] == "surrendered":
+            self.decide_surrendered(tgt[1])
+            return
+        if tgt[0] == "body":
+            self.search_body(tgt[1])
+            return
+        if tgt[0] == "npc" and getattr(tgt[1], "is_guard", False) and tgt[1].alive and not tgt[1].grudge:
+            from ...set_system import crime
+            town = crime.town_of(self.state)
+            if crime.bounty(self.state, town):
+                ok, msg = crime.pay_fine(self.state, town)
+                self.game.notify(msg)
+                if ok:
+                    for g in self.combat.combatants:
+                        if getattr(g, "is_guard", False) and g.ai is not None:
+                            g.ai.challenged = False
+                            g.ai.challenge_t = 0.0
+                return
         if tgt[0] == "npc":
             a = tgt[1]
             if not self.talkable(a):
@@ -593,7 +781,8 @@ class LocalScene(Scene):
         elif k == "bed":
             self.use_bed()
         elif k == "bounty_board":
-            self.read_board()
+            if self.map.kind != "town" or not self.board_menu(o):
+                self.read_board()
         elif k in ("anvil", "furnace", "workbench", "stove", "alchemy_table", "campfire"):
             from ...set_system.crafting import OBJECT_STATION
             from .crafting import CraftingScene
@@ -608,9 +797,11 @@ class LocalScene(Scene):
         elif k == "scribing_table":
             from .spellbook import SpellbookScene
             self.game.scenes.push(SpellbookScene(self.game, at_table=True))
+        elif k in ("barrel", "crate"):
+            self.steal(o)
         elif k == "chest":
             if not self.at_home():
-                self.game.notify("Not your chest.")
+                self.steal(o)
                 return
             from .base import StorageScene
             self.game.scenes.push(StorageScene(self.game, st.property[st.location], "Your house chest"))

@@ -6,13 +6,17 @@ Pure functions over plain numbers/dicts so they are deterministic and unit-testa
 import math
 
 # share of an attack cycle spent in each phase
-WINDUP, ACTIVE, RECOVERY = 0.32, 0.14, 0.54
+WINDUP, ACTIVE, RECOVERY = 0.28, 0.14, 0.40
+TEMPO = 1.3                  # combat overhaul: every attack cycle runs 30% faster
+RANGED_RECOVERY = 0.55       # ...and ranged weapons reload in about half the time
+MIN_ENEMY_WINDUP = 0.18      # enemy wind-ups never get shorter than this, so they stay readable
+CANCEL_AFTER = 0.3           # share of recovery after which a new action may cut it short
 COMBO_MAX = 3
-COMBO_WINDOW = 0.45          # seconds after recovery starts in which the next combo hit can be queued
+COMBO_WINDOW = 0.55          # seconds after recovery starts in which the next combo hit can be queued
 COMBO_FINISHER = {"damage": 1.4, "knockback": 1.6, "stagger": 1.5}
 
 KICK = {"damage": 3.0, "reach": 18, "arc": 70, "knockback": 170, "stagger": 0.5, "speed": 0.9, "guard_damage": 35}
-DODGE_TIME, DODGE_IFRAMES, DODGE_COOLDOWN = 0.32, 0.24, 0.65
+DODGE_TIME, DODGE_IFRAMES, DODGE_COOLDOWN = 0.3, 0.24, 0.45
 GUARD_MAX, GUARD_REGEN = 100.0, 28.0
 BLOCK_ARC = 75               # degrees either side of facing that a block covers
 BACKSTAB_ARC = 60
@@ -48,7 +52,7 @@ def attack_profile(data, attrs, skills, weapon_type, item_id=None, combo_step=1)
     scale = sum(attrs.get(a, 10) * s for a, s in w["scaling"].items()) / 10.0
     skill = skills.get(w["skill"], 0.0)
     dmg = w["damage"] * (0.6 + 0.4 * scale) * (1 + skill / 100.0)
-    speed = w["speed"] * (1 + attrs.get("dexterity", 10) / 100.0) * (1 + skill / 400.0)
+    speed = w["speed"] * (1 + attrs.get("dexterity", 10) / 100.0) * (1 + skill / 400.0) * TEMPO
     cycle = 1.0 / speed
     kb = w["knockback"] * (1 + attrs.get("strength", 10) / 100.0)
     stagger = w["stagger"]
@@ -63,7 +67,8 @@ def attack_profile(data, attrs, skills, weapon_type, item_id=None, combo_step=1)
     return {
         "weapon": weapon_type, "class": w["class"], "skill": w["skill"], "damage": dmg, "knockback": kb,
         "stagger": stagger, "reach": w["reach"], "arc": w["arc"], "windup": windup, "active": cycle * ACTIVE,
-        "recovery": cycle * RECOVERY, "guard_break": weapon_type in GUARD_BREAKERS,
+        "recovery": cycle * RECOVERY * (RANGED_RECOVERY if w["class"] == "ranged" else 1.0),
+        "guard_break": weapon_type in GUARD_BREAKERS,
         "armor_pierce": ARMOR_PIERCE.get(weapon_type, 0.0), "bleed": BLEEDERS.get(weapon_type),
         "backstab": 3.0 if weapon_type == "dagger" else 1.0, "finisher": finisher,
         "projectile_speed": w.get("projectile_speed", 0), "ammo": w.get("ammo"), "pellets": w.get("pellets", 1),
@@ -85,13 +90,14 @@ def enemy_profile(data, enemy):
     """Attack profile for an enemy archetype entry from enemies.json."""
     w = data.weapons[enemy["weapon"]]
     heavy = enemy["archetype"] == "heavy"
-    speed = w["speed"] * (0.75 if heavy else 1.0) * (1.25 if enemy["archetype"] == "fast" else 1.0)
+    speed = w["speed"] * (0.75 if heavy else 1.0) * (1.25 if enemy["archetype"] == "fast" else 1.0) * TEMPO
     cycle = 1.0 / speed
     return {"weapon": enemy["weapon"], "class": w["class"], "skill": w["skill"], "damage": float(enemy["damage"]),
             "knockback": w["knockback"] * (1.4 if heavy else 1.0), "stagger": w["stagger"] * (1.3 if heavy else 1.0),
             "reach": max(enemy["attack_range"], 14) if w["class"] == "melee" else enemy["attack_range"],
-            "arc": max(w["arc"], 60), "windup": cycle * WINDUP * (1.6 if heavy else 1.0), "active": cycle * ACTIVE,
-            "recovery": cycle * RECOVERY, "guard_break": enemy["weapon"] in GUARD_BREAKERS or heavy,
+            "arc": max(w["arc"], 60), "windup": max(MIN_ENEMY_WINDUP, cycle * WINDUP * (1.6 if heavy else 1.0)),
+            "active": cycle * ACTIVE,
+            "recovery": cycle * RECOVERY * (RANGED_RECOVERY if w["class"] == "ranged" else 1.0), "guard_break": enemy["weapon"] in GUARD_BREAKERS or heavy,
             "armor_pierce": ARMOR_PIERCE.get(enemy["weapon"], 0.0), "bleed": BLEEDERS.get(enemy["weapon"]),
             "backstab": 1.0, "finisher": False, "projectile_speed": w.get("projectile_speed", 0),
             "ammo": None, "pellets": w.get("pellets", 1), "pierce": 0, "scaling": []}
