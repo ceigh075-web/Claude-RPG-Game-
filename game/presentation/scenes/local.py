@@ -404,26 +404,36 @@ class LocalScene(Scene):
                                           "Prisoners need a house or an outpost to hold them."))
 
     def search_body(self, a):
-        """Take what the fallen carried; robbery if anyone sees it."""
-        rng = stable_rng("body", a.cid, self.state.clock.day_index)
-        a.looted = True
-        marks = rng.randint(2, 10) + (10 if a.npc and a.npc.get("personality", {}).get("greed", 5) >= 7 else 0)
-        if getattr(a, "is_guard", False):
-            marks += rng.randint(4, 12)
-        self.state.gold += marks
-        self.game.notify(f"You take {marks} marks from {a.name}.")
-        if self.map.kind != "wild":
-            self.report_crime("robbery", marks, a.x, a.y, a.name)
+        """Open the loot panel for a fallen character. Taking from townsfolk is robbery if anyone sees it."""
+        from ...set_system import loot
+        from .loot import LootScene
+        if getattr(a, "loot", None) is None:
+            greedy = bool(a.npc and a.npc.get("personality", {}).get("greed", 5) >= 7)
+            a.loot = loot.citizen_loot(self.state, a.cid, greedy, getattr(a, "is_guard", False))
+        town = self.map.kind != "wild" and a.team == "npc"
+
+        def done(value, msgs):
+            if not a.loot:
+                a.looted = True
+            if town and value > 0:
+                self.report_crime("robbery", value, a.x, a.y, a.name)
+        sub = "Taking this is robbery - anyone watching will report it." if town else None
+        self.game.scenes.push(LootScene(self.game, f"{a.name}", a.loot, done, sub, owned=not town))
 
     def steal(self, o):
-        """Barrels, crates and other people's chests (once a day each)."""
-        from ...set_system import crime
-        msgs, value = crime.loot_container(self.state, self.loc_key, o["key"], chest=o["kind"] == "chest")
-        self.game.notify(msgs)
-        if self.map.kind != "wild" and value > 0:
-            x, y = o["x"] * T + 8, o["y"] * T + 8
-            if not self.report_crime("theft", value, x, y, "the townsfolk"):
-                self.game.toast("No one saw you.")
+        """Barrels, crates and other people's chests: their contents persist and refill every few days."""
+        from ...set_system import loot
+        from .loot import LootScene
+        wild = self.map.kind == "wild"
+        entries = loot.container(self.state, self.loc_key, o["key"], chest=o["kind"] == "chest")
+        x, y = o["x"] * T + 8, o["y"] * T + 8
+
+        def done(value, msgs):
+            if not wild and value > 0:
+                if not self.report_crime("theft", value, x, y, "the townsfolk"):
+                    self.game.toast("No one saw you.")
+        sub = None if wild else "This belongs to someone. Taking it is theft if you're seen."
+        self.game.scenes.push(LootScene(self.game, o["kind"].title(), entries, done, sub, owned=wild))
 
     def board_menu(self, o):
         """The town's job board: jobs, paying off a bounty, or seizing the town once its guards are beaten."""
@@ -701,10 +711,13 @@ class LocalScene(Scene):
             if getattr(a, "surrendered", False) and a.alive and not a.fled and \
                     math.hypot(a.x - qx, (a.y - 6) - qy) < best_d + 8:
                 return ("surrendered", a)
-        for a in self.npcs:
-            if a in self.combat.combatants and a.state == "dead" and not getattr(a, "looted", False) and \
-                    math.hypot(a.x - qx, a.y - qy) < best_d:
-                best, best_d = ("body", a), math.hypot(a.x - qx, a.y - qy)
+        for a in self.combat.combatants:
+            if a.state != "dead" or a is self.player or getattr(a, "looted", False):
+                continue
+            if a.team == "npc" or getattr(a, "loot", None):          # townsfolk, or a foe carrying gear
+                d = math.hypot(a.x - qx, a.y - qy)
+                if d < best_d:
+                    best, best_d = ("body", a), d
         for a in self.npcs:
             if not a.alive or a.fled or a not in self.combat.combatants:
                 continue
@@ -742,7 +755,7 @@ class LocalScene(Scene):
             return f"Decide the fate of the {tgt[1].name}"
         if tgt[0] == "body":
             return f"Search {tgt[1].name}'s belongings" + (" (others are watching!)" if self.map.kind != "wild" and
-                                                           self.witnesses(tgt[1].x, tgt[1].y) else "")
+                                                           tgt[1].team == "npc" and self.witnesses(tgt[1].x, tgt[1].y) else "")
         if tgt[0] == "npc" and getattr(tgt[1], "is_guard", False) and tgt[1].alive:
             from ...set_system import crime
             owed = crime.bounty(self.state, crime.town_of(self.state))

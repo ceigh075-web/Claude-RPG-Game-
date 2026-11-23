@@ -35,6 +35,14 @@ class StorageScene(Scene):
         if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_TAB, pygame.K_LEFT, pygame.K_RIGHT):
             self.focus = 1 - self.focus
             return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
+            from ...set_system import loot
+            inv = base.storage(self.state, self.holder)
+            n = loot.deposit_materials(self.state, inv)
+            base.save_storage(self.holder, inv)
+            self.game.toast(f"Stored {n} materials." if n else "No materials to store.")
+            self.refresh()
+            return
         menu = self.mine if self.focus == 0 else self.store
         v = menu.handle(ev)
         if not v:
@@ -55,7 +63,7 @@ class StorageScene(Scene):
             ui.text(screen, label, (x, 96), 28, ui.ACCENT if self.focus == i else ui.TEXT_DIM, bold=True)
         self.mine.draw(screen)
         self.store.draw(screen)
-        ui.text(screen, "[Enter] move 1   [Shift+Enter] move all   [Tab] switch   [Esc] close",
+        ui.text(screen, "[Enter] move 1   [Shift+Enter] move all   [Q] store all materials   [Tab] switch   [Esc] close",
                 (W // 2, r.bottom - 30), 21, ui.TEXT_DIM, center=True)
 
 

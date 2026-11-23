@@ -48,12 +48,43 @@ def sprite_entries(world, art, camx, camy, t):
     return out + pickup_entries(world, art, camx, camy, t)
 
 
+_TW = {}
+
+
+def _twinkle(frame):
+    s = _TW.get(frame)
+    if s is None:
+        import pygame
+        s = pygame.Surface((7, 7), pygame.SRCALPHA)
+        r = (1, 2, 3, 2)[min(3, frame)]
+        for d in range(-r, r + 1):
+            s.set_at((3 + d, 3), (255, 255, 230, 230 - abs(d) * 50))
+            s.set_at((3, 3 + d), (255, 255, 230, 230 - abs(d) * 50))
+        _TW[frame] = s
+    return s
+
+
 def pickup_entries(world, art, camx, camy, t):
     out = []
+    from . import icons
+    for c in world.combatants:              # a fallen foe still carrying gear: a loot bag floats over them
+        if c.state == "dead" and getattr(c, "loot", None) and not getattr(c, "looted", False) and c.team != "npc":
+            img = icons.icon(world.data, "marks" if all(e["item"] == "marks" for e in c.loot) else "sack_marker")
+            bob = math.sin(t * 3 + c.x) * 2
+            out.append((c.y + 0.02, img, int(c.x - 6 - camx), int(c.y - 30 + bob - camy)))
     for pk in world.pickups:
-        it = "marks" if pk["item"] == "marks" else world.data.item(pk["item"])["type"]
-        bob = math.sin(t * 4 + pk["x"]) * 1.5
-        out.append((pk["y"], art.pickup(it), int(pk["x"] - 4 - camx), int(pk["y"] - 8 + bob - camy)))
+        img = icons.icon(world.data, pk["item"])
+        z = pk.get("z", 0.0)
+        settled = z <= 0 and not pk.get("vz")
+        bob = math.sin(t * 3 + pk["x"]) * 1.0 if settled else 0.0
+        w, h = img.get_size()
+        sh = art.shadow(8)
+        out.append((pk["y"] - 0.6, sh, int(pk["x"] - 4 - camx), int(pk["y"] - 2 - camy)))
+        out.append((pk["y"], img, int(pk["x"] - w / 2 - camx), int(pk["y"] - h - z + bob - camy)))
+        ph = (t * 1.3 + pk["x"] * 0.07) % 3.0
+        if settled and ph < 0.3:                           # a brief twinkle so drops catch the eye
+            out.append((pk["y"] + 0.01, _twinkle(int(ph * 10)), int(pk["x"] - 3 + w / 4 - camx),
+                        int(pk["y"] - h - 2 + bob - camy)))
     return out
 
 

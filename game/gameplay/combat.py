@@ -903,8 +903,16 @@ class CombatWorld:
             if item == "marks":
                 n = int(round(n * wealth))      # richer pickings in more dangerous places
             if n > 0:
-                ang = self.rng.uniform(0, math.tau)
-                self.pickups.append({"item": item, "qty": n, "x": tgt.x + math.cos(ang) * 8, "y": tgt.y + math.sin(ang) * 6})
+                if item == "marks" and n >= 6:       # coins burst out in a few piles
+                    piles = min(4, 1 + n // 8)
+                    for k in range(piles):
+                        self.drop(item, n // piles + (n % piles if k == 0 else 0), tgt.x, tgt.y)
+                else:
+                    self.drop(item, n, tgt.x, tgt.y)
+        # gear stays on the body: search it (E) to see what they carried
+        from ..set_system import loot as loot_rules
+        danger = self.data.location(st.location).get("danger", 1) if st.location in self.data.locations else 1
+        tgt.loot = loot_rules.enemy_gear(self.data, e, self.rng, danger)
         if src is not None and src.char:
             src.char.train("health", 1.0, src.race_data)
             src.char.xp_total += e["xp"] * 0.5
@@ -949,6 +957,7 @@ class CombatWorld:
             p[3] += 140 * dt
             p[4] -= dt
         self.particles = [p for p in self.particles if p[4] > 0]
+        self._move_pickups(dt, lmap)
         self._collect_pickups()
         # downed companions get back up once the fighting is over
         if not self.in_combat:
@@ -988,7 +997,8 @@ class CombatWorld:
             self.calm_t = 0.0
         # remove faded corpses and escaped enemies
         self.combatants = [c for c in self.combatants if not (c.state == "dead" and c.dead_t > 1.6 and c is not self.player
-                                                                 and not c.char and c.team != "npc") and not c.fled]
+                                                                 and not c.char and c.team != "npc"
+                                                                 and not getattr(c, "loot", None)) and not c.fled]
 
     def _update_combatant(self, c, dt, lmap):
         c.state_t += dt
@@ -1288,13 +1298,43 @@ class CombatWorld:
         (ax, ay), (bx, by) = self._barrier_ends(e)
         return _seg_dist(ax, ay, bx, by, x, y)
 
+    def drop(self, item, qty, x, y, speed=55.0):
+        """Spill an item out of a body or container: it pops up, bounces and settles where the player can grab it."""
+        ang = self.rng.uniform(0, math.tau)
+        sp = self.rng.uniform(0.5, 1.0) * speed
+        self.pickups.append({"item": item, "qty": qty, "x": x, "y": y + 2, "vx": math.cos(ang) * sp,
+                             "vy": math.sin(ang) * sp * 0.6, "z": 6.0, "vz": self.rng.uniform(70, 110), "t": 0.0})
+
+    def _move_pickups(self, dt, lmap):
+        for pk in self.pickups:
+            if "vz" not in pk:
+                continue
+            pk["t"] += dt
+            if pk["z"] > 0 or pk["vz"] > 0:
+                nx, ny = pk["x"] + pk["vx"] * dt, pk["y"] + pk["vy"] * dt
+                if lmap is None or not lmap.solid(int(nx // TILE), int(ny // TILE)):
+                    pk["x"], pk["y"] = nx, ny
+                else:
+                    pk["vx"], pk["vy"] = -pk["vx"] * 0.4, -pk["vy"] * 0.4
+                pk["vz"] -= 420 * dt
+                pk["z"] += pk["vz"] * dt
+                if pk["z"] <= 0:
+                    pk["z"] = 0.0
+                    if pk["vz"] < -40:              # bounce
+                        pk["vz"] = -pk["vz"] * 0.35
+                        pk["vx"] *= 0.5
+                        pk["vy"] *= 0.5
+                    else:
+                        pk["vz"] = 0.0
+                        pk["vx"] = pk["vy"] = 0.0
+
     def _collect_pickups(self):
         p = self.player
         if p is None or not p.alive:
             return
         keep = []
         for pk in self.pickups:
-            if math.hypot(pk["x"] - p.x, pk["y"] - p.y) < PICKUP_RADIUS:
+            if pk.get("t", 1.0) > 0.35 and math.hypot(pk["x"] - p.x, pk["y"] - p.y) < PICKUP_RADIUS:
                 self.sfx("coin" if pk["item"] == "marks" else "pickup")
                 if pk["item"] == "marks":
                     self.state.gold += pk["qty"]

@@ -202,9 +202,9 @@ def for_object(state, loc_key, obj, lmap=None):
             state.property[loc_key.split("/")[0]]["building"] == loc_key.split("/")[1]
         return Interaction("Open your storage chest" if own else "Steal from the chest", kind="scene")
     if k in ("barrel", "crate"):
-        searched = state.location_state(loc_key).get("searched", {}).get(obj["key"]) == state.clock.day_index
-        if searched:
-            return Interaction(f"Search the {k}", kind="refuse", message="Already searched today.")
+        cs = state.location_state(loc_key).get("containers", {}).get(obj["key"])
+        if cs is not None and not cs["items"] and state.clock.day_index < cs["refill"]:
+            return Interaction(f"Search the {k}", kind="refuse", message=f"The {k} is empty.")
         wild = lmap is not None and lmap.kind == "wild"
         return Interaction(f"{'Search' if wild else 'Steal from'} the {k}", kind="scene")
     if k == "base_well":

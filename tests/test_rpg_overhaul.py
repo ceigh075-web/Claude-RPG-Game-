@@ -110,3 +110,67 @@ class TestAttackFromConversation(unittest.TestCase):
         g = self.w.add_townsfolk(None, self.pc.x + 80, self.pc.y, self.LOOK, self.random.Random(3), guard=True)
         self.w.provoke(self.pc, a)
         self.assertIn(self.pc.cid, g.grudge)
+
+
+class TestLooting(unittest.TestCase):
+    def test_container_persists_and_no_duplication(self):
+        from game.set_system import loot
+        st, m, w, pc = world()
+        items = loot.container(st, "brackenford", "b1", chest=True)
+        snapshot = [dict(e) for e in items]
+        self.assertEqual(loot.container(st, "brackenford", "b1", chest=True), snapshot)   # same contents on reopen
+        gold0 = st.gold
+        msgs, v = loot.take_all(st, items)
+        self.assertEqual(items, [])
+        self.assertEqual(loot.container(st, "brackenford", "b1"), [])                     # stays empty
+        again, v2 = loot.take_all(st, loot.container(st, "brackenford", "b1"))
+        self.assertEqual(v2, 0)
+        self.assertGreaterEqual(st.gold, gold0)
+        st.clock.minutes += 1440 * loot.CONTAINER_REFILL_DAYS
+        loot.container(st, "brackenford", "b1", chest=True)                                 # refills later (may roll empty)
+        self.assertGreater(st.location_state("brackenford")["containers"]["b1"]["refill"], st.clock.day_index)
+
+    def test_take_one_and_categories(self):
+        from game.set_system import loot
+        st, m, w, pc = world()
+        entries = loot.sort(DATA, [{"item": "bread", "qty": 2}, {"item": "marks", "qty": 9},
+                                   {"item": "dagger_rustite", "qty": 1}, {"item": "wood", "qty": 3}])
+        self.assertEqual([loot.category(DATA, e["item"]) for e in entries], ["money", "equipment", "consumable", "material"])
+        gold0 = st.gold
+        loot.take(st, entries, 0)
+        self.assertEqual(st.gold, gold0 + 9)
+        loot.take_all(st, entries, only="equipment")
+        self.assertTrue(st.player.inventory.has("dagger_rustite"))
+        self.assertEqual(len(entries), 2)
+
+    def test_enemy_drops_scatter_and_gear_stays_on_body(self):
+        import random
+        st, m, w, pc = world()
+        e = w.spawn_enemy("bandit_cutthroat", pc.x + 60, pc.y)
+        w.rng = random.Random(4)
+        e.hp = 0
+        w.kill(e, pc)
+        self.assertTrue(w.pickups)
+        self.assertTrue(all("vz" in p for p in w.pickups))
+        self.assertIsInstance(e.loot, list)
+        run(w, m, 2.5)
+        if e.loot:
+            self.assertIn(e, w.combatants)            # a body with gear stays until searched
+
+    def test_deposit_materials(self):
+        from game.set_system import loot
+        from game.set_system.inventory import Inventory
+        st, m, w, pc = world()
+        st.player.inventory.add("wood", 5)
+        st.player.inventory.add("bread", 1)
+        inv = Inventory()
+        self.assertGreaterEqual(loot.deposit_materials(st, inv), 5)
+        self.assertFalse(st.player.inventory.has("wood"))
+        self.assertTrue(st.player.inventory.has("bread"))
+
+    def test_icons_for_every_item(self):
+        import pygame
+        pygame.init()
+        from game.presentation import icons
+        for item in list(DATA.items) + ["marks"]:
+            self.assertIsNotNone(icons.icon(DATA, item))
