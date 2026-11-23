@@ -60,7 +60,7 @@ def buy_house(state, town, building_id):
     state.property[town] = {"building": building_id, "bought": state.clock.day_index, "storage": {}}
     state.player.inventory.add("house_deed")
     hist(state, f"{state.player.name} bought a house in {state.data.location(town)['name']}.", 3, town)
-    return True, f"The house is yours! Bed, storage chest, workbench, scribing table and training dummy inside."
+    return True, "The house is yours! Bed, storage chest, workbench, scribing table and training dummy inside."
 
 
 def owns_house(state, town, building_id=None):

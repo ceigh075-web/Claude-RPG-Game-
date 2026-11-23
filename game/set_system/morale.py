@@ -182,7 +182,7 @@ def resolve(state, enemy_id, choice, purse=0):
         if willingness(state, enemy_id) < 70:
             return f"The {name} refuses."
         if not bed_free(state):
-            return f"You have no bed for a retainer. Buy a house or build a bunkhouse first."
+            return "You have no bed for a retainer. Buy a house or build a bunkhouse first."
         retainers(state).append({"name": name, "enemy": enemy_id, "since": state.clock.day_index, "loyalty": 55.0})
         state.memory.record("player", "recruited", f"A former {name} swore to serve {state.player.name}.",
                             importance=2, location=state.location, **_stamp(state))
