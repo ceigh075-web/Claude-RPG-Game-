@@ -282,11 +282,12 @@ def keycap(surf, key, pos, size=18):
     return w
 
 
-def prompt(surf, key, label, center, size=22):
-    """'[E] Talk to Hessa' as a keycap + label on a small wooden plate."""
+def prompt(surf, key, label, center, size=22, icon=None):
+    """'[E] Talk to Hessa' as a keycap + (optional action icon) + label on a small wooden plate."""
     f = font(size)
     kw = font(size - 2, True).size(key)[0] + 10
-    w = kw + 10 + f.size(label)[0] + 24
+    iw = size + 6 if icon is not None else 0
+    w = kw + 10 + iw + f.size(label)[0] + 24
     r = pygame.Rect(0, 0, w, size + 14)
     r.center = center
     s = pygame.Surface(r.size, pygame.SRCALPHA)
@@ -294,7 +295,10 @@ def prompt(surf, key, label, center, size=22):
     surf.blit(s, r.topleft)
     pygame.draw.rect(surf, BORDER, r, 1, border_radius=4)
     keycap(surf, key, (r.x + 10, r.y + 5), size - 2)
-    text(surf, label, (r.x + 20 + kw, r.y + 8), size, TEXT)
+    if icon is not None:
+        ic = fit_icon(icon, size + 4)
+        surf.blit(ic, (r.x + 16 + kw, r.y + (r.h - ic.get_height()) // 2))
+    text(surf, label, (r.x + 20 + kw + iw, r.y + 8), size, TEXT)
     return r
 
 
@@ -325,8 +329,31 @@ def _click(name):
     audio.play(name)
 
 
+_fit_cache = {}
+
+
+def fit_icon(img, h):
+    """An icon scaled (by whole steps where possible, keeping pixels crisp) to at most `h` px tall."""
+    key = (id(img), h)
+    out = _fit_cache.get(key)
+    if out is None:
+        w0, h0 = img.get_size()
+        if h0 * 0.74 <= h and h0 * 2 > h:
+            out = img           # native size: pixel art stays crisp (the icons carry their own padding)
+        elif h0 * 2 <= h:
+            k = h // h0
+            out = pygame.transform.scale(img, (w0 * k, h0 * k))
+        else:
+            out = pygame.transform.smoothscale(img, (max(1, w0 * h // h0), h))
+        if len(_fit_cache) > 600:
+            _fit_cache.clear()
+        _fit_cache[key] = out
+    return out
+
+
 class ListMenu:
-    """Vertical list of selectable entries. Entries: (label, value, enabled[, right_text])."""
+    """Vertical list of selectable entries. Entries: (label, value, enabled[, right_text[, icon]]).
+    `icon` is an optional pygame Surface shown before the label (scaled to the row height)."""
 
     def __init__(self, entries, rect, size=26, row_h=None, scroll=True):
         self.entries = entries
@@ -335,6 +362,7 @@ class ListMenu:
         self.row_h = row_h or int(size * 1.15)
         self.index = 0
         self.top = 0
+        self.icon_for = None        # optional: value -> Surface, an icon drawn before each label
         self._skip_disabled(1)
 
     @property
@@ -435,7 +463,16 @@ class ListMenu:
                 stripe.fill((0, 0, 0, 28))
                 surf.blit(stripe, (self.rect.x - 6, y - 2))
             col = (TEXT if enabled else TEXT_DIM) if i != self.index else (ACCENT if enabled else TEXT_DIM)
-            text(surf, e[0], (self.rect.x + 4, y + 2), self.size, col)
+            tx = self.rect.x + 4
+            icon = e[4] if len(e) >= 5 else (self.icon_for(e[1]) if self.icon_for else None)
+            if icon is not None:
+                ic = fit_icon(icon, self.row_h - 2)
+                if not enabled:
+                    ic = ic.copy()
+                    ic.set_alpha(110)
+                surf.blit(ic, (tx, y - 1 + (self.row_h - ic.get_height()) // 2))
+                tx += ic.get_width() + 6
+            text(surf, e[0], (tx, y + 2), self.size, col)
             if len(e) >= 4 and e[3]:
                 text(surf, e[3], (self.rect.right - 4, y + 2), self.size, TEXT_DIM if i != self.index else col, right=True)
         if len(self.entries) > self.visible:

@@ -4,6 +4,7 @@ import pygame
 from ...core.scene import Scene
 from ...world import travel
 from ...world.worldmap import TERRAIN_SPEED
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -25,6 +26,39 @@ DANGER_COL = [(150, 150, 150), (130, 200, 110), (220, 210, 100), (230, 150, 70),
 
 def to_screen(pos):
     return int(MAP_ORIGIN[0] + pos[0] * SCALE), int(MAP_ORIGIN[1] + pos[1] * SCALE)
+
+
+_markers = {}
+
+
+def town_marker(roof, specialty=None):
+    """A tiny pixel-art town (two houses, faction-coloured roofs) for the world map, 24x24."""
+    key = (roof, specialty)
+    if key in _markers:
+        return _markers[key]
+    s = pygame.Surface((12, 12), pygame.SRCALPHA)
+    dark = (24, 18, 16)
+    wall = (226, 210, 180)
+    rd = tuple(int(c * 0.65) for c in roof)
+    # back house
+    pygame.draw.rect(s, dark, (6, 3, 6, 6))
+    pygame.draw.rect(s, wall, (7, 5, 4, 3))
+    pygame.draw.polygon(s, rd, [(6, 5), (9, 2), (11, 5)])
+    # front house
+    pygame.draw.rect(s, dark, (0, 5, 8, 7))
+    pygame.draw.rect(s, wall, (1, 8, 6, 3))
+    pygame.draw.polygon(s, roof, [(0, 8), (4, 4), (7, 8)])
+    pygame.draw.line(s, dark, (0, 8), (4, 4))
+    pygame.draw.line(s, dark, (4, 4), (7, 8))
+    s.set_at((3, 9), (90, 60, 40))
+    s.set_at((3, 10), (90, 60, 40))
+    s.set_at((5, 9), (250, 214, 120))
+    if specialty in ("military", "magic"):
+        pygame.draw.line(s, dark, (10, 0), (10, 3))
+        s.set_at((11, 0), roof)
+    out = pygame.transform.scale(s, (24, 24))
+    _markers[key] = out
+    return out
 
 
 class WorldMapScene(Scene):
@@ -87,16 +121,23 @@ class WorldMapScene(Scene):
                 col, width = ui.ACCENT, 5
             pygame.draw.line(screen, tuple(int(c * 0.8) for c in col), pa, pb, width)
         # nodes
+        quest_places = set()
+        for j in st.jobs:
+            if j.get("status") == "active":
+                for k in ("to", "where", "town"):
+                    if j.get(k):
+                        quest_places.add(j[k])
         for lid, loc in data.locations.items():
             x, y = to_screen(loc["pos"])
             known = lid in st.discovered or loc["kind"] == "town"
             if loc["kind"] == "town":
                 fcol = tuple(data.factions[loc["faction"]]["color"]) if loc["faction"] in data.factions else (160, 160, 160)
-                pygame.draw.rect(screen, (20, 18, 20), (x - 9, y - 9, 18, 18))
-                pygame.draw.rect(screen, fcol, (x - 7, y - 7, 14, 14))
+                screen.blit(town_marker(fcol, loc.get("specialty")), (x - 12, y - 14))
             else:
                 pygame.draw.circle(screen, (20, 18, 20), (x, y), 8)
                 pygame.draw.circle(screen, DANGER_COL[loc["danger"]] if known else (90, 90, 90), (x, y), 6)
+            if lid in quest_places:
+                screen.blit(ui.fit_icon(icons.named(icons.ACTION_CELL, "quest"), 24), (x + 8, y - 26))
             ui.text(screen, loc["name"], (x, y + 11), 19 if loc["kind"] == "wild" else 22,
                     ui.TEXT if known else ui.TEXT_DIM, center=True, bold=loc["kind"] == "town")
         # player marker
@@ -139,4 +180,4 @@ class WorldMapScene(Scene):
         for i in range(1, 6):
             pygame.draw.circle(screen, DANGER_COL[i], (lx + 80 + i * 34, ly + 8), 6)
             ui.text(screen, str(i), (lx + 90 + i * 34, ly), 18, ui.TEXT_DIM)
-        ui.text(screen, "Squares are towns (faction colour)", (lx + 300, ly), 20, ui.TEXT_DIM)
+        ui.text(screen, "Houses are towns (roof = faction); scrolls mark your jobs", (lx + 300, ly), 20, ui.TEXT_DIM)

@@ -4,6 +4,7 @@ import pygame
 from ...core.scene import Scene
 from ...set_system import factions, needs
 from ...set_system.stats import ATTR_DESC, ATTRIBUTES, SKILLS
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 from .. import visuals
@@ -38,6 +39,9 @@ class CharacterScene(Scene):
         y += 34
         for a in ATTRIBUTES:
             base, eff = p.attributes[a], p.attr(a)
+            ic = icons.named(icons.STAT_CELL, a)
+            if ic is not None:
+                screen.blit(ui.fit_icon(ic, 24), (r.x + 2, y - 2))
             ui.text(screen, a.title(), (r.x + 30, y), 24)
             ui.bar(screen, (r.x + 150, y + 2, 200, 16), base / 100, (170, 140, 90), f"{base:.1f}", 18)
             if abs(eff - base) > 0.05:
@@ -54,6 +58,9 @@ class CharacterScene(Scene):
         y += 34
         for s in SKILLS:
             v = p.skills[s]
+            ic = icons.named(icons.STAT_CELL, s)
+            if ic is not None:
+                screen.blit(ui.fit_icon(ic, 22), (x - 26, y - 2))
             ui.text(screen, s.title(), (x, y), 22)
             ui.bar(screen, (x + 120, y + 2, 180, 14), v / 100, (110, 140, 180), f"{v:.1f}", 16)
             y += 26

@@ -4,6 +4,7 @@ import pygame
 from ...core.clock import format_stamp
 from ...core.scene import Scene
 from ...set_system import jobs, world_events
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -19,6 +20,7 @@ class JobBoardScene(Scene):
         self.focus = 0
         self.open_menu = ui.ListMenu([], (70, 250, 540, 330), 23)
         self.active_menu = ui.ListMenu([], (690, 250, 520, 330), 23)
+        self.open_menu.icon_for = self.active_menu.icon_for = lambda v: icons.named(icons.ACTION_CELL, 'quest')
         self.refresh()
 
     def refresh(self):

@@ -544,7 +544,10 @@ class LocalScene(Scene):
     def stranger_menu(self, a):
         from .common import ChoiceScene
         shop = getattr(a, "citizen", False) is False and self.map.building is not None and self.map.building.get("shop")
-        opts = [("Trade" if shop else "Chat", "talk"), (f"[Attack the {a.name.lower()}]", "attack"), ("Leave", "leave")]
+        from .. import icons
+        opts = [("Trade" if shop else "Chat", "talk", True, "", icons.named(icons.ACTION_CELL, "trade" if shop else "talk")),
+                (f"Attack the {a.name.lower()}", "attack", True, "", icons.named(icons.ACTION_CELL, "attack")),
+                ("Leave", "leave", True, "", None)]
 
         def choose(v):
             if v == "talk":
@@ -697,6 +700,12 @@ class LocalScene(Scene):
                                                          on_done=self._look_changed)),
              "map": lambda: self.open_map(leaving=self.map.kind != "interior"),
              "save": lambda: self.game.save_game(1), "pause": lambda: push(PauseScene(self.game))}[v]()
+        acts = {"inv": "inventory", "char": "level", "book": "spellbook", "party": "party", "rel": "relationship",
+                "journal": "journal", "guide": "guide", "prisoners": "prisoner", "look": "look", "map": "map",
+                "save": "save", "pause": "pause"}
+        from .. import icons
+        opts = [o + (icons.named(icons.ACTION_CELL, acts.get(o[1])) or icons.named(icons.STAT_CELL, acts.get(o[1])),)
+                for o in opts]
         self.game.scenes.push(ChoiceScene(self.game, "Menu", opts, go))
 
     def _look_changed(self, look):
@@ -1473,6 +1482,33 @@ class LocalScene(Scene):
     TOWN_GRADE = {"magic": (190, 160, 255, 16), "military": (190, 200, 230, 10), "mining": (210, 170, 130, 16),
                   "trading": (255, 220, 160, 12), "frontier": (220, 190, 150, 14)}
 
+    OBJ_ACTION = {"chest": "loot", "barrel": "loot", "crate": "loot", "anvil": "forge", "furnace": "forge",
+                  "ore_vein": "mine", "tree": "chop", "campfire": "campfire", "bed": "camp", "door": "house",
+                  "job_board": "quest", "board": "quest", "scribing_table": "spellbook", "counter": "trade",
+                  "alchemy_table": "research", "workbench": "forge", "bush": "farm", "crop": "farm",
+                  "scavenge": "loot", "well": "farm", "landmark": "map", "mana_crystal_node": "mine"}
+
+    def prompt_icon(self, tgt):
+        """A small picture of what pressing E will do (talk, loot, mine, forge...)."""
+        from .. import icons
+        if not tgt:
+            return None
+        kind = tgt[0]
+        if kind == "npc":
+            return icons.named(icons.ACTION_CELL, "talk")
+        if kind == "body":
+            return icons.named(icons.ACTION_CELL, "loot")
+        if kind == "surrendered":
+            return icons.named(icons.ACTION_CELL, "prisoner")
+        o = tgt[1]
+        k = o.get("kind", "")
+        if k == "water":
+            return icons.ui_icon(self.data, "water")
+        act = self.OBJ_ACTION.get(k) or ("quest" if "board" in k else None)
+        if k in ("barrel", "crate", "chest") and self.map.kind != "wild" and not self.at_home():
+            act = "steal"
+        return icons.named(icons.ACTION_CELL, act)
+
     def draw_grade(self, c):
         """Regional colour grading: each region keeps its own light and mood (presentation only)."""
         m = self.map
@@ -1630,9 +1666,10 @@ class LocalScene(Scene):
             ui.bar(screen, (W // 2 - 160, H - 90, 320, 22), frac, ui.ACCENT, self.action["ia"].label + "...", 20)
             ui.text(screen, "[Esc] stop", (W // 2, H - 62), 18, ui.TEXT_DIM, center=True)
         else:
-            pr = self.prompt(self.target())
+            tgt = self.target()
+            pr = self.prompt(tgt)
             if pr:
-                ui.prompt(screen, "E", pr, (W // 2, H - 48), 24)
+                ui.prompt(screen, "E", pr, (W // 2, H - 48), 24, self.prompt_icon(tgt))
         combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H, self.hotbar())
         if p.hp < p.max_hp * 0.3:
             pulse = 0.5 + 0.5 * math.sin(self.t * 5)

@@ -4,6 +4,7 @@ import pygame
 from ...core.scene import Scene
 from ...set_system import crafting, timeflow
 from .. import knowledge
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -17,6 +18,8 @@ class CraftingScene(Scene):
         super().__init__(game)
         self.station = station
         self.menu = ui.ListMenu([], (70, 130, 560, 500), 23)
+        self.menu.icon_for = lambda v: (icons.named(icons.ACTION_CELL, 'campfire') if v == '__rest' else
+                                        icons.ui_icon(self.data, self.data.recipes[v]['out']) if v in self.data.recipes else None)
         self.refresh()
 
     def refresh(self):

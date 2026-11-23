@@ -4,6 +4,7 @@ import pygame
 from ...core.scene import Scene
 from ...set_system import economy
 from .. import knowledge
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -19,6 +20,7 @@ class ShopScene(Scene):
         self.sdef = self.data.shops[shop_type]
         self.buy_menu = ui.ListMenu([], (70, 150, 520, 400), 23)
         self.sell_menu = ui.ListMenu([], (690, 150, 520, 400), 23)
+        self.buy_menu.icon_for = self.sell_menu.icon_for = lambda v: icons.ui_icon(self.data, v) if v in self.data.items or v == 'marks' else None
         self.focus = 0
         self.refresh()
 

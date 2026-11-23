@@ -93,7 +93,7 @@ class LootScene(Scene):
             if sel:
                 pygame.draw.rect(screen, ui.PANEL_LIGHT, row, border_radius=4)
                 pygame.draw.rect(screen, ui.BORDER_HI, row, 1, border_radius=4)
-            screen.blit(icons.icon(self.data, e["item"], 2), (row.x + 6, row.y + 2))
+            screen.blit(ui.fit_icon(icons.ui_icon(self.data, e["item"]), ROW - 6), (row.x + 6, row.y + 1))
             ui.text(screen, loot.label(self.data, e), (row.x + 44, row.y + 4), 22, ui.ACCENT if sel else ui.TEXT)
             tag = loot.CATEGORY_NAME[cat]
             if cat != last_cat or sel:

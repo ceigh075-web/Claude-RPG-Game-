@@ -291,8 +291,12 @@ def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):
         extra = f"  x{p.inventory.count(item)}"
     elif ammo:
         extra = f"  {data.item(ammo)['name']}: {p.inventory.count(ammo)}"
+    from . import icons
     r = ui.panel(screen, (W - 352, H - 128, 340, 116), alpha=200)
-    ui.text(screen, f"{name}{extra}", (r.x + 12, r.y + 8), 22, ui.ACCENT)
+    wic = icons.ui_icon(data, item) if item else icons.named(icons.WEAPON_CELL, "knuckles")
+    if wic is not None:
+        screen.blit(ui.fit_icon(wic, 24), (r.x + 8, r.y + 4))
+    ui.text(screen, f"{name}{extra}", (r.x + 36, r.y + 8), 22, ui.ACCENT)
     if p.equipment.get("ranged"):
         ui.text(screen, "[Q] switch", (r.right - 12, r.y + 8), 18, ui.TEXT_DIM, right=True)
     # spells
@@ -302,7 +306,14 @@ def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):
         cd = world.spell_cd.get((pc.cid, sp["name"]), 0) if pc else 0
         short = p.mana < props["mana"]
         ok = not short and cd <= 0
-        ui.text(screen, f"[{i + 1}] {sp['name']}", (r.x + 12, y), 20, ui.TEXT if ok else ui.TEXT_DIM)
+        sic = icons.element_icon(data, sp)
+        if sic is not None:
+            ic = ui.fit_icon(sic, 18)
+            if not ok:
+                ic = ic.copy()
+                ic.set_alpha(110)
+            screen.blit(ic, (r.x + 10, y))
+        ui.text(screen, f"[{i + 1}] {sp['name']}", (r.x + 32, y), 20, ui.TEXT if ok else ui.TEXT_DIM)
         tag = f"{props['mana']} mp"
         if cd > 0:
             tag += f"  {cd:.1f}s"

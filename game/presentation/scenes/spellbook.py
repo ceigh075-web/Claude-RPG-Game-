@@ -3,6 +3,7 @@ import pygame
 
 from ...core.scene import Scene
 from ...set_system import spells
+from .. import icons
 from ..ui import widgets as ui
 from .common import ConfirmScene, is_close
 
@@ -19,6 +20,8 @@ class SpellbookScene(Scene):
         self.replace_for = None  # draft index waiting for a book slot to replace
         self.book = ui.ListMenu([], (70, 150, 520, 240), 24)
         self.drafts = ui.ListMenu([], (690, 150, 520, 240), 24)
+        self.book.icon_for = lambda i: icons.element_icon(self.data, self.state.spellbook[i]) if i < len(self.state.spellbook) else None
+        self.drafts.icon_for = lambda i: icons.element_icon(self.data, self.state.spell_drafts[i]) if i < len(self.state.spell_drafts) else None
         self.refresh()
 
     def refresh(self):
@@ -147,6 +150,9 @@ class SpellbookScene(Scene):
             p = spells.compute(self.data, sp, st.player.skills["magic"])
             y = 410
             pygame.draw.line(screen, ui.BORDER, (70, y - 8), (W - 70, y - 8))
+            eic = icons.element_icon(self.data, sp)
+            if eic is not None:
+                screen.blit(ui.fit_icon(eic, 64), (W - 150, y))
             ui.text(screen, p["name"], (70, y), 28, tuple(p["color"]), bold=True)
             ui.text(screen, f"Tier {p['tier']}  {spells.source_name(self.data, p)} / "
                             f"{self.data.magic['movements'][p['move']]['name']} / {self.data.magic['stats'][p['stat']]['name']}",
@@ -377,7 +383,14 @@ class SpellCraftScene(Scene):
                 ui.text(screen, f"x{v:.2f}", (bx + bw + 14, y), 21, ui.ACCENT if sel else ui.TEXT)
             else:
                 v = self.value_text(f, sp)
-                ui.text(screen, f"<  {v}  >" if f not in ("Name", "Save") else v, (r.x + 160, y), 21,
+                ic = {"Element": icons.named(icons.ELEMENT_CELL, sp["element"]),
+                      "Sub-element": icons.named(icons.SUB_CELL, sp["sub"]),
+                      "Effect": icons.named(icons.EFFECT_CELL, sp["stat"])}.get(f)
+                vx = r.x + 160
+                if ic is not None:
+                    screen.blit(ui.fit_icon(ic, self.ROW - 8), (vx, y - 4))
+                    vx += self.ROW - 4
+                ui.text(screen, f"<  {v}  >" if f not in ("Name", "Save") else v, (vx, y), 21,
                         ui.ACCENT if sel else ui.TEXT)
             y += self.ROW
         x = r.x + 590
@@ -387,6 +400,9 @@ class SpellCraftScene(Scene):
             ui.text_block(screen, str(e), (x, r.y + 60, 560, 60), 22, ui.TEXT_BAD)
             return
         col = tuple(p["color"])
+        eic = icons.element_icon(self.data, sp)
+        if eic is not None:
+            screen.blit(eic, (x + 540, r.y + 44))
         ui.text(screen, p["name"], (x, r.y + 48), 26, col, bold=True)
         cost_col = ui.TEXT_GOOD if p["mana"] <= st.player.mana else ui.TEXT_BAD
         ui.text(screen, f"{p['mana']} mana", (x, r.y + 80), 32, cost_col, bold=True)

@@ -5,6 +5,7 @@ import pygame
 from ...core.scene import Scene
 from ...set_system import items as items_mod
 from .. import knowledge
+from .. import icons
 from ..ui import widgets as ui
 from .common import is_close
 
@@ -23,6 +24,7 @@ class InventoryScene(Scene):
     def __init__(self, game):
         super().__init__(game)
         self.menu = ui.ListMenu([], (70, 168, 540, 456), 24)
+        self.menu.icon_for = lambda v: icons.ui_icon(self.data, v) if v in self.data.items or v == 'marks' else None
         self.filter = 0
         self.sort = 0
         self.refresh()
@@ -143,8 +145,12 @@ class InventoryScene(Scene):
         it = self.data.item(sel)
         ui.parchment(screen, box)
         x, y, w = box.x + 14, box.y + 10, box.w - 28
+        screen.blit(icons.ui_icon(self.data, sel), (x - 2, y - 2))
+        x += 38
+        w -= 38
         ui.ink(screen, it["name"], (x, y), 28, ui.INK, bold=True)
         ui.ink(screen, f"{it['type'].title()}   {it['value']} marks   {it['weight']} kg", (x + w, y + 6), 19, ui.INK_DIM, right=True)
+        x, w = x - 38, w + 38
         y += 30
         y = ui.ink_block(screen, it.get("desc", ""), (x, y, w, 60), 20, ui.INK_DIM)
         y += 4

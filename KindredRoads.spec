@@ -7,7 +7,7 @@ a = Analysis(
     ["main.py"],
     pathex=["."],
     datas=[("data", "data"), ("config.json", "."), ("assets/icon32.png", "assets"),
-           ("assets/pixel_crawler", "assets/pixel_crawler"), ("ASSETS.md", ".")],
+           ("assets/pixel_crawler", "assets/pixel_crawler"), ("assets/icons", "assets/icons"), ("ASSETS.md", ".")],
     hiddenimports=[],
     excludes=["tkinter", "numpy", "unittest", "test", "pydoc"],
     noarchive=False,

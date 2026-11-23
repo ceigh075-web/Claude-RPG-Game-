@@ -3,6 +3,7 @@ import pygame
 
 from ...core.scene import Scene
 from ...set_system import base
+from .. import icons
 from ..ui import widgets as ui
 from .common import ChoiceScene, ConfirmScene, is_close
 
@@ -19,6 +20,7 @@ class StorageScene(Scene):
         self.focus = 0
         self.mine = ui.ListMenu([], (70, 130, 520, 480), 23)
         self.store = ui.ListMenu([], (690, 130, 520, 480), 23)
+        self.mine.icon_for = self.store.icon_for = lambda v: icons.ui_icon(self.data, v) if v in self.data.items or v == 'marks' else None
         self.refresh()
 
     def refresh(self):

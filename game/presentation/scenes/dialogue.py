@@ -41,7 +41,17 @@ class DialogueScene(Scene):
         self.waiting = False
         self.source = "ai" if self.engine.client.enabled else "fallback"
         self.menu = ui.ListMenu([], (360, 548, 840, 140), 24, row_h=28)
+        self.menu.icon_for = self.option_icon
         self.build()
+
+    OPTION_ICON = {"type": "talk", "about": "talk", "place": "map", "rumor": "talk", "favor": "quest", "duel": "duel",
+                   "gift": "gift", "peace": "money", "trade": "trade", "bye": None, "attack": "attack", "join": "join",
+                   "c_follow": "join", "c_gather": "farm", "c_wait": "camp", "c_dismiss": None, "r_ask": "relationship",
+                   "r_date": "relationship", "r_commit": "relationship", "r_break": None}
+
+    def option_icon(self, v):
+        from .. import icons
+        return icons.named(icons.ACTION_CELL, self.OPTION_ICON.get(v))
 
     # ------------------------------------------------------------ menu
     def build(self):
@@ -65,7 +75,7 @@ class DialogueScene(Scene):
             _, at_work = npc_mod.shopkeeper(st, st.location, npc["shop"])
             e.append(("Let's trade.", "trade", at_work))
         if self.local is not None and self.local.combatant_for(npc) is not None:
-            e.append((f"[Attack {npc['name']}]", "attack"))
+            e.append((f"Attack {npc['name']}", "attack"))
         e.append(("Goodbye.", "bye"))
         self.menu.set_entries(e)
 
