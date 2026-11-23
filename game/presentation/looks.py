@@ -11,6 +11,10 @@ EARTH = [(122, 86, 54), (96, 78, 60), (140, 110, 70), (90, 100, 60), (110, 120, 
 MUTED = [(90, 96, 110), (70, 84, 100), (110, 110, 118), (84, 96, 84), (120, 104, 96), (66, 70, 84), (140, 130, 120)]
 RICH = [(150, 40, 52), (110, 50, 140), (40, 110, 120), (60, 80, 160), (170, 120, 40), (40, 100, 60), (160, 70, 110)]
 BRIGHT = [(220, 120, 50), (200, 60, 90), (70, 160, 200), (230, 200, 80), (120, 190, 90), (180, 90, 200)]
+EYE_COLORS = {"human": [(64, 44, 36), (40, 90, 160), (60, 130, 80), (120, 80, 40), (90, 90, 100)],
+              "kethari": [(200, 160, 40), (180, 110, 40), (120, 160, 60)],
+              "sylth": [(130, 60, 160), (40, 150, 160), (200, 200, 240), (70, 90, 190)],
+              "murrok": [(180, 50, 60), (200, 120, 40), (64, 44, 36)]}
 PANTS = [(70, 60, 50), (60, 56, 64), (84, 70, 52), (50, 50, 60), (96, 84, 66), (70, 76, 60), (40, 40, 46)]
 BOOTS = [(54, 40, 32), (40, 34, 30), (70, 52, 36), (30, 30, 34), (90, 66, 44)]
 STRAW, LEATHER, IRON, STEEL, DARKSTEEL = (214, 184, 112), (120, 82, 50), (150, 154, 166), (176, 182, 194), (60, 60, 70)
@@ -182,6 +186,17 @@ def build(rng, race_data, race_id, role="citizen", faction=None, age=30, pronoun
     for k in ("build", "height"):
         if T.get(k) and rng.random() < 0.7:
             look[k] = T[k]
+    # eyes and small face details (Set System never reads these: presentation only)
+    look["eye"] = list(rng.choice(EYE_COLORS.get(race_id, EYE_COLORS["human"])))
+    roll = rng.random()
+    if roll < 0.10:
+        look["face"] = "freckles"
+    elif roll < 0.17:
+        look["face"] = "blush"
+    elif roll < 0.20 and role in ("guard", "soldier", "mercenary", "bandit", "hunter"):
+        look["face"] = "scar"
+    elif roll < 0.23:
+        look["face"] = "beauty_mark"
     # race tendencies: murrok broad, sylth willowy, kethari compact
     if race_id == "murrok" and rng.random() < 0.6:
         look["build"] = "stout"

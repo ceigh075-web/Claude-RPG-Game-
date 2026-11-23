@@ -290,7 +290,236 @@ def _roof(w, h, col, style, seed):
     return s
 
 
-def building(b, specialty, palette, lit=False):
+TOP = 26        # building images reserve this many px above the footprint for towers, spires and flags
+SIGN_ITEM = {"provisioner": "bread", "inn": "ale", "outfitter": "shortsword_rustite", "armorer": "helm_rustite",
+             "forge": "hammer_rustite", "smithy": "hammer_rustite", "assayer": "greyvein_ore", "market": "marks",
+             "general_store": "ration", "warehouse": "plank", "enchanter": "mana_crystal", "apothecary": "herbal_salve",
+             "scavenger_shop": "scrap", "tannery": "leather", "guild_hall": "longsword_rustite",
+             "mage_tower": "arcane_dust", "workshop": "nails", "docks": "fish", "shaman_hut": "mirelight_herb",
+             "arena": "spear_rustite"}
+AWNING = {"market", "general_store", "provisioner", "outfitter", "apothecary", "scavenger_shop", "assayer"}
+RICH_TOWNS = {"velmora", "saltmarket", "glimmerfen"}
+POOR_TOWNS = {"duskreach", "thornhollow"}
+
+
+def _outline_rect(s, rect, col=(16, 12, 14)):
+    pygame.draw.rect(s, col, rect, 1)
+
+
+def _sign(item, data):
+    """A hanging shop sign: wooden board on a bracket with the trade's pictogram."""
+    from . import icons
+    s = pygame.Surface((20, 22), pygame.SRCALPHA)
+    pygame.draw.line(s, (40, 30, 24), (0, 1), (16, 1), 2)            # iron bracket
+    pygame.draw.line(s, (40, 30, 24), (2, 3), (6, 1))
+    for x in (4, 14):
+        pygame.draw.line(s, (60, 50, 44), (x, 2), (x, 5))            # chains
+    pygame.draw.rect(s, (150, 106, 62), (1, 6, 18, 15))
+    pygame.draw.rect(s, (110, 76, 44), (1, 18, 18, 3))
+    pygame.draw.line(s, (186, 140, 90), (2, 7), (17, 7))
+    _outline_rect(s, (1, 6, 18, 15))
+    if data is not None and item:
+        try:
+            ic = icons.icon(data, item)
+            s.blit(ic, (10 - ic.get_width() // 2, 14 - ic.get_height() // 2))
+        except Exception:
+            pass
+    return s
+
+
+def _awning(w, col):
+    s = pygame.Surface((w, 8), pygame.SRCALPHA)
+    alt = (236, 228, 210)
+    for x in range(0, w, 6):
+        c = col if (x // 6) % 2 == 0 else alt
+        pygame.draw.rect(s, c, (x, 0, 6, 5))
+        pygame.draw.polygon(s, c, [(x, 5), (x + 3, 7), (x + 6, 5)])
+    pygame.draw.line(s, tuple(int(v * 0.6) for v in col), (0, 0), (w, 0))
+    pygame.draw.line(s, (0, 0, 0, 60), (0, 5), (w, 5))
+    return s
+
+
+def _lantern(lit):
+    s = pygame.Surface((7, 10), pygame.SRCALPHA)
+    pygame.draw.line(s, (40, 30, 24), (3, 0), (3, 2))
+    pygame.draw.rect(s, (40, 30, 24), (1, 2, 5, 7))
+    pygame.draw.rect(s, (255, 214, 120) if lit else (150, 130, 90), (2, 3, 3, 5))
+    return s
+
+
+def _steeple(roof_col, stone, emblem, h=46):
+    s = pygame.Surface((18, h), pygame.SRCALPHA)
+    pygame.draw.rect(s, stone, (3, 18, 12, h - 18))
+    pygame.draw.rect(s, tuple(int(v * 0.78) for v in stone), (11, 18, 4, h - 18))
+    pygame.draw.rect(s, (30, 24, 26), (6, 24, 6, 8))                   # belfry opening
+    pygame.draw.circle(s, (200, 170, 70), (9, 29), 2)                  # bell
+    pygame.draw.polygon(s, roof_col, [(1, 19), (9, 2), (17, 19)])
+    pygame.draw.polygon(s, tuple(int(v * 0.7) for v in roof_col), [(9, 2), (17, 19), (9, 19)])
+    pygame.draw.polygon(s, (16, 12, 14), [(1, 19), (9, 2), (17, 19)], 1)
+    pygame.draw.line(s, emblem, (9, 0), (9, 4))
+    pygame.draw.line(s, emblem, (7, 1), (11, 1))
+    _outline_rect(s, (3, 18, 12, h - 18))
+    return s
+
+
+def _spire(roof_col, wall, glow, h=50):
+    s = pygame.Surface((20, h), pygame.SRCALPHA)
+    pygame.draw.rect(s, wall, (4, 20, 12, h - 20))
+    pygame.draw.rect(s, tuple(int(v * 0.75) for v in wall), (12, 20, 4, h - 20))
+    for y in range(30, h - 4, 12):
+        pygame.draw.rect(s, glow, (8, y, 4, 5))
+    pygame.draw.rect(s, glow, (8, 27, 4, 6))
+    pygame.draw.polygon(s, roof_col, [(1, 21), (10, 0), (19, 21)])
+    pygame.draw.polygon(s, tuple(int(v * 0.7) for v in roof_col), [(10, 0), (19, 21), (10, 21)])
+    pygame.draw.polygon(s, (16, 12, 14), [(1, 21), (10, 0), (19, 21)], 1)
+    _outline_rect(s, (4, 20, 12, h - 20))
+    s.set_at((10, 0), (255, 240, 170))
+    return s
+
+
+def _battlements(w, stone):
+    s = pygame.Surface((w, 7), pygame.SRCALPHA)
+    pygame.draw.rect(s, stone, (0, 3, w, 4))
+    for x in range(0, w, 6):
+        pygame.draw.rect(s, stone, (x, 0, 4, 4))
+        pygame.draw.rect(s, (16, 12, 14), (x, 0, 4, 4), 1)
+    pygame.draw.rect(s, (16, 12, 14), (0, 3, w, 4), 1)
+    return s
+
+
+def _flag(col):
+    s = pygame.Surface((12, 20), pygame.SRCALPHA)
+    pygame.draw.line(s, (60, 50, 44), (1, 0), (1, 19))
+    pygame.draw.polygon(s, col, [(2, 1), (11, 3), (2, 7)])
+    pygame.draw.polygon(s, (16, 12, 14), [(2, 1), (11, 3), (2, 7)], 1)
+    return s
+
+
+def building(b, specialty, palette, lit=False, data=None, town=None):
+    """Facade + roof image covering the building's footprint (plus TOP px above it for towers and flags).
+    Every type gets its own architecture: signs with the trade's pictogram, awnings, steeples, spires,
+    battlements, lanterns, forge glow, barn doors; richer towns get gilded trim, poorer ones patched roofs."""
+    key = ("bld2", b["id"], b["x"], b["y"], specialty, lit, town)
+    s = _cache.get(key)
+    if s is None:
+        base = _building_base(b, specialty, palette, lit)
+        s = pygame.Surface((base.get_width(), base.get_height() + TOP), pygame.SRCALPHA)
+        s.blit(base, (0, TOP))
+        _decorate(s, b, specialty, palette, lit, data, town)
+        _cache[key] = s
+    return s
+
+
+def _decorate(s, b, specialty, palette, lit, data, town):
+    t = b["type"]
+    W, H = b["w"] * T, b["h"] * T
+    roof_h = (b["h"] - 2) * T
+    wall_y = TOP + roof_h                      # top of the facade
+    dx = (b["door"][0] - b["x"]) * T
+    roof_col = tuple(palette["roof"]) if palette else (140, 70, 50)
+    accent = tuple(palette.get("accent", (170, 50, 40))) if palette else (170, 50, 40)
+    stone = (150, 146, 140)
+    r = random.Random(b["id"])
+    # hipped roof ends on grander buildings: a different roof silhouette from the plain gable
+    if t in ("inn", "temple", "chapel", "palace", "guild_hall", "barracks", "mage_tower", "market") and roof_h > 16:
+        hw = min(W // 4, roof_h // 2 + 4)
+        ridge = TOP + roof_h // 2
+        shade = tuple(int(v * 0.62) for v in roof_col)
+        lightc = tuple(min(255, int(v * 1.1)) for v in roof_col)
+        pygame.draw.polygon(s, shade, [(0, TOP), (hw, ridge), (0, TOP + roof_h + 3)])
+        pygame.draw.polygon(s, lightc, [(W - 1, TOP), (W - 1 - hw, ridge), (W - 1, TOP + roof_h + 3)])
+        for pts in ([(0, TOP), (hw, ridge), (0, TOP + roof_h + 3)], [(W - 1, TOP), (W - 1 - hw, ridge), (W - 1, TOP + roof_h + 3)]):
+            pygame.draw.lines(s, (16, 12, 14), False, pts, 1)
+    # wealth
+    if town in RICH_TOWNS:
+        pygame.draw.line(s, (214, 178, 80), (1, wall_y - 3), (W - 2, wall_y - 3))
+        pygame.draw.line(s, (214, 178, 80), (1, wall_y + 1), (W - 2, wall_y + 1))
+    elif town in POOR_TOWNS:
+        for _ in range(max(1, W // 40)):
+            px, py = r.randint(4, max(5, W - 14)), TOP + r.randint(2, max(3, roof_h - 8))
+            pygame.draw.rect(s, (120, 100, 70), (px, py, 8, 5))
+            _outline_rect(s, (px, py, 8, 5), (70, 56, 40))
+    # awnings over shop fronts
+    if t in AWNING:
+        aw = _awning(W - 4, accent if t != "market" else (170, 50, 50))
+        s.blit(aw, (2, wall_y + 2))
+    # hanging sign beside the door
+    item = SIGN_ITEM.get(t) or (SIGN_ITEM.get(b.get("shop")) if b.get("shop") else None)
+    if item:
+        sx = dx + 18 if dx + 40 < W else max(2, dx - 20)
+        s.blit(_sign(item, data), (sx, wall_y + 3))
+    # lanterns by inn and tavern doors (glowing at night)
+    if t in ("inn", "guild_hall", "palace", "temple", "chapel"):
+        for lx in (dx - 9, dx + 18):
+            if 0 <= lx < W - 7:
+                s.blit(_lantern(lit), (lx, wall_y + 6))
+    # towers and roofs with a skyline
+    if t in ("temple", "chapel"):
+        st = _steeple(roof_col, (200, 196, 186), (230, 200, 90), wall_y + 6)
+        s.blit(st, (W // 2 - 9, 0))
+    elif t == "mage_tower":
+        sp = _spire((90, 70, 150), (170, 160, 190), (150, 220, 255) if lit else (110, 160, 210), wall_y + 4)
+        s.blit(sp, (W // 2 - 10, 0))
+    elif t in ("barracks", "palace", "watchtower", "arena"):
+        s.blit(_battlements(W, stone), (0, TOP - 4))
+        if t == "palace":
+            for fx in (2, W // 2 - 1, W - 12):
+                s.blit(_flag(accent), (fx, TOP - 22))
+            tw = _spire(roof_col, (200, 194, 180), (240, 210, 120), wall_y - 2)
+            s.blit(tw, (2, 4))
+            s.blit(tw, (W - 22, 4))
+        elif t != "arena":
+            s.blit(_flag(accent), (W // 2 - 1, TOP - 20))
+    elif t in ("guild_hall", "longhouse"):
+        s.blit(_flag(accent), (W - 14, TOP - 18))
+    elif t == "shaman_hut":
+        for k in range(3):
+            pygame.draw.line(s, (150, 110, 70), (W // 2 - 4 + k * 4, TOP - 6), (W // 2 - 2 + k, TOP + 6), 2)
+        pygame.draw.circle(s, (230, 220, 200), (W // 2, TOP - 6), 3)
+        pygame.draw.circle(s, (16, 12, 14), (W // 2, TOP - 6), 3, 1)
+    # trade details on the facade
+    if t in ("forge", "smithy"):
+        gx = 6 if dx > W // 2 else W - 22
+        pygame.draw.rect(s, (40, 26, 20), (gx, wall_y + 10, 16, 12))
+        pygame.draw.rect(s, (255, 140, 50), (gx + 2, wall_y + 14, 12, 7))
+        pygame.draw.rect(s, (255, 210, 110), (gx + 4, wall_y + 16, 8, 4))
+        _outline_rect(s, (gx, wall_y + 10, 16, 12))
+        cx = W - 16 if dx < W // 2 else 8
+        pygame.draw.rect(s, (90, 80, 78), (cx, TOP - 6, 9, 16))
+        _outline_rect(s, (cx, TOP - 6, 9, 16))
+        for k in range(3):                                      # smoke
+            pygame.draw.circle(s, (180, 180, 186, 140 - k * 40), (cx + 4 + k, TOP - 9 - k * 5), 3 + k)
+    elif t in ("barn", "farmhouse", "warehouse") and b["w"] >= 4:
+        bx = 6 if dx > W // 2 else W - 26
+        pygame.draw.rect(s, (130, 60, 44), (bx, wall_y + 8, 20, 24))
+        pygame.draw.line(s, (230, 220, 200), (bx, wall_y + 8), (bx + 19, wall_y + 31))
+        pygame.draw.line(s, (230, 220, 200), (bx + 19, wall_y + 8), (bx, wall_y + 31))
+        _outline_rect(s, (bx, wall_y + 8, 20, 24), (230, 220, 200))
+    elif t == "tannery":
+        hx = 6 if dx > W // 2 else W - 22
+        pygame.draw.line(s, (90, 62, 40), (hx, wall_y + 6), (hx + 16, wall_y + 6))
+        for k in range(2):
+            pygame.draw.rect(s, (170, 130, 90), (hx + 1 + k * 8, wall_y + 7, 6, 10))
+            _outline_rect(s, (hx + 1 + k * 8, wall_y + 7, 6, 10), (100, 70, 50))
+    elif t == "docks":
+        for k in range(0, W, 10):
+            pygame.draw.rect(s, (120, 86, 54), (k + 2, wall_y + 26, 3, 8))
+    elif t in ("house", "property_for_sale") and r.random() < 0.6:
+        # flower boxes or laundry lines on homes
+        pygame.draw.line(s, (200, 190, 170), (4, wall_y + 4), (W - 5, wall_y + 4))
+        for k in range(r.randint(1, 3)):
+            lx = r.randint(8, max(9, W - 16))
+            pygame.draw.rect(s, r.choice([(200, 80, 80), (80, 120, 200), (230, 220, 200), (110, 170, 90)]),
+                             (lx, wall_y + 5, 6, 6))
+    if t == "property_for_sale":
+        sx = dx + 18 if dx + 30 < W else max(2, dx - 16)
+        pygame.draw.rect(s, (220, 210, 180), (sx, wall_y + 10, 12, 8))
+        _outline_rect(s, (sx, wall_y + 10, 12, 8))
+        pygame.draw.line(s, (180, 40, 40), (sx + 2, wall_y + 13), (sx + 9, wall_y + 13))
+        pygame.draw.line(s, (180, 40, 40), (sx + 2, wall_y + 15), (sx + 7, wall_y + 15))
+
+
+def _building_base(b, specialty, palette, lit=False):
     """Facade + roof image covering the building's footprint (plus a few px of eave shadow)."""
     key = ("bld", b["id"], b["x"], b["y"], specialty, lit)
     s = _cache.get(key)

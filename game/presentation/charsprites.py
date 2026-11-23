@@ -297,7 +297,11 @@ def _paint(look, info, d):
                 if top or back or (d != "down" and y < hy0 + 4) or (x in (hx0, hx1) and y < hy1 - 1):
                     put(p, cap)
             elif style != 3 and (top or back):
-                put(p, hair)
+                # glossy anime-style sheen: a lighter band across the crown
+                if top and d != "up" and y == hy0 + 1 and cx - 3 <= x <= cx - 1 + (d == "side"):
+                    put(p, tuple(min(255, int(v * 1.45 + 30)) for v in hair))
+                else:
+                    put(p, hair)
         # race features
         _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
     eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}

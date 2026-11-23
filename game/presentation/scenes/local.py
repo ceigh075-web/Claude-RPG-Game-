@@ -34,6 +34,9 @@ ATTACK_KEYS = (pygame.K_k,)
 BLOCK_KEYS = (pygame.K_l,)
 
 
+_GRADE_CACHE = {}
+
+
 class LocalScene(Scene):
     def __init__(self, game):
         super().__init__(game)
@@ -1422,8 +1425,9 @@ class LocalScene(Scene):
                 lit = self.state.clock.daylight() < 0.6
                 for b in m.buildings.values():
                     if b["x"] * T - camx < CW and (b["x"] + b["w"]) * T - camx > 0 and \
-                            b["y"] * T - camy < CH and (b["y"] + b["h"]) * T - camy > 0:
-                        c.blit(env.building(b, spec, pal, lit), (b["x"] * T - camx, b["y"] * T - camy))
+                            b["y"] * T - camy - env.TOP < CH and (b["y"] + b["h"]) * T - camy > 0:
+                        c.blit(env.building(b, spec, pal, lit, self.data, self.state.location),
+                               (b["x"] * T - camx, b["y"] * T - camy - env.TOP))
         # sortable sprites
         sprites = []
         for o in m.objects:
@@ -1441,8 +1445,10 @@ class LocalScene(Scene):
         sprites.sort(key=lambda s: s[0])
         for _, img, bx, by in sprites:
             c.blit(img, (bx, by))
+        self.draw_target_outline(c, camx, camy)
         combat_draw.draw_fx(c, self.combat, art, camx, camy, self.t)
         self.draw_weather(c)
+        self.draw_grade(c)
         self.draw_lighting(c, camx, camy)
         pygame.transform.scale(c, (W, H), screen)
         combat_draw.draw_floaters(screen, self.combat, camx, camy)
@@ -1459,6 +1465,54 @@ class LocalScene(Scene):
         if self.combat.intent:
             ui.text(screen, "HOSTILE INTENT (G): your attacks hit anyone", (W // 2, 44), 22, (240, 110, 90), center=True)
         self.draw_hud(screen)
+
+    GRADE = {"desert": (255, 214, 150, 22), "canyon": (255, 190, 140, 20), "snow": (190, 215, 255, 26),
+             "mountain": (200, 210, 230, 14), "swamp": (120, 160, 110, 30), "moor": (150, 150, 175, 26),
+             "volcanic": (255, 110, 70, 26), "ruins": (200, 180, 150, 14), "crystal": (190, 160, 255, 22),
+             "coast": (190, 230, 255, 12), "forest": (140, 190, 120, 14)}
+    TOWN_GRADE = {"magic": (190, 160, 255, 16), "military": (190, 200, 230, 10), "mining": (210, 170, 130, 16),
+                  "trading": (255, 220, 160, 12), "frontier": (220, 190, 150, 14)}
+
+    def draw_grade(self, c):
+        """Regional colour grading: each region keeps its own light and mood (presentation only)."""
+        m = self.map
+        if m.kind == "interior":
+            return
+        g = self.GRADE.get(m.biome)
+        if m.kind == "town":
+            g = self.TOWN_GRADE.get(self.data.towns.get(self.state.location, {}).get("specialty"), g)
+        if not g:
+            return
+        key = ("grade", g, c.get_size())
+        surf = _GRADE_CACHE.get(key)
+        if surf is None:
+            surf = _GRADE_CACHE[key] = pygame.Surface(c.get_size(), pygame.SRCALPHA)
+            surf.fill(g)
+        c.blit(surf, (0, 0))
+
+    def draw_target_outline(self, c, camx, camy):
+        """A soft pulsing outline on whatever E would interact with, so interactables read at a glance."""
+        tgt = self.target()
+        if not tgt or tgt[0] != "obj":
+            return
+        o = tgt[1]
+        if "x" not in o:
+            return
+        img = self.object_image(o)
+        if img is None:
+            return
+        key = ("outline", id(img))
+        pts = _GRADE_CACHE.get(key)
+        if pts is None:
+            pts = _GRADE_CACHE[key] = pygame.mask.from_surface(img).outline()
+            if len(_GRADE_CACHE) > 200:
+                _GRADE_CACHE.clear()
+        bx = o["x"] * T + T // 2 - img.get_width() // 2 - camx
+        by = (o["y"] + 1) * T - img.get_height() - camy
+        a = 0.55 + 0.45 * math.sin(self.t * 5)
+        col = (255, int(220 + 30 * a), int(120 + 80 * a))
+        for x, y in pts[::1]:
+            c.set_at((int(bx + x), int(by + y)), col)
 
     def object_image(self, o):
         art, k, m = self.game.art, o["kind"], self.map
