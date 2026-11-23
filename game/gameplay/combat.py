@@ -460,16 +460,23 @@ class CombatWorld:
         x, y = c.x, c.y - 8
         if mv in ("projectile", "homing"):
             spd = max(120, p["speed"])
-            pr = Projectile(x + aim[0] * 8, y + aim[1] * 8, aim[0] * spd, aim[1] * spd, c.team, c, rng_left=p["range"],
-                            kind="spell", color=p["color"], radius=p.get("radius", 4), payload=p,
-                            homing=3.0 if mv == "homing" else 0.0)
-            self.projectiles.append(pr)
+            bh = p.get("behavior", "standard")
+            angles = (-0.21, 0.0, 0.21) if bh == "volley" else (0.0,)
+            pay = dict(p, power=round(p["power"] * 0.6, 1)) if bh == "volley" else p
+            base = math.atan2(aim[1], aim[0])
+            for da in angles:
+                ax, ay = math.cos(base + da), math.sin(base + da)
+                pr = Projectile(x + ax * 8, y + ay * 8, ax * spd, ay * spd, c.team, c, rng_left=p["range"],
+                                kind="spell", color=p["color"], radius=p.get("radius", 4), payload=pay,
+                                homing=3.0 if mv == "homing" else 0.0, pierce=2 if bh == "piercing" else 0)
+                self.projectiles.append(pr)
         elif mv == "beam":
             ex, ey = x + aim[0] * p["range"], y + aim[1] * p["range"]
             ex, ey = self._ray_end(x, y, ex, ey)
             eff = SpellEffect("beam", c, p, x, y, 0.25, aim)
             eff.end = (ex, ey)
             self.effects.append(eff)
+            self.linger(c, p, ex, ey + 6)
             for o in self._spell_targets(c, p):
                 if _seg_dist(x, y, ex, ey, o.x, o.y - 6) <= p["area"] + 6:
                     self.apply_payload(c, o, p, (x, y))
@@ -494,6 +501,7 @@ class CombatWorld:
                 if (o is not c or p["target"] == "ally") and math.hypot(o.x - c.x, o.y - 6 - (c.y - 6)) <= p["area"]:
                     self.apply_payload(c, o, p, (c.x, c.y - 6))
             self.shake = max(self.shake, 1.0 + p["area"] / 80)
+            self.linger(c, p, c.x, c.y)
         elif mv == "self":
             self.apply_payload(c, c, p, (c.x, c.y))
             self.effects.append(SpellEffect("aura_flash", c, p, c.x, c.y, 0.5))
@@ -512,6 +520,8 @@ class CombatWorld:
                           key=lambda o: math.hypot(o.x - cur.x, o.y - cur.y), default=None)
             if len(pts) == 1:
                 pts.append((x + aim[0] * p["range"] * 0.6, y + aim[1] * p["range"] * 0.6))
+            if len(hit):
+                self.linger(c, p, pts[-1][0], pts[-1][1] + 8)
             eff = SpellEffect("chain", c, p, x, y, 0.35, aim)
             eff.points = pts
             self.effects.append(eff)
@@ -530,6 +540,15 @@ class CombatWorld:
             else:
                 self.effects.append(SpellEffect("aura", c, p, c.x, c.y, max(3.0, p["zone_duration"])))
         self._burst(x, y, p["color"], 8)
+
+    def linger(self, c, p, x, y):
+        """'Lingering' behaviour: a small, short-lived field where the spell struck."""
+        if p.get("behavior") != "lingering" or c is None or p.get("lingered"):
+            return
+        f = dict(p, move="ground", lingered=True, power=round(p["power"] * 0.3, 1), area=max(18.0, p["area"] * 0.6),
+                 zone_duration=round(2.5 * p.get("duration_mult", 1.0), 1))
+        self._limit_persistent(c, "ground")
+        self.effects.append(SpellEffect("ground", c, f, x, y, f["zone_duration"]))
 
     def _limit_persistent(self, c, kind):
         """Keep at most MAX_PERSISTENT lingering effects of one kind per caster (oldest fades first)."""
@@ -1175,6 +1194,7 @@ class CombatWorld:
             self.pickups.append({"item": pr.drop_item, "qty": 1, "x": pr.x - pr.vx * 0.03, "y": pr.y - pr.vy * 0.03 + 8})
         if pr.payload:
             self._burst(pr.x, pr.y, pr.payload["color"], 6)
+            self.linger(pr.owner, pr.payload, pr.x, pr.y + 6)
 
     def _nearest_foe(self, c, x, y, radius):
         best, bd = None, radius
@@ -1202,6 +1222,7 @@ class CombatWorld:
                         self.apply_payload(c, o, p, (e.x, e.y))
                 self._burst(e.x, e.y, p["color"], 16)
                 self.shake = max(self.shake, 1.5)
+                self.linger(c, p, e.x, e.y)
             elif e.kind in ("ground", "ward", "aura"):
                 if e.kind == "aura":
                     e.x, e.y = c.x, c.y

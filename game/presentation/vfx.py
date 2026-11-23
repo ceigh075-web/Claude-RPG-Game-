@@ -95,7 +95,28 @@ DEFAULT = ELEMENT["light"]
 
 
 def style(sub):
-    return ELEMENT.get(sub, DEFAULT)
+    st = ELEMENT.get(sub)
+    if st is None and sub and "#" in sub:
+        st = ELEMENT[sub] = _variant(sub)
+    return st or DEFAULT
+
+
+def _variant(key):
+    """A designer colour / intensity variant of an element style ('fire#2#1.25')."""
+    import copy
+    from ..set_system.spells import variant_color
+    base, hue, inten = key.split("#")
+    hue, inten = int(hue), float(inten)
+    st = copy.copy(ELEMENT.get(base, DEFAULT))
+    for attr in ("core", "bright", "dark"):
+        v = getattr(st, attr, None)
+        if isinstance(v, tuple) and len(v) == 3:
+            setattr(st, attr, variant_color(v, hue))
+    for attr in ("glow", "trail_rate"):
+        v = getattr(st, attr, None)
+        if isinstance(v, (int, float)):
+            setattr(st, attr, v * inten)
+    return st
 
 
 # ============================================================================ primitives

@@ -61,8 +61,13 @@ def main():
     for k in (pygame.K_RIGHT, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_RIGHT):
         key(g, k)
     shot(g, "p4_spell_design")
-    for _ in range(6):          # Movement -> Effect -> Focus -> Size -> Tier -> Name -> Save
+    for _ in range(4):          # Movement -> Behaviour -> Effect -> Focus -> Size: make it bigger
         key(g, pygame.K_DOWN)
+    key(g, pygame.K_RIGHT)
+    key(g, pygame.K_DOWN)        # Duration
+    key(g, pygame.K_RIGHT)
+    shot(g, "p4_spell_sliders")
+    g.scenes.top.field = len(g.scenes.top.FIELDS) - 1      # Save
     key(g, pygame.K_RETURN)
     assert st.spell_drafts, "draft not saved"
     shot(g, "p4_spellbook")

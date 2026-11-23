@@ -39,7 +39,35 @@ def normalize(data, spell):
     out.setdefault("sub", None)
     out.setdefault("focus", "balanced")
     out["size"] = float(out.get("size", 1.0))
+    for k in TUNING_KEYS:
+        out[k] = float(out.get(k, 1.0))
+    out.setdefault("behavior", "standard")
+    out["hue"] = int(out.get("hue", 0))
+    out["intensity"] = float(out.get("intensity", 1.0))
     return out
+
+
+TUNING_KEYS = ("duration", "potency", "velocity", "reach")
+
+
+def duration_matters(sp, data=None):
+    if data is not None:
+        m = data.magic
+        el = m["elements"][sp["element"]]
+        src = m["subelements"][sp["sub"]] if sp.get("sub") else el
+        if (src.get("status", "none") if src.get("status", "none") != "none" else el.get("status", "none")) != "none":
+            return True             # lingering statuses (burn, chill...) last longer
+    return sp["move"] in ("ground", "ward", "aura", "orbit", "trap", "barrier") or \
+        sp["stat"] in ("strength", "speed", "dexterity", "health", "defense", "root", "affliction") or \
+        sp.get("behavior") == "lingering"
+
+
+def velocity_matters(sp):
+    return sp["move"] in ("projectile", "homing", "wave")
+
+
+def reach_matters(data, sp):
+    return data.magic["movements"][sp["move"]]["range"] > 0
 
 
 def allowed_effects(data, element, sub=None):
@@ -70,6 +98,20 @@ def validate(data, spell, level=None):
     lo, hi = m["sizes"]["min"], m["sizes"]["max"]
     if not lo <= sp["size"] <= hi:
         raise SpellError(f"size must be between {lo} and {hi}")
+    for k in TUNING_KEYS:
+        t = m["tuning"][k]
+        if not t["min"] <= sp[k] <= t["max"]:
+            raise SpellError(f"{t['name']} must be between {t['min']} and {t['max']}")
+    bh = m["behaviors"].get(sp["behavior"])
+    if bh is None:
+        raise SpellError(f"unknown behaviour {sp['behavior']}")
+    if bh["moves"] and sp["move"] not in bh["moves"]:
+        raise SpellError(f"{bh['name']} only works with: " + ", ".join(m["movements"][x]["name"] for x in bh["moves"]))
+    if not 0 <= sp["hue"] < len(m["appearance"]["hues"]):
+        raise SpellError("unknown colour variant")
+    ai = m["appearance"]["intensity"]
+    if not ai["min"] <= sp["intensity"] <= ai["max"]:
+        raise SpellError("intensity out of range")
     if sp["stat"] not in allowed_effects(data, sp["element"], sp["sub"]):
         src = m["subelements"][sp["sub"]]["name"] if sp["sub"] else m["elements"][sp["element"]]["name"]
         raise SpellError(f"{src} cannot carry {m['stats'][sp['stat']]['name']}")
@@ -99,16 +141,35 @@ def compute(data, spell, magic_skill=0.0, mana_conduct=0.0):
              * aff * fc.get("power", 1.0) * (0.7 + 0.3 * size))
     if fc.get("power", 1.0) > 1:
         power *= focus_bonus
-    mana = (MANA_BASE * src["mana"] * mv["mana"] * sc["mana"] * td["mana"] * (size ** mv["size_cost"])
-            * fc.get("mana", 1.0) * (1 - min(0.3, magic_skill / 300.0)))
-    if fc.get("mana", 1.0) < 1:
-        mana /= focus_bonus
-    rng = mv["range"] * (1 + 0.2 * (tier - 1)) * fc.get("range", 1.0) * (focus_bonus if "range" in fc else 1.0)
+    tune = m["tuning"]
+    bh = m["behaviors"][sp["behavior"]]
+    power *= sp["potency"]
+    # every choice that changes what the spell does changes its price (shown to the player as a breakdown)
+    base_mana = MANA_BASE * src["mana"] * mv["mana"] * sc["mana"] * td["mana"]
+    factors = [("Element" + (" / sub-element" if sp["sub"] else ""), src["mana"]),
+               (f"{mv['name']} movement", mv["mana"]), (f"{sc['name']} effect", sc["mana"]), (f"Tier {tier}", td["mana"]),
+               (f"Size x{size:g}", size ** mv["size_cost"])]
+    factors.append((f"Duration x{sp['duration']:g}" + ("" if duration_matters(sp, data) else " (no effect)"),
+                    sp["duration"] ** tune["duration"]["cost"] if duration_matters(sp, data) else 1.0))
+    factors.append((f"Potency x{sp['potency']:g}", sp["potency"] ** tune["potency"]["cost"]))
+    factors.append((f"Speed x{sp['velocity']:g}" + ("" if velocity_matters(sp) else " (no effect)"),
+                    sp["velocity"] ** tune["velocity"]["cost"] if velocity_matters(sp) else 1.0))
+    factors.append((f"Range x{sp['reach']:g}" + ("" if reach_matters(data, sp) else " (no effect)"),
+                    sp["reach"] ** tune["reach"]["cost"] if reach_matters(data, sp) else 1.0))
+    factors.append((f"{bh['name']} behaviour", bh["mana"]))
+    fmana = fc.get("mana", 1.0) / (focus_bonus if fc.get("mana", 1.0) < 1 else 1.0)
+    factors.append((f"{fc['name']} focus", fmana))
+    disc = 1 - min(0.3, magic_skill / 300.0)
+    factors.append(("Your Magic skill", disc))
+    mana = MANA_BASE
+    for _, f in factors:
+        mana *= f
+    rng = mv["range"] * (1 + 0.2 * (tier - 1)) * fc.get("range", 1.0) * (focus_bonus if "range" in fc else 1.0) * sp["reach"]
     area = min(mv["max_area"], mv["area"] * (1 + 0.25 * (tier - 1)) * size * fc.get("area", 1.0)
                * (focus_bonus if "area" in fc else 1.0))
     speed = mv["speed"] * src["speed"] * (el["speed"] if sp["sub"] else 1.0) * fc.get("speed", 1.0) * \
-        (focus_bonus if "speed" in fc else 1.0)
-    dur_mult = fc.get("duration", 1.0) * (focus_bonus if "duration" in fc else 1.0)
+        (focus_bonus if "speed" in fc else 1.0) * sp["velocity"]
+    dur_mult = fc.get("duration", 1.0) * (focus_bonus if "duration" in fc else 1.0) * sp["duration"]
     control = fc.get("control", 1.0) * (focus_bonus if "control" in fc else 1.0)
     status = src["status"] if src["status"] != "none" else el["status"]
     if sp["stat"] in ("strength", "speed", "dexterity", "health", "defense"):
@@ -121,22 +182,48 @@ def compute(data, spell, magic_skill=0.0, mana_conduct=0.0):
     if sp["stat"] == "knockback":
         power *= control
     zone_duration = mv["duration"] * (1 + 0.25 * (tier - 1)) * dur_mult
-    cooldown = mv["cooldown"] * (0.85 + 0.15 * tier)
+    cooldown = mv["cooldown"] * (0.85 + 0.15 * tier) * (0.5 if sp["behavior"] == "rapid" else 1.0)
     if sp["stat"] == "root":
         status = "root"
     style = sp["sub"] or sp["element"]
+    if sp["hue"] or sp["intensity"] != 1.0:
+        style = f"{style}#{sp['hue']}#{sp['intensity']:g}"      # a colour/intensity variant of the look
+    color = variant_color(tuple(src["color"]), sp["hue"])
     out = {
         "name": sp.get("name") or describe_name(data, sp), "sub": style, "sub_id": sp["sub"],
         "element": sp["element"], "move": sp["move"], "stat": sp["stat"], "tier": tier, "focus": sp["focus"],
-        "size": size, "color": tuple(src["color"]),
+        "size": size, "color": color, "behavior": sp["behavior"], "hue": sp["hue"], "intensity": sp["intensity"],
+        "duration_mult": sp["duration"], "potency": sp["potency"],
         "power": round(power, 1), "mana": max(1, round(mana)), "range": round(rng), "area": round(area),
         "radius": round(4 * size ** 0.5, 1), "speed": round(speed), "duration": round(duration, 1),
         "zone_duration": round(zone_duration, 1), "cooldown": round(cooldown, 2), "status": status,
         "target": sc["target"], "chain_jumps": 2 + tier,
         "hp_cost": round(mana * 0.3) if sp["sub"] == "blood" else 0,
+        "cost_breakdown": [(label, round(f, 2)) for label, f in factors if abs(f - 1.0) > 0.005],
     }
     out["description"] = describe(data, out)
     return out
+
+
+def variant_color(col, hue):
+    """The colour variants offered in the designer (0 = natural)."""
+    import colorsys
+    if not hue:
+        return col
+    r, g, b = (c / 255.0 for c in col)
+    h, l, sat = colorsys.rgb_to_hls(r, g, b)
+    if hue == 1:
+        h, sat = (h - 0.08) % 1.0, min(1.0, sat * 1.15)       # warm
+    elif hue == 2:
+        h = (h + 0.1) % 1.0                                    # cool
+    elif hue == 3:
+        l = l * 0.55                                           # shadow
+    elif hue == 4:
+        l, sat = min(0.92, l * 0.5 + 0.48), sat * 0.6          # pale
+    elif hue == 5:
+        h = (h + 0.5) % 1.0                                    # inverted
+    r, g, b = colorsys.hls_to_rgb(h, l, sat)
+    return (int(r * 255), int(g * 255), int(b * 255))
 
 
 def describe_name(data, spell):
