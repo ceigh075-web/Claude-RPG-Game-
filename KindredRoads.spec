@@ -6,7 +6,8 @@ import sys
 a = Analysis(
     ["main.py"],
     pathex=["."],
-    datas=[("data", "data"), ("config.json", "."), ("assets/icon32.png", "assets")],
+    datas=[("data", "data"), ("config.json", "."), ("assets/icon32.png", "assets"),
+           ("assets/pixel_crawler", "assets/pixel_crawler"), ("ASSETS.md", ".")],
     hiddenimports=[],
     excludes=["tkinter", "numpy", "unittest", "test", "pydoc"],
     noarchive=False,

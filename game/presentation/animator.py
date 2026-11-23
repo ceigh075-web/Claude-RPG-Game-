@@ -141,9 +141,11 @@ def humanoid_entries(a, look, weapon, t, camx, camy, art, white_fn):
         sc = SMEAR_SCALE.get(prof.get("weapon"), 1.0)
         tint = look.get("smear")
         s = _smear(smear, sc, tuple(tint) if tint else None)
+        s = s.copy()
         if getattr(a, "state", None) == "recovery":
-            s = s.copy()
-            s.set_alpha(max(0, 200 - int(a.state_t * 900)))
+            s.set_alpha(max(0, 150 - int(a.state_t * 700)))
+        else:
+            s.set_alpha(185)   # bright but see-through, so the target stays readable
         off = (64 * sc - 64) / 2
         entries.append((a.y + 0.02, s, int(fx - off), int(fy - off + (64 * sc - 64) / 2 * 0.3)))
     # dodge afterimages

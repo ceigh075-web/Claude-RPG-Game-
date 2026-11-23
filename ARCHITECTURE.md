@@ -111,7 +111,7 @@ Writes go to a temp file then `os.replace` for atomic saves.
 | local_ai (dialogue) | `client`, `context`, `personality`, `actions` (whitelist bridge), `dialogue` (engine: thread does HTTP only), `fallback` |
 | world | `worldmap`, `mapgen`, `travel`, `effects`, `weather` |
 | gameplay | `entity`, `interactions`, `npcs`, `combat` (runtime), `enemy_ai`, `companion_ai` |
-| presentation | `art`, `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
+| presentation | `art` (procedural fallback), `assets` (pack sprite manifest), `charsprites` (humanoid rig compositor), `weapons_art`, `animator`, `creatures`, `visuals` (gameplay → look/weapon glue), `vfx` (spell & combat effects), `env` (ground, water, buildings, props, decor), `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
 
 **Daily tick order** (`set_system/daily.py`): companion bonds → relationship neglect → world events
 (expiry, jobs, Hollow, territory, honours, festivals, a new event) → base (construction, research,
@@ -119,6 +119,31 @@ upkeep, production, raids).
 
 **Threads:** only the local-AI HTTP call and music rendering run off the main thread. All game state,
 including Set AI (SQLite), is touched only on the main thread.
+
+## Presentation layer (visual overhaul)
+
+Rendering only *reads* gameplay objects. The rules are:
+
+- **No gameplay state is written from presentation code.** Animation is chosen from existing fields
+  (`state`, `state_t`, `profile`, `moving`, `facing`, `flash`, `dead_t`, `blocking`, `charge`…).
+- **One small hook in gameplay:** `CombatWorld.vfx_events`, a bounded list of hit/dodge notifications
+  (`_vfx`) that the renderer drains. Gameplay never reads it. Spell hit profiles carry an extra `vfx_sub`
+  key that the rules ignore. `tests/test_visuals.py` runs the same seeded battle with and without drawing
+  and requires identical results.
+- **Effects have their own RNG** (`vfx._rng`); they never consume the gameplay RNG.
+- **Fallback:** if `assets/pixel_crawler` is missing, `visuals.enabled()` / `env.enabled()` are false and the
+  original procedural art in `art.py` is used.
+
+Pipeline per frame (LocalScene.draw): tiles (`env` textures, animated water) → ragged tile edges → ground
+decor → building facades/roofs → `combat_draw.draw_under` (spell zones, telegraphs, rune circles,
+shockwaves) → depth-sorted sprites (objects, `visuals.combatant_entries`, NPCs) → `combat_draw.draw_fx`
+(projectiles, beams, waves, particles) → weather → lighting (spells add light sources) → damage numbers
+and hurt flash in screen space.
+
+Reusable pieces: `vfx.Style` per sub-element (palette, glyph, particle, beam style, ground pattern),
+`vfx.glyph()` element shapes, a capped particle pool (`MAX_PARTICLES`), movement renderers shared by all
+elements, and `charsprites.compose(look, anim, dir, frame)` for any humanoid. Sprite sources and licences
+are recorded in `ASSETS.md`.
 
 ## Data flow for a location visit
 

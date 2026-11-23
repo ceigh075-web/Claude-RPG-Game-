@@ -10,6 +10,7 @@ from ...set_system import factions, favors, recruitment, relationships as rel
 from ..art import npc_look
 from ..ui import widgets as ui
 from .common import ConfirmScene, MessageScene, is_close
+from .. import visuals
 
 W, H = 1280, 720
 TOPIC_LINES = {"about": "Tell me about yourself.", "place": "What is this place like?", "rumor": "Heard any news?",
@@ -267,7 +268,7 @@ class DialogueScene(Scene):
         npc, st = self.npc, self.state
         ui.dim(screen, 90)
         ui.panel(screen, (40, 330, W - 80, 370))
-        spr = self.game.art.character(npc_look(self.data, npc), "down", 0)
+        spr = visuals.portrait(self.game.art, npc_look(self.data, npc), "down", int(self.t * 5) if hasattr(self, "t") else 0)
         screen.blit(pygame.transform.scale(spr, (160, 240)), (90, 380))
         ui.text(screen, npc["name"], (360, 342), 32, ui.ACCENT, bold=True)
         race = self.data.races[npc["race"]]["name"]

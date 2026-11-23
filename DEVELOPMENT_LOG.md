@@ -26,6 +26,70 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | 7 World Simulation | ✅ Done |
 | 8 Base Building | ✅ Done |
 | 9 Polish | ✅ Done |
+| Visual overhaul (art, animation, VFX) | ✅ Done |
+
+## Session 4 — Visual Overhaul (presentation only)
+
+Goal: make characters, combat, spells and places look and feel better without touching gameplay.
+Source art: the uploaded *Pixel Crawler – Free Pack* by Anokolisa (free incl. commercial, may be altered,
+can't be resold as assets; not CC0). Only a 58-file subset was imported. See `ASSETS.md`.
+
+### Phase 1 — Visual audit
+- Old art: 16×24 procedural characters with 4-frame walk, a line for a weapon, creatures as single blobs,
+  spells as coloured circles, flat-colour tiles. The pack matches our 16 px grid and outline style.
+
+### Phase 2 — Character animation
+- `charsprites`: the pack's Body_A rig (idle, walk, run, slice, pierce, crush, hit, death, collect in
+  3 directions, mirrored for the 4th). Baked tools are stripped; skin/hair/shirt/armour/pants/boots regions
+  are found by erosion and recoloured per character; race features drawn on (Sylth ears, Murrok tusks,
+  Kethari freckles, war paint).
+- `weapons_art`: every weapon type drawn from the pack's weapon sheet, head recoloured by ore, posed at the
+  hand each frame; carried on the back while walking. Bows, crossbows and firelocks are distinct.
+- `animator`: attack phases map to anticipation (frames 0–2), strike (3–4) and follow-through (5–7);
+  smear arcs scale with weapon size. Casting raises the hands, blocking holds a guard pose, dodges leave
+  after-images, stagger shakes, death plays the collapse and fades.
+- `creatures`: wolves, ice wolves, skitterers, sand wurms, stone brutes, bog lurkers, crystal golems and
+  dummies each have idle / move / windup / strike / hit / death frames; big enemies are drawn big. Husks use
+  the pack skeleton. Humanoid enemies wear role outfits (hooded cutthroats and archers, armoured
+  shieldbearers, a dark captain with a red smear, painted Murrok raiders).
+
+### Phase 3 — Spell effects
+- 16 sub-element styles, each with its own glyph, particle, beam and ground pattern (crystalline ice shards,
+  branching lightning, molten rock with dripping embers, ash flakes, steam clouds, blood droplets, poison
+  bubbles, spinning metal blades, faceted gems, sand swirls, leaves and vines, wind crescents, expanding sound
+  arcs, gravity wells pulling particles inward, radiant stars).
+- Movement classes look different: projectiles with trails, homing ribbons, beams, growing waves,
+  telegraphed areas that gather then burst, bounded ground zones, orbiting motes, ward totems, auras.
+- Cast flourish (rune circle + sparks), hand glow while casting, element impacts, spell light at night.
+
+### Phase 4 — Combat presentation
+- Per-attack-type impacts: cut lines and blood for blades, dust rings, debris and stars for blunt weapons,
+  splinters for arrows, smoke for firelocks, blue sparks for blocks, shattering for guard breaks, dust for
+  dodges, knockback dust trails, stagger stars, status particles (burn, bleed, poison, chill, roots…).
+- Damage numbers pop, rise and scale with damage; a red edge flashes when the player is hurt.
+
+### Phase 5 — Environment
+- Ground textures from the pack tinted to each biome's existing palette, ragged transitions between tile
+  types, animated water with shoreline foam.
+- Trees, rocks, bushes, crystals and ore veins (ore-coloured specks; greyed when depleted) chosen per biome.
+- Ground clutter (flowers, mushrooms, pebbles, reeds…) per biome; non-colliding.
+- Towns: textured facades and roofs with a style per town (log/thatch Brackenford, plaster-brick/slate
+  Velmora, dark planks Cinderdeep, plaster Saltmarket…), windows lit at night, chimneys, flower boxes,
+  banners. Interiors use pack furniture and stations; campfires animate.
+- Character previews in menus, dialogue, party and travel use the new sprites.
+
+### Phase 6 — Polish & testing
+- `tests/test_visuals.py` (7 tests): rendering doesn't change a seeded battle; event queue is bounded;
+  all 16 sub-elements have unique looks; every enemy/race/direction has frames; ground tiles are opaque;
+  the game still draws with the art folder missing. Total: 124 tests pass.
+- `tools/vfx_gallery.py` (every sub-element × movement), `tools/env_tour.py` (screenshot any location or
+  interior), `tools/preview_assets.py`.
+- Performance: ~7.5 ms per frame with 8 enemies and continuous spells in a headless run; particles capped
+  at 450; sprite frames cached on first use (~2 ms each).
+
+### Unchanged by design
+Combat maths, stats, speeds, spells, weapons, AI, NPC behaviour, saves, world structure, controls.
+Collision still uses tiles; big trees only change how things look.
 
 ## Session 3 — Phase 9: Polish & Testing
 - **Audio** (`presentation/audio.py`): 20 procedurally synthesized effects (swings, hits, heavy hits,

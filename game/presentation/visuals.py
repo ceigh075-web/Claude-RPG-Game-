@@ -173,15 +173,27 @@ def _husk(c, art, camx, camy, t):
     return out
 
 
-def npc_entries(a, art, camx, camy, t, data=None, char=None):
-    """Entries for a non-combat wanderer/shopkeeper."""
+def npc_entries(a, art, camx, camy, t, data=None):
+    """Entries for a non-combat wanderer/shopkeeper; named NPCs carry their listed weapon."""
     if not enabled():
         return None
-    look = dress(a.look, char, data) if char is not None and data is not None else a.look
     weapon = None
-    if char is not None and data is not None:
-        weapon = _item_weapon(data, char.equipment.get("weapon"))
-    out = animator.humanoid_entries(a, look, weapon, t, camx, camy, art, art.white)
+    npc = getattr(a, "npc", None)
+    if npc and data is not None:
+        for item in npc.get("equipment", []):
+            weapon = _item_weapon(data, item)
+            if weapon:
+                break
+    out = animator.humanoid_entries(a, a.look, weapon, t, camx, camy, art, art.white)
     sh = art.shadow(12)
     out.append((a.y - 0.5, sh, int(a.x - 6 - camx), int(a.y - 3 - camy)))
     return out
+
+
+def portrait(art, look, direction="down", frame=0, walking=False):
+    """Character preview for menus (22x32, feet at the bottom); falls back to the procedural sprite."""
+    if not enabled():
+        return art.character(look, direction, frame)
+    anim = "walk" if walking else "idle"
+    surf, _, _ = charsprites.compose(look, anim, direction, frame % (6 if walking else 4))
+    return surf.subsurface((21, 16, 22, 32))

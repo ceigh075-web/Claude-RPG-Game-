@@ -6,6 +6,7 @@ import pygame
 
 from ...core.scene import Scene
 from ...world import mapgen as mg
+from .. import visuals
 from ..art import random_look
 from ..ui import widgets as ui
 from .common import ControlsScene, SlotScene
@@ -32,7 +33,7 @@ def draw_backdrop(game, screen, t):
     # a little party walking the road
     for i, look in enumerate(game._menu_looks):
         frame = int(t * 8 + i) % 4
-        canvas.blit(art.character(look, "right", frame), (250 + i * 22, 230))
+        canvas.blit(visuals.portrait(art, look, "right", frame, True), (250 + i * 22, 230))
     dark = pygame.Surface(canvas.get_size(), pygame.SRCALPHA)
     dark.fill((10, 8, 20, 120))
     canvas.blit(dark, (0, 0))
@@ -192,9 +193,9 @@ class NewGameScene(Scene):
         pygame.draw.rect(screen, ui.BORDER, box, 2)
         dirs = ("down", "left", "up", "right")
         d = dirs[int(self.t / 1.5) % 4]
-        spr = self.game.art.character(self.look, d, int(self.t * 6) % 4)
-        big = pygame.transform.scale(spr, (16 * 10, 24 * 10))
-        screen.blit(big, (box.centerx - 80, box.y + 60))
+        spr = visuals.portrait(self.game.art, self.look, d, int(self.t * 8), True)
+        big = pygame.transform.scale(spr, (spr.get_width() * 9, spr.get_height() * 9))
+        screen.blit(big, (box.centerx - big.get_width() // 2, box.bottom - big.get_height() - 20))
         ui.text(screen, race["appearance"], (box.centerx, box.bottom + 14), 20, ui.TEXT_DIM, center=True)
         ui.text(screen, "Up/Down: field   Left/Right: change   Enter: confirm   Esc: back",
                 (r.centerx, r.bottom - 34), 22, ui.TEXT_DIM, center=True)

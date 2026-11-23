@@ -51,6 +51,15 @@ class Art:
         return self._get(("tile", tile_id, biome, variant, pk), lambda: self._make_tile(tile_id, biome, variant, palette))
 
     def _make_tile(self, tid, biome, variant, palette):
+        from . import env
+        if env.enabled():
+            if tid == mg.WATER:
+                img = env.water(biome, variant % 4, variant // 4)
+            else:
+                img = env.ground(tid, biome, variant, palette, BIOME_GROUND.get(biome, BIOME_GROUND["grassland"]),
+                                 PATH_COLOR.get(biome, (152, 122, 84)))
+            if img is not None:
+                return img.convert() if pygame.display.get_surface() else img
         s = pygame.Surface((T, T))
         r = stable_rng("tile", tid, biome, variant)
         g, alt = BIOME_GROUND.get(biome, BIOME_GROUND["grassland"])
@@ -139,6 +148,14 @@ class Art:
         return self._get(key, lambda: self._make_obj(kind, variant, biome, extra))
 
     def _make_obj(self, kind, variant, biome, extra):
+        from . import env
+        if kind == "campfire" and env.enabled():
+            img = env.campfire(variant)
+            if img is not None:
+                return img
+        img = env.prop(kind, variant, biome, extra)
+        if img is not None:
+            return img
         r = stable_rng("obj", kind, variant, biome, extra)
         if kind == "tree":
             s = pygame.Surface((T + 8, 30), pygame.SRCALPHA)

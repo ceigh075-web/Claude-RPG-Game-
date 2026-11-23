@@ -6,6 +6,7 @@ from ...set_system import companions as comp_mod, items as items_mod, relationsh
 from ..art import npc_look
 from ..ui import widgets as ui
 from .common import ConfirmScene, is_close
+from .. import visuals
 
 W, H = 1280, 720
 
@@ -75,7 +76,7 @@ class PartyScene(Scene):
         c = comp["char"]
         npc = self.data.npcs[cid]
         x = 450
-        spr = pygame.transform.scale(self.game.art.character(npc_look(self.data, npc), "down", 0), (64, 96))
+        spr = pygame.transform.scale(visuals.portrait(self.game.art, npc_look(self.data, npc), "down", 0), (66, 96))
         screen.blit(spr, (x, 110))
         ui.text(screen, npc["name"], (x + 80, 112), 30, ui.ACCENT, bold=True)
         ui.text(screen, f"{self.data.races[npc['race']]['name']} {npc['occupation']}  -  Lv {c.level}  -  task: "

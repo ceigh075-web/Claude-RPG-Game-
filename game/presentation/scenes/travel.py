@@ -8,6 +8,7 @@ from ...world import effects, travel, weather
 from ...world import mapgen as mg
 from ..ui import widgets as ui
 from .common import PauseScene
+from .. import visuals
 
 W, H = 1280, 720
 STRIP = (640, 150)
@@ -254,7 +255,7 @@ class TravelScene(Scene):
             s.blit(img, (x, y))
         # party
         frame = int(self.t * 8) % 4 if self.auto else 0
-        s.blit(art.character(st.player.appearance, "right", frame), (300, 98))
+        s.blit(visuals.portrait(art, st.player.appearance, "right", frame, True), (300, 98))
         # weather particles
         if wid in ("rain", "storm", "snow"):
             r = stable_rng("p", int(self.t * 10))

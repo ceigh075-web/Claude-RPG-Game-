@@ -39,3 +39,7 @@ ollama pull llama3.2:3b
 
 Then in the game open **Esc → Options** and use **Test AI connection**. LM Studio, llama.cpp
 `llama-server` and other OpenAI-compatible servers also work: switch "AI server" in Options.
+
+## Credits
+
+Character, environment and prop art: *Pixel Crawler – Free Pack* by Anokolisa (see ASSETS.md for details and terms). Everything else is original to Kindred Roads.

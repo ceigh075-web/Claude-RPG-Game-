@@ -14,7 +14,7 @@ from ...set_system import base as base_mod
 from ...set_system import factions, skirmish, timeflow
 from ...world import mapgen as mg
 from ...world import weather
-from .. import combat_draw
+from .. import combat_draw, env, visuals
 from ..art import npc_look, random_look
 from ..ui import widgets as ui
 from .common import ConfirmScene, MessageScene, PauseScene
@@ -887,10 +887,27 @@ class LocalScene(Scene):
         pal = m.palette
         x0, y0 = max(0, camx // T), max(0, camy // T)
         x1, y1 = min(m.w, (camx + CW) // T + 2), min(m.h, (camy + CH) // T + 2)
+        wf = int(self.t * 3) % 4
         for ty in range(y0, y1):
             row = m.tiles[ty]
             for tx in range(x0, x1):
-                c.blit(art.tile(row[tx], biome, (tx * 7 + ty * 13) % 4, pal), (tx * T - camx, ty * T - camy))
+                v = (tx * 7 + ty * 13) % 4
+                tid = row[tx]
+                if tid == mg.WATER:
+                    v += 4 * ((wf + (tx + ty) // 3) % 4)
+                c.blit(art.tile(tid, biome, v, pal), (tx * T - camx, ty * T - camy))
+        if env.enabled():
+            env.draw_edges(c, m, lambda tid, v: art.tile(tid, biome, v, pal), x0, y0, x1, y1, camx, camy)
+            for dx_, dy_, img in env.decor_layer(m, biome):
+                if -16 < dx_ - camx < CW and -16 < dy_ - camy < CH:
+                    c.blit(img, (dx_ - camx, dy_ - camy))
+            if m.kind == "town" and m.buildings:
+                spec = self.data.towns.get(self.state.location, {}).get("specialty", "")
+                lit = self.state.clock.daylight() < 0.6
+                for b in m.buildings.values():
+                    if b["x"] * T - camx < CW and (b["x"] + b["w"]) * T - camx > 0 and \
+                            b["y"] * T - camy < CH and (b["y"] + b["h"]) * T - camy > 0:
+                        c.blit(env.building(b, spec, pal, lit), (b["x"] * T - camx, b["y"] * T - camy))
         # sortable sprites
         sprites = []
         for o in m.objects:
@@ -905,6 +922,10 @@ class LocalScene(Scene):
             sprites.append((sort_y, img, bx, by))
         sprites += combat_draw.sprite_entries(self.combat, art, camx, camy, self.t)
         for a in self.npcs:
+            ent = visuals.npc_entries(a, art, camx, camy, self.t, self.data)
+            if ent is not None:
+                sprites += ent
+                continue
             img = art.character(a.look, a.facing, a.frame(), a.action)
             sh = art.shadow(12)
             sprites.append((a.y - 0.5, sh, int(a.x - 6 - camx), int(a.y - 3 - camy)))
@@ -922,7 +943,7 @@ class LocalScene(Scene):
         for a in self.npcs + self.combat.companions():
             if self.player.dist_to(a.x, a.y) < 70:
                 label = a.npc["name"] if a.npc else "Shopkeeper"
-                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 30 - camy) * 2)), 20, ui.TEXT, center=True)
+                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 34 - camy) * 2)), 20, ui.TEXT, center=True)
         self.draw_hud(screen)
 
     def object_image(self, o):
@@ -936,7 +957,7 @@ class LocalScene(Scene):
         if k in ("scavenge", "mana_crystal_node"):
             return art.obj(k, 0, m.biome, "depleted" if dep else None)
         if k == "campfire":
-            return art.obj("campfire", int(self.t * 6) % 2, m.biome)
+            return art.obj("campfire", int(self.t * 10) % 8 if env.enabled() else int(self.t * 6) % 2, m.biome)
         if k.startswith("base_"):
             b = base_mod.building_at(self.state, o["plot"])
             extra = None
