@@ -68,7 +68,7 @@ jobs:
         run: |
           mkdir -p package/KindredRoads
           cp dist/${{ matrix.exe }} package/KindredRoads/
-          cp README.md PLAYING.md package/KindredRoads/
+          cp README.md PLAYING.md ASSETS.md package/KindredRoads/
           cd package && 7z a ../${{ matrix.artifact }}.zip KindredRoads || zip -r ../${{ matrix.artifact }}.zip KindredRoads
       - uses: actions/upload-artifact@v4
         with:
