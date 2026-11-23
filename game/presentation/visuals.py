@@ -3,6 +3,8 @@
 Everything here only *reads* gameplay state (equipment, enemy definitions, combat state) to decide what a
 character looks like and which weapon it visibly holds. No gameplay values are changed.
 """
+import math
+
 import pygame
 
 from . import animator, assets, charsprites, creatures
@@ -64,7 +66,13 @@ def _item_weapon(data, item):
 
 def weapon_for(c, data, state=None):
     """(weapon type, ore) visibly held by a combatant, or None for bare hands."""
-    if c.enemy:
+    if getattr(c, "npc", None) and c.team == "npc":
+        for item in c.npc.get("equipment", []):
+            w = _item_weapon(data, item)
+            if w:
+                return w
+        return None
+    if c.enemy and c.team == "enemy":
         e = c.enemy
         if e.get("shape") != "humanoid" or e.get("weapon") == "fists":
             return None
@@ -119,7 +127,7 @@ def combatant_entries(world, art, camx, camy, t, state=None):
             out += _husk(c, art, camx, camy, t)
             shadow_w = 12
         elif shape == "humanoid":
-            look = enemy_look(c) if e else dress(c.look, c.char, data)
+            look = enemy_look(c) if e and c.team == "enemy" else dress(c.look, c.char, data)
             out += animator.humanoid_entries(c, look, weapon_for(c, data, state), t, camx, camy, art, art.white)
         else:
             cshape = creatures.shape_for(eid, e)
@@ -140,7 +148,37 @@ def combatant_entries(world, art, camx, camy, t, state=None):
             shadow_w = max(12, min(30, int(w * 0.7)))
         sh = art.shadow(shadow_w)
         out.append((c.y - 0.5, sh, int(c.x - sh.get_width() / 2 - camx), int(c.y - 3 - camy)))
+        if getattr(c, "killed", False):
+            out.append((c.y - 0.6, _blood_pool(min(1.0, c.dead_t / 2.0)), int(c.x - 11 - camx), int(c.y - 5 - camy)))
+        elif getattr(c, "downed", False) and c.state == "dead":
+            for k in range(3):   # dazed stars over someone knocked down (they'll get up)
+                a_ = t * 3 + k * 2.1
+                star = _star()
+                out.append((c.y + 0.03, star, int(c.x - 2 + math.cos(a_) * 7 - camx), int(c.y - 14 + math.sin(a_) * 2 - camy)))
     return out
+
+
+_pool_cache = {}
+
+
+def _blood_pool(f):
+    k = int(f * 4)
+    if k not in _pool_cache:
+        s = pygame.Surface((22, 9), pygame.SRCALPHA)
+        w = 10 + k * 3
+        pygame.draw.ellipse(s, (110, 14, 20, 200), ((22 - w) // 2, 1, w, 4 + k))
+        pygame.draw.ellipse(s, (150, 30, 34, 200), ((22 - w) // 2 + 2, 2, max(2, w - 6), 2 + k // 2))
+        _pool_cache[k] = s
+    return _pool_cache[k]
+
+
+def _star():
+    if "star" not in _pool_cache:
+        s = pygame.Surface((3, 3), pygame.SRCALPHA)
+        s.fill((255, 235, 140), (1, 0, 1, 3))
+        s.fill((255, 235, 140), (0, 1, 3, 1))
+        _pool_cache["star"] = s
+    return _pool_cache["star"]
 
 
 def _husk(c, art, camx, camy, t):

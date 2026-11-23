@@ -27,6 +27,35 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | 8 Base Building | ✅ Done |
 | 9 Polish | ✅ Done |
 | Visual overhaul (art, animation, VFX) | ✅ Done |
+| Universal targeting & consequences | ✅ Done |
+
+## Session 5 — Universal entity interaction and combat
+
+- Every character is attackable. Townsfolk, shopkeepers and camp NPCs are now combatants on a neutral
+  `npc` team (`gameplay/bystander_ai.py`), so they share the combat runtime, animations, hit feedback,
+  knockback and defeat poses with everyone else.
+- Hostility is a team default plus personal grudges (`CombatWorld.hostile_between`). Hostile intent (G)
+  lets the player's attacks connect with anyone, including companions; without it only foes are hit, so
+  nothing happens by accident.
+- `set_system/aggression.py` (deterministic): reactions (fight / flee / call for help / cower / yield),
+  bystander responses to cries for help, companion reactions (join / stand / object / defend / leave),
+  and consequences: relationships, faction standing (victim's faction, plus the town's faction if
+  witnessed), player profile, statistics, Set AI records and facts.
+- Defeat vs death: 0 HP knocks a person down; named NPCs recover at home (1 day) and hold a grudge
+  (3 days). A finishing blow with hostile intent kills permanently (`npc:<id>:alive` = False, which
+  schedules, shops, recruitment and the Local AI already respected). Leaders' deaths trigger succession;
+  Black Ren's breaks the Hollow. Bodies persist on the map, with a blood pool; downed people show
+  dazed stars.
+- Companions who come to blows with the player decide afterwards (or when you leave the map) whether to
+  stay; a killing can make a disapproving companion leave for good.
+- Local AI context gains hard facts: "the player attacked you", known violence nearby, the player's kill
+  count. The model never decides any outcome.
+- Hostile NPCs refuse to talk or trade; names turn red; hurt NPCs show health bars; `in_combat` covers
+  hostile townsfolk and companions who turned on you (music, resting, map exits).
+- Tests: `tests/test_aggression.py` (13): personality-driven, deterministic reactions; no protected
+  characters by default; assault, defeat and kill consequences; shop handover; peaceful swings don't hurt
+  bystanders; execution needs intent; enemies ignore townsfolk; companions attackable and reacting;
+  falling-out settlement; identical replays. 137 tests total.
 
 ## Session 4 — Visual Overhaul (presentation only)
 

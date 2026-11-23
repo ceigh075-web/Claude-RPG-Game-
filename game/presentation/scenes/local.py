@@ -9,7 +9,7 @@ from ...core.scene import Scene
 from ...gameplay import interactions as inter
 from ...gameplay import npcs as npc_mod
 from ...gameplay.combat import CombatWorld, facing_from, norm
-from ...gameplay.entity import Actor, Wanderer
+from ...gameplay.entity import Actor
 from ...set_system import base as base_mod
 from ...set_system import factions, skirmish, timeflow
 from ...world import mapgen as mg
@@ -50,6 +50,8 @@ class LocalScene(Scene):
         st = self.state
         if self.combat is not None:
             self.note_escape()
+            for msg in self.combat.settle_conflicts():
+                self.game.toast(msg)
         if st.sub_location:
             self.map = self.game.interior_map(st.location, st.sub_location)
             self.loc_key = f"{st.location}/{st.sub_location}"
@@ -202,6 +204,9 @@ class LocalScene(Scene):
 
     def on_exit(self):
         self.note_escape()
+        if self.combat is not None:
+            for msg in self.combat.settle_conflicts():
+                self.game.toast(msg)
 
     def rebuild_solid(self):
         self.depleted = inter.depleted_keys(self.state, self.loc_key, self.map.objects)
@@ -225,12 +230,22 @@ class LocalScene(Scene):
         return tx * T + T / 2, ty * T + T - 2
 
     def spawn_npcs(self):
+        """Townsfolk are combatants on the neutral 'npc' team: calm until someone gives them a reason."""
         st, m = self.state, self.map
         building = m.building
         present = npc_mod.present_npcs(st, st.location, m.kind, building)
-        self.npcs = []
+        old = getattr(self, "npcs", [])
+        # anyone mid-conflict, lying defeated or dead stays where they are; the calm are re-placed by schedule
+        keep = [a for a in old if a in self.combat.combatants and (a.grudge or a.downed or a.state == "dead")]
+        for a in old:
+            if a not in keep and a in self.combat.combatants:
+                self.combat.combatants.remove(a)
+        kept_ids = {a.npc["id"] for a in keep if a.npc}
+        self.npcs = list(keep)
         spots = list(m.npc_spots) or [m.entry]
         for i, (npc, act) in enumerate(present):
+            if npc["id"] in kept_ids:
+                continue
             rng = stable_rng("npcpos", npc["id"], st.clock.day_index, st.clock.hour)
             stationary = False
             if building is not None and building.get("shop") == npc.get("shop") and act == "work":
@@ -239,23 +254,37 @@ class LocalScene(Scene):
             else:
                 sx, sy = spots[(i + rng.randint(0, len(spots) - 1)) % len(spots)]
             sx, sy = m.find_open_near(sx, sy, 3)
-            a = Wanderer(sx * T + 8, sy * T + 14, npc_look(self.data, npc), rng,
-                         anchor_radius=1 if building else 4, name=npc["name"])
-            a.npc = npc
-            a.stationary = stationary
+            a = self.combat.add_townsfolk(npc, sx * T + 8, sy * T + 14, npc_look(self.data, npc), rng,
+                                          anchor_radius=1 if building else 4, stationary=stationary)
             self.npcs.append(a)
         # anonymous shopkeeper for shops without a named owner
-        if building is not None and building.get("shop"):
+        if building is not None and building.get("shop") and not any(a.npc is None for a in keep):
             keeper, at_work = npc_mod.shopkeeper(st, st.location, building["shop"])
             if keeper is None and at_work:
                 sx, sy = spots[0]
                 rng = stable_rng("keeper", st.location, building["id"])
                 race = rng.choice(list(self.data.races))
-                a = Wanderer(sx * T + 8, sy * T + 14, random_look(self.data.races[race], rng, race), rng,
-                             name="Shopkeeper")
-                a.npc = None
-                a.stationary = True
+                a = self.combat.add_townsfolk(None, sx * T + 8, sy * T + 14, random_look(self.data.races[race], rng, race),
+                                              rng, anchor_radius=1, stationary=True, name="Shopkeeper")
                 self.npcs.append(a)
+
+    def refusal(self, a):
+        mode = getattr(a.ai, "mode", "")
+        if mode == "cower":
+            return f"{a.name} flinches away from you."
+        if mode in ("flee", "leave"):
+            return f"{a.name} is running from you."
+        if mode == "fight" or (a.grudge and self.player.cid in a.grudge):
+            return f"{a.name} isn't in a talking mood."
+        return f"{a.name} keeps their distance."
+
+    def talkable(self, a):
+        """Can this character be talked to / traded with right now?"""
+        if a not in self.combat.combatants or not a.alive or a.fled:
+            return False
+        if a.grudge or (a.ai is not None and getattr(a.ai, "mode", "calm") != "calm"):
+            return False
+        return True
 
     # ================================================================ input
     def mouse_world(self):
@@ -305,6 +334,11 @@ class LocalScene(Scene):
             cw.dodge(pc, (dx, dy))
         elif k == pygame.K_q:
             cw.switch_weapon()
+        elif k == pygame.K_g:
+            cw.intent = not cw.intent
+            self.state.settings["hostile_intent"] = cw.intent
+            self.game.toast("Hostile intent ON: your attacks will hit anyone, and finish off the fallen."
+                            if cw.intent else "Hostile intent off: you only strike enemies.")
         elif pygame.K_1 <= k <= pygame.K_4:
             i = k - pygame.K_1
             bar = self.hotbar()
@@ -359,6 +393,8 @@ class LocalScene(Scene):
         qx, qy = px + fx * 10, py + fy * 10
         best, best_d = None, INTERACT_RANGE
         for a in self.npcs:
+            if not a.alive or a.fled or a not in self.combat.combatants:
+                continue
             d = math.hypot(a.x - qx, (a.y - 6) - qy)
             reach = best_d + (18 if getattr(a, "stationary", False) else 0)  # talk across a shop counter
             if d < reach:
@@ -391,6 +427,8 @@ class LocalScene(Scene):
             return None
         if tgt[0] == "npc":
             a = tgt[1]
+            if not self.talkable(a):
+                return f"{a.name} won't deal with you" if a.alive else None
             if a.npc is None:
                 return "Trade with the Shopkeeper"
             return f"Talk to {a.npc['name']}"
@@ -415,6 +453,9 @@ class LocalScene(Scene):
             return
         if tgt[0] == "npc":
             a = tgt[1]
+            if not self.talkable(a):
+                self.game.notify(self.refusal(a))
+                return
             if a.npc is None:
                 self.open_shop(self.map.building["shop"])
                 return
@@ -775,10 +816,7 @@ class LocalScene(Scene):
                     self.game.toast(msg)
             self.spawn_npcs()
             self.depleted = inter.depleted_keys(st, self.loc_key, m.objects)
-        for a in self.npcs:
-            a.update(m, dt, stationary=getattr(a, "stationary", False))
-            if getattr(a, "stationary", False):
-                a.facing = "down"
+        self.npcs = [a for a in self.npcs if a in self.combat.combatants]
         # leaving the map by walking to the edge
         self.leave_cooldown = max(0.0, self.leave_cooldown - dt)
         if m.kind != "interior" and self.leave_cooldown <= 0:
@@ -921,15 +959,6 @@ class LocalScene(Scene):
             sort_y = (o["y"] + 1) * T - (16 if o["kind"] in ("door", "counter", "crop", "exit_door") else 0)
             sprites.append((sort_y, img, bx, by))
         sprites += combat_draw.sprite_entries(self.combat, art, camx, camy, self.t)
-        for a in self.npcs:
-            ent = visuals.npc_entries(a, art, camx, camy, self.t, self.data)
-            if ent is not None:
-                sprites += ent
-                continue
-            img = art.character(a.look, a.facing, a.frame(), a.action)
-            sh = art.shadow(12)
-            sprites.append((a.y - 0.5, sh, int(a.x - 6 - camx), int(a.y - 3 - camy)))
-            sprites.append((a.y, img, int(a.x - 8 - camx), int(a.y - 23 - camy)))
         combat_draw.draw_under(c, self.combat, camx, camy, self.t)
         sprites.sort(key=lambda s: s[0])
         for _, img, bx, by in sprites:
@@ -941,9 +970,16 @@ class LocalScene(Scene):
         combat_draw.draw_floaters(screen, self.combat, camx, camy)
         # NPC names (screen space)
         for a in self.npcs + self.combat.companions():
-            if self.player.dist_to(a.x, a.y) < 70:
+            if self.player.dist_to(a.x, a.y) < 70 and a in self.combat.combatants and not a.killed:
                 label = a.npc["name"] if a.npc else "Shopkeeper"
-                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 34 - camy) * 2)), 20, ui.TEXT, center=True)
+                col = ui.TEXT
+                if self.combat.hostile_between(self.player, a):
+                    col = (240, 110, 90)
+                elif a.downed:
+                    col, label = ui.TEXT_DIM, label + " (down)"
+                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 34 - camy) * 2)), 20, col, center=True)
+        if self.combat.intent:
+            ui.text(screen, "HOSTILE INTENT (G): your attacks hit anyone", (W // 2, 44), 22, (240, 110, 90), center=True)
         self.draw_hud(screen)
 
     def object_image(self, o):

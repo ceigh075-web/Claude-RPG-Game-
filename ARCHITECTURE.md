@@ -106,11 +106,11 @@ Writes go to a temp file then `os.replace` for atomic saves.
 | Layer | Modules |
 |---|---|
 | core | `game`, `scene`, `save` (versioned, autosave and backups), `state`, `clock`, `rng`, `events`, `data` |
-| set_system (rules) | `stats`, `needs`, `inventory`, `items`, `economy`, `factions`, `timeflow`, `daily`, `combat`, `skirmish`, `spells`, `crafting`, `relationships`, `favors`, `recruitment`, `companions`, `world_events`, `jobs`, `base` |
+| set_system (rules) | `aggression` (reactions & consequences of violence), `stats`, `needs`, `inventory`, `items`, `economy`, `factions`, `timeflow`, `daily`, `combat`, `skirmish`, `spells`, `crafting`, `relationships`, `favors`, `recruitment`, `companions`, `world_events`, `jobs`, `base` |
 | set_ai (memory) | `memory` (append-only records and facts, prunable chatter) |
 | local_ai (dialogue) | `client`, `context`, `personality`, `actions` (whitelist bridge), `dialogue` (engine: thread does HTTP only), `fallback` |
 | world | `worldmap`, `mapgen`, `travel`, `effects`, `weather` |
-| gameplay | `entity`, `interactions`, `npcs`, `combat` (runtime), `enemy_ai`, `companion_ai` |
+| gameplay | `entity`, `interactions`, `npcs`, `combat` (runtime), `enemy_ai`, `companion_ai`, `bystander_ai` |
 | presentation | `art` (procedural fallback), `assets` (pack sprite manifest), `charsprites` (humanoid rig compositor), `weapons_art`, `animator`, `creatures`, `visuals` (gameplay → look/weapon glue), `vfx` (spell & combat effects), `env` (ground, water, buildings, props, decor), `audio`, `combat_draw`, `ui/widgets`, `scenes/*` (menu, local, travel, arena, duel, practice, worldmap, inventory, character, shop, crafting, spellbook, dialogue, party, jobs, base, journal, options, common, hints) |
 
 **Daily tick order** (`set_system/daily.py`): companion bonds → relationship neglect → world events
@@ -119,6 +119,18 @@ upkeep, production, raids).
 
 **Threads:** only the local-AI HTTP call and music rendering run off the main thread. All game state,
 including Set AI (SQLite), is touched only on the main thread.
+
+## Hostility model (who may hurt whom)
+
+`CombatWorld.hostile_between(a, b)`: teams give the default (party vs enemies; the neutral `npc` team is
+nobody's enemy), and each combatant's `grudge` set overrides it in either direction. `foes_of` (AI
+targeting) uses it; `strike_targets` / `can_hit` (what an attack connects with) add everyone when the
+player's `intent` is on. The first blow on someone who wasn't a foe goes through
+`_personal_violence`, which asks the Set System (`aggression.py`) for consequences and reactions and
+hands the reaction to the victim's AI (`BystanderAI` for townsfolk, `CompanionAI` for companions).
+Defeat sets `downed`; `execute` (finishing blow) sets `killed` and calls `aggression.on_kill`. Persistent
+results are only Set System state and Set AI facts/records (`npc:<id>:alive`, `:grudge_until`,
+`:injured_until`); the Local AI only reads them (`local_ai/context.violence_facts`).
 
 ## Presentation layer (visual overhaul)
 

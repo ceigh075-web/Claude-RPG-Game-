@@ -200,7 +200,7 @@ def draw_fx(canvas, world, art, camx, camy, t):
         canvas.fill(p[5], (int(p[0] - camx), int(p[1] - camy), 2, 2))
     # enemy health bars
     for c in world.combatants:
-        if c.team == "enemy" and c.alive and (c.hp < c.max_hp or c.alerted):
+        if c.team in ("enemy", "npc") and c.alive and (c.hp < c.max_hp or (c.alerted and c.team == "enemy")):
             w = 18 if c.max_hp < 120 else 26
             top = {"brute": 40, "worm": 30, "beast": 26, "bug": 20, "dummy": 30}.get(c.enemy["shape"], 30)
             if new and c.enemy["shape"] == "humanoid":

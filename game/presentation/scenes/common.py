@@ -15,6 +15,7 @@ CONTROLS = [
     ("L / Right mouse", "Block (hold)"),
     ("F / Space", "Kick / dodge roll"),
     ("Q", "Switch melee / ranged weapon"),
+    ("G", "Hostile intent: attack anyone (finish off the fallen)"),
     ("1 - 4", "Cast spell from your spell book"),
     ("B", "Spell book: design, test and inscribe spells"),
     ("P / R", "Your company (squad) / relationships"),

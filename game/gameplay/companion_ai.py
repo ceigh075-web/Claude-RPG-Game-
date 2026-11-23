@@ -2,6 +2,7 @@
 Companions never use the Local AI for combat decisions."""
 import math
 
+from ..set_system import aggression
 from ..set_system import combat as rules
 from ..set_system import spells
 from .combat import facing_from, norm
@@ -20,6 +21,7 @@ class CompanionAI:
         self.block_t = 0.0
         self.react_cd = 0.0
         self.offset = (rng.uniform(-18, 18), rng.uniform(6, 20))
+        self.fighting = False
 
     def weapon(self):
         ch = self.c.char
@@ -53,7 +55,7 @@ class CompanionAI:
             return
         p = world.player
         # 1) heal a hurt ally (validated spell numbers, paid with the companion's own mana)
-        if c.char.skills["magic"] >= 15 and self.heal_cd <= 0:
+        if c.char.skills["magic"] >= 15 and self.heal_cd <= 0 and p.cid not in c.grudge:
             props = spells.compute(world.data, HEAL_SPELL, c.char.skills["magic"])
             allies = [a for a in world.combatants if a.team == c.team and a.alive and a.hp < a.max_hp * 0.45
                       and math.hypot(a.x - c.x, a.y - c.y) < 70]
@@ -66,7 +68,23 @@ class CompanionAI:
                 world.events.append(f"{c.name} heals {tgt.name or 'you'}.")
                 return
         foes = [e for e in world.enemies() if e.alive and e.hostile and e.alerted and
-                math.hypot(e.x - p.x, e.y - p.y) < ENGAGE_RADIUS and not e.enemy.get("training")]
+                math.hypot(e.x - p.x, e.y - p.y) < ENGAGE_RADIUS and not e.enemy.get("training")
+                and not (c.grudge and p.cid in c.grudge)]
+        # personal conflicts (Set System decided): someone they joined the player against, or the player
+        foes += [o for o in world.foes_of(c) if (o.cid in c.grudge or c.cid in o.grudge) and o not in foes]
+        self.fighting = True
+        if p.cid in c.grudge and p.alive:
+            # turned on the player: personality decides whether they stand and fight or back off
+            kind = aggression.reaction(c.npc, c.hp / max(1.0, c.max_hp))
+            if kind != "fight":
+                self.fighting = False
+                world.set_block(c, False)
+                d = math.hypot(c.x - p.x, c.y - p.y)
+                if d < 120:
+                    self.steer(lmap, c.x - p.x, c.y - p.y, dt, 1.1)
+                else:
+                    c.moving = False
+                return
         # 2) retreat toward the player when badly hurt
         if foes and c.hp < c.max_hp * 0.25:
             f = min(foes, key=lambda e: math.hypot(e.x - c.x, e.y - c.y))

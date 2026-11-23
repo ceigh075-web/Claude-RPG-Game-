@@ -1,7 +1,7 @@
 """Builds the model prompt for one NPC: who they are, what they know (Set AI memories, ranked by
 importance), hard world facts that must not be contradicted, and the action whitelist."""
 from ..core.clock import format_stamp
-from ..set_system import factions, favors, relationships as rel
+from ..set_system import aggression, factions, favors, relationships as rel
 from . import personality
 from .actions import WHITELIST
 
@@ -33,9 +33,28 @@ def world_facts(state, npc):
         r = state.reputation.get(npc["faction"], 0)
         out.append(f"Your faction ({data.factions[npc['faction']]['name']}) regards the player as "
                    f"{factions.standing_label(r)}.")
+    out += violence_facts(state, npc)
     companions = [data.npcs[i]["name"] for i in state.companions] if hasattr(state, "companions") else []
     if companions:
         out.append("The player travels with: " + ", ".join(companions) + ".")
+    return out
+
+
+def violence_facts(state, npc):
+    """Hard facts about the player's violence (decided by the Set System; the model must not contradict them)."""
+    out = []
+    if aggression.grudge_active(state, npc["id"]):
+        out.append("The player ATTACKED YOU recently. You are angry, hurt and afraid of them; you do not trust them.")
+    heard = []
+    for m in state.memory.recent(60, 3):
+        if m["event_type"] in ("assault", "death") and "player" in m.get("related", []) and m["subject"] != npc["id"]:
+            if m["location"] in (npc["home"], state.location) or m["event_type"] == "death":
+                heard.append(m["description"])
+    if heard:
+        out.append("Known violence by the player: " + " ".join(heard[:3]))
+    kills = state.stats.get("murders", 0)
+    if kills:
+        out.append(f"The player has killed {kills} innocent {'person' if kills == 1 else 'people'}.")
     return out
 
 

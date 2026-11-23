@@ -12,6 +12,11 @@ def is_alive(state, npc_id):
     return state.memory.fact(f"npc:{npc_id}:alive", True)
 
 
+def recovering(state, npc_id):
+    """Beaten down recently: stays home until healed (Set System persistence rule)."""
+    return state.memory.fact(f"npc:{npc_id}:injured_until", -1) >= state.clock.day_index
+
+
 def present_npcs(state, loc_id, lmap_kind, building=None):
     """NPCs visible in this location/sub-location now. Returns list of (npc_dict, activity)."""
     data = state.data
@@ -19,7 +24,7 @@ def present_npcs(state, loc_id, lmap_kind, building=None):
     town = data.towns.get(loc_id)
     out = []
     for npc in data.npcs.values():
-        if npc["home"] != loc_id or not is_alive(state, npc["id"]):
+        if npc["home"] != loc_id or not is_alive(state, npc["id"]) or recovering(state, npc["id"]):
             continue
         if state.flags.get(f"recruited:{npc['id']}"):
             continue
@@ -52,6 +57,7 @@ def shopkeeper(state, loc_id, shop_type):
     """The named NPC running this shop, if any, and whether they're at work now."""
     for npc in state.data.npcs.values():
         if npc["home"] == loc_id and npc.get("shop") == shop_type and is_alive(state, npc["id"]) \
+                and not recovering(state, npc["id"]) \
                 and not state.flags.get(f"recruited:{npc['id']}"):
             act = activity(state.data, npc, state.clock.hour)
             return npc, act == "work" or (shop_type == "inn" and act == "tavern")

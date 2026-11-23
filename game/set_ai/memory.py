@@ -59,7 +59,7 @@ EVENT_TYPES = {
     # companion memories
     "recruited", "dismissed", "battle", "travel", "companion_bond", "companion_conflict",
     # enemy memories
-    "encounter", "escaped", "defeated",
+    "encounter", "escaped", "defeated", "assault",
     # world history
     "war", "faction_change", "death", "settlement", "political", "accomplishment", "world_event",
     # player journey

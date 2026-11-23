@@ -21,6 +21,7 @@ folder to keep your progress.
 | Space | Dodge roll |
 | F | Kick |
 | Q | Switch melee / ranged weapon |
+| G | Hostile intent on/off: your attacks hit anyone (townsfolk, companions), and finish off the fallen |
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
 | B / P / R | Spell book / your company / relationships |

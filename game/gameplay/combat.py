@@ -6,6 +6,7 @@ the Character / Inventory / factions APIs.
 """
 import math
 
+from ..set_system import aggression
 from ..set_system import combat as rules
 from ..set_system import factions, spells as spell_rules
 from ..world.mapgen import TILE
@@ -76,6 +77,10 @@ class Combatant(Actor):
         self.fled = False
         self.telegraph = 0.0
         self.attackers = 0
+        self.grudge = set()     # cids this combatant is hostile to regardless of teams (personal conflicts)
+        self.downed = False     # defeated (0 HP) but alive; can recover
+        self.killed = False     # finished off: permanent
+        self.npc = None         # named NPC record, if any
 
     # ------------------------------------------------------------ stats
     @property
@@ -180,6 +185,7 @@ class CombatWorld:
         self.effects = []
         self.floaters = []      # [text, x, y, t, color]
         self.particles = []     # [x, y, vx, vy, t, color]
+        self.intent = bool(state.settings.get("hostile_intent", False)) if state is not None else False
         self.vfx_events = []    # purely visual notifications (hits, dodges) consumed by the renderer
         self.pickups = []       # {"item","qty","x","y"}
         self.shake = 0.0
@@ -214,6 +220,21 @@ class CombatWorld:
         self.combatants.append(c)
         return c
 
+    def add_townsfolk(self, npc, x, y, look, rng, anchor_radius=4, stationary=False, name=None):
+        """A non-hostile character (named NPC or anonymous shopkeeper) who can still be attacked."""
+        from .bystander_ai import BystanderAI, civilian_def
+        e = npc_fighter(self.data, npc) if npc else civilian_def(name or "Townsperson")
+        c = Combatant(x, y, look, 34.0, npc["name"] if npc else (name or "Townsperson"), team="npc", enemy=e,
+                      race=self.data.races.get(npc["race"]) if npc else None)
+        c.npc = npc
+        c.enemy_id = None
+        c.hostile = False
+        c.stationary = stationary
+        wary = bool(npc) and aggression.grudge_active(self.state, npc["id"])
+        c.ai = BystanderAI(c, rng, anchor_radius, stationary, wary=wary)
+        self.combatants.append(c)
+        return c
+
     def companions(self):
         return [c for c in self.combatants if getattr(c, "companion_id", None)]
 
@@ -235,12 +256,55 @@ class CombatWorld:
     def enemies(self, alive=True):
         return [c for c in self.combatants if c.team == "enemy" and (c.alive or not alive)]
 
+    # ---------------------------------------------------------------- who may hurt whom
+    @staticmethod
+    def hostile_between(a, b):
+        """Teams decide the default (party vs enemies); personal grudges override it either way.
+        'npc' team characters (townsfolk, shopkeepers, camp NPCs) are nobody's enemy until a grudge forms."""
+        if a is b:
+            return False
+        if b.cid in a.grudge or a.cid in b.grudge:
+            return True
+        if a.team == b.team or "npc" in (a.team, b.team):
+            return False
+        return True
+
     def foes_of(self, c):
-        return [o for o in self.combatants if o.alive and o is not c and o.team != c.team]
+        return [o for o in self.combatants if o.alive and self.hostile_between(c, o)]
+
+    def strike_targets(self, c):
+        """Everyone this combatant's attacks can connect with. With hostile intent on, the player's attacks
+        connect with anyone at all - friends, neutrals and companions included."""
+        if c is self.player and self.intent:
+            return [o for o in self.combatants if o.alive and o is not c]
+        return self.foes_of(c)
+
+    def can_hit(self, owner, o, team=None):
+        if owner is None:
+            return o.team != team
+        if o is owner:
+            return False
+        return self.hostile_between(owner, o) or (owner is self.player and self.intent)
+
+    def threatens_party(self, o):
+        """A non-enemy currently fighting the player's side."""
+        if not o.alive or o.team == "enemy" or o is self.player:
+            return False
+        if not any(cid in o.grudge for cid in self._party_ids()):
+            return False
+        return getattr(o.ai, "fighting", True)
+
+    def _party_ids(self):
+        ids = {c.cid for c in self.companions() if not c.grudge}
+        if self.player is not None:
+            ids.add(self.player.cid)
+        return ids
 
     @property
     def in_combat(self):
-        return any(c.alive and c.alerted and c.hostile and not c.enemy.get("training") for c in self.enemies())
+        if any(c.alive and c.alerted and c.hostile and not c.enemy.get("training") for c in self.enemies()):
+            return True
+        return self.player is not None and any(self.threatens_party(o) for o in self.combatants)
 
     # ================================================================ player commands
     def player_weapon(self):
@@ -413,8 +477,8 @@ class CombatWorld:
 
     def _spell_targets(self, c, p):
         if p["target"] == "ally":
-            return [o for o in self.combatants if o.alive and o.team == c.team]
-        return self.foes_of(c)
+            return [o for o in self.combatants if o.alive and o.team == c.team and not self.hostile_between(c, o)]
+        return self.strike_targets(c)
 
     def _target_point(self, c, rng, aim):
         best, bd = None, rng
@@ -528,7 +592,10 @@ class CombatWorld:
         return res
 
     def provoke(self, src, tgt):
-        if src is None or tgt.team == src.team:
+        if src is None or src is tgt:
+            return
+        if tgt.team == "npc" or tgt.team == src.team or src.team == "npc" or src.cid in tgt.grudge:
+            self._personal_violence(src, tgt)
             return
         tgt.last_attacker = src
         if not tgt.alerted:
@@ -541,6 +608,92 @@ class CombatWorld:
             if fac:
                 factions.change_rep(self.state, fac, -3, f"attacked a {tgt.name}")
             self.alert_group(tgt)
+
+    def _personal_violence(self, src, tgt):
+        """Someone hit a character who is not a team enemy. Reactions are decided by the Set System
+        (aggression.py) and the victim's AI; this only routes them."""
+        tgt.last_attacker = src
+        tgt.alerted = True
+        if src.cid in tgt.grudge:
+            return
+        tgt.grudge.add(src.cid)
+        if tgt.ai is not None and hasattr(tgt.ai, "provoked"):
+            tgt.ai.provoked(self, src)
+        if src is not self.player or tgt is self.player:
+            return
+        st = self.state
+        npc_id = tgt.npc["id"] if tgt.npc else None
+        comp_id = getattr(tgt, "companion_id", None)
+        near = [o for o in self.combatants if o.alive and o is not tgt and o is not src and o.team == "npc"
+                and math.hypot(o.x - tgt.x, o.y - tgt.y) < 170]
+        witnessed = bool(near) or npc_id is not None or comp_id is not None
+        self.events += aggression.on_assault(st, npc_id or comp_id, tgt.name or "a stranger",
+                                             is_companion=comp_id is not None, witnessed=witnessed)
+        for o in near:
+            if o.npc:
+                aggression.witness(st, o.npc["id"], tgt.name or "a stranger")
+        self._companions_react(tgt, killed=False)
+
+    def _companions_react(self, victim, killed):
+        st = self.state
+        victim_cid = getattr(victim, "companion_id", None)
+        for co in self.companions():
+            if co is victim or not co.alive or co.grudge or co.companion_id not in st.companions:
+                continue
+            kind, msg = aggression.companion_reaction(st, co.companion_id, victim_npc=victim.npc if not victim_cid else None,
+                                                      victim_cid=victim_cid, killed=killed)
+            aggression.companion_reacts(st, co.companion_id, kind, victim.name or "a stranger")
+            if kind == "join" and not killed:
+                co.grudge.add(victim.cid)
+            elif kind == "defend":
+                co.grudge.add(self.player.cid)
+                co.alerted = True
+            elif kind == "leave":
+                co.companion_id = None
+                co.fled = True
+            if msg:
+                self.events.append(msg)
+                self.floaters.append([msg.split(":")[0] if ":" in msg else "!", co.x, co.y - 34, 0.0, (240, 220, 160)])
+
+    def settle_conflicts(self):
+        """Leaving the map mid-quarrel: companions who fought the player decide whether they stay (Set System)."""
+        msgs = []
+        if self.player is None:
+            return msgs
+        for c in self.companions():
+            if c.alive and (self.player.cid in c.grudge or c.cid in self.player.grudge):
+                verdict, msg = aggression.after_conflict(self.state, c.companion_id)
+                if msg:
+                    msgs.append(msg)
+            c.grudge.clear()
+        return msgs
+
+    def execute(self, src, tgt):
+        """A finishing blow on a defeated character. Permanent for named NPCs and companions."""
+        st = self.state
+        npc_id = tgt.npc["id"] if tgt.npc else getattr(tgt, "companion_id", None)
+        if not aggression.can_kill(st, npc_id):
+            self.events.append(f"{tgt.name} cannot be killed.")
+            return False
+        tgt.killed = True
+        tgt.flash = 0.2
+        self.sfx("heavy")
+        self.shake = max(self.shake, 2.0)
+        self._vfx("hit", src, tgt, {"weapon": (src.profile or {}).get("weapon"), "skill": "melee"},
+                  {"stagger_time": 0.5}, (src.x, src.y - 6), 1.0)
+        near = [o for o in self.combatants if o.alive and o.team == "npc" and math.hypot(o.x - tgt.x, o.y - tgt.y) < 200]
+        was_companion = getattr(tgt, "companion_id", None)
+        if was_companion and tgt.char:
+            tgt.char.alive = False
+        self.events += aggression.on_kill(st, npc_id, tgt.name or "a stranger", witnessed=bool(near) or npc_id is not None)
+        for o in near:
+            if o.npc:
+                aggression.witness(st, o.npc["id"], tgt.name or "a stranger", "a killing")
+            if o.ai is not None and hasattr(o.ai, "terrified"):
+                o.ai.terrified(self, src)
+        tgt.companion_id = None
+        self._companions_react(tgt, killed=True)
+        return True
 
     def alert_group(self, c):
         for o in self.enemies():
@@ -580,6 +733,15 @@ class CombatWorld:
             tgt.downed = True
             tgt.char.hp = 0.0
             self.events.append(f"{tgt.name} is down!")
+            if src is self.player:
+                aggression.on_defeat(self.state, tgt.companion_id, tgt.name, by_player=True)
+            return
+        if tgt.team == "npc":
+            # townsfolk are beaten down, not killed (see aggression.py persistence rules)
+            tgt.downed = True
+            tgt.statuses = []
+            self.events += aggression.on_defeat(self.state, tgt.npc["id"] if tgt.npc else None, tgt.name or "a stranger",
+                                                by_player=src is self.player)
             return
         self.kills.append(tgt.enemy_id)
         st = self.state
@@ -643,8 +805,30 @@ class CombatWorld:
         if not self.in_combat:
             self.calm_t = getattr(self, "calm_t", 0.0) + dt
             if self.calm_t > 3.0:
+                for c in self.combatants:
+                    if c.team == "npc" and c.downed and not c.killed and c.state == "dead" and self.calm_t > 5.0:
+                        c.downed = False
+                        c.hp = max(1.0, c.max_hp * 0.25)
+                        c.set_state("idle")
+                        c.dead_t = 0.0
+                        if c.ai is not None and hasattr(c.ai, "recovered"):
+                            c.ai.recovered(self)
                 for c in self.companions():
-                    if getattr(c, "downed", False):
+                    if c.grudge and c.alive and self.calm_t > 3.0:
+                        with_player = self.player is not None and (self.player.cid in c.grudge or c.cid in self.player.grudge)
+                        for o in self.combatants:
+                            o.grudge.discard(c.cid)
+                        c.grudge.clear()
+                        if not with_player:
+                            continue
+                        verdict, msg = aggression.after_conflict(self.state, c.companion_id)
+                        if verdict == "leave":
+                            c.companion_id = None
+                            c.fled = True
+                        if msg:
+                            self.events.append(msg)
+                for c in self.companions():
+                    if getattr(c, "downed", False) and not c.killed:
                         c.downed = False
                         c.char.hp = max(1.0, c.char.max_hp * 0.2)
                         c.char.alive = True
@@ -655,7 +839,7 @@ class CombatWorld:
             self.calm_t = 0.0
         # remove faded corpses and escaped enemies
         self.combatants = [c for c in self.combatants if not (c.state == "dead" and c.dead_t > 1.6 and c is not self.player
-                                                                 and not c.char) and not c.fled]
+                                                                 and not c.char and c.team != "npc") and not c.fled]
 
     def _update_combatant(self, c, dt, lmap):
         c.state_t += dt
@@ -755,13 +939,23 @@ class CombatWorld:
     def _melee_sweep(self, c):
         p = c.profile
         origin = (c.x, c.y - 6)
-        for o in self.foes_of(c):
+        landed = False
+        for o in self.strike_targets(c):
             if o.cid in c.hit_ids or not o.alive:
                 continue
             if rules.in_arc(origin, c.aim, (o.x, o.y - 6), p["reach"], p["arc"]):
                 c.hit_ids.add(o.cid)
+                landed = True
                 self.hit(c, o, p, origin)
                 if not (p["arc"] >= 100):  # narrow weapons hit one target per swing
+                    break
+        # a deliberate blow on someone lying defeated finishes them (player, hostile intent only)
+        if not landed and c is self.player and self.intent and p.get("weapon") != "kick":
+            for o in self.combatants:
+                if o.downed and not o.killed and o.state == "dead" and o.cid not in c.hit_ids \
+                        and rules.in_arc(origin, c.aim, (o.x, o.y - 2), p["reach"] + 4, max(60, p["arc"])):
+                    c.hit_ids.add(o.cid)
+                    self.execute(c, o)
                     break
 
     def _fire(self, c, charge=1.0):
@@ -818,9 +1012,7 @@ class CombatWorld:
                 self._projectile_end(pr)
                 continue
             for o in self.combatants:
-                if not o.alive or o.team == pr.team or o.cid in pr.hit:
-                    continue
-                if pr.owner and pr.owner.team == "enemy" and o.team == "enemy":
+                if not o.alive or o.cid in pr.hit or not self.can_hit(pr.owner, o, pr.team):
                     continue
                 if math.hypot(o.x - pr.x, (o.y - 7) - pr.y) <= pr.radius + 6:
                     pr.hit.add(o.cid)

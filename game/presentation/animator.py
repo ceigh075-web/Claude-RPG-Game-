@@ -91,8 +91,8 @@ def humanoid_entries(a, look, weapon, t, camx, camy, art, white_fn):
     entries = []
     dead = getattr(a, "state", None) == "dead"
     alpha = 255
-    if dead:
-        alpha = max(0, int(255 * (1 - max(0.0, a.dead_t - 0.8) / 0.8)))
+    if dead and getattr(a, "team", "enemy") == "enemy" and not getattr(a, "char", None):
+        alpha = max(0, int(255 * (1 - max(0.0, a.dead_t - 0.8) / 0.8)))   # enemy bodies fade; people stay
     # weapon
     wtype, ore = weapon if weapon else (None, None)
     if anim in ("slice", "pierce", "crush", "collect") and getattr(a, "state", None) == "cast":

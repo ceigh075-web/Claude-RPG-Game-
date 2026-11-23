@@ -55,6 +55,7 @@ Pushing a tag like `v1.0.0` publishes them as a Release.
 | L / right mouse | Block (hold) |
 | F / Space | Kick / dodge roll |
 | Q | Switch melee / ranged weapon |
+| G | Hostile intent on/off: your attacks hit anyone (townsfolk, companions), and finish off the fallen |
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
 | B / P / R | Spell book / your company / relationships |

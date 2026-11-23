@@ -162,6 +162,36 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## Violence against anyone (universal targeting)
+
+Every living character can be attacked: enemies, wildlife, townsfolk, shopkeepers, faction leaders,
+recruitable NPCs and your own companions. Nobody is invulnerable by default.
+
+- **Targeting.** Normal attacks only connect with enemies, so a swing in a crowded square can't hurt
+  anyone by accident. Press **G** for *hostile intent*: with it on, melee, arrows and spells connect with
+  whoever they touch. Anyone who is fighting you is a normal foe and can be hit without intent.
+- **Reactions** (Set System, `set_system/aggression.py`, from personality and fighting skill):
+  fight back, flee, call for help (nearby people may join in, flee or just watch, depending on their own
+  courage, ties to the victim and how much they like you), cower when cornered indoors, or yield when badly
+  hurt. Anyone you attack holds a grudge for 3 days: they won't talk or trade, and they may attack or run
+  when they see you again.
+- **Companions** react by personality, loyalty, their relationship with you and their ties to the victim
+  (same faction, same home, friendship). They may join you, stand aside, object, or turn on you to
+  defend the victim. Seeing a killing can make a companion leave for good. A companion you fought
+  decides once things calm down whether to stay.
+- **Defeat and death.** At 0 HP a person is *defeated*: knocked down, not killed. Named NPCs then stay home
+  injured for a day. Only a deliberate finishing blow (hostile intent on) on someone lying defeated kills
+  them, and death is permanent: they leave every schedule, shop and recruitment list, and the Local AI is
+  told they are dead. Killing a faction leader triggers a succession (killing Black Ren breaks the
+  Hollow). Bodies stay where they fell for the rest of the visit.
+- **Consequences.** Assault: the victim's friendship and trust drop sharply and conflict rises; you lose
+  standing with the victim's faction and with the faction that runs the town, if anyone saw it. Killing
+  costs much more, hurts your standing with everyone who knew the victim, and counts on your record.
+  All of it is written into the Set AI's history (`assault`, `defeated`, `death`, `witnessed`,
+  `political`) so NPCs, the journal and the Local AI can refer to it later.
+- **Exceptions** belong in data: an NPC with `"protected": true` (or listed in
+  `aggression.PROTECTED`) can still be attacked and defeated but not killed. The list ships empty.
+
 ## Magic (data/magic.json)
 
 4 elements × 4 sub-elements:
