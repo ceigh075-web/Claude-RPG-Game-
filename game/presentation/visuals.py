@@ -111,7 +111,7 @@ def enemy_look(c, data=None):
             if len(_enemy_looks) > 400:
                 _enemy_looks.clear()
             lk = looks.enemy_variant(data, eid, c.cid)
-            if e.get("elite_event"):
+            if e.get("elite_event") or e.get("boss"):
                 lk["cape"] = [120, 20, 30]
                 lk["hat"] = "horns" if eid == "thornblood_raider" else lk.get("hat", "crown")
                 lk["height"] = "tall"
@@ -154,13 +154,19 @@ def combatant_entries(world, art, camx, camy, t, state=None):
         elif shape == "humanoid":
             look = enemy_look(c, data) if e and (c.team == "enemy" or getattr(c, "surrendered", False)) \
                 else dress(c.look, c.char, data)
-            out += animator.humanoid_entries(c, look, weapon_for(c, data, state), t, camx, camy, art, art.white)
+            ents = animator.humanoid_entries(c, look, weapon_for(c, data, state), t, camx, camy, art, art.white)
+            if e and e.get("boss"):
+                ents = _scale_entries(ents, data.bosses[e["boss"]].get("scale", 1.4), c.x - camx, c.y - camy)
+                shadow_w = 26
+            out += ents
         else:
             cshape = creatures.shape_for(eid, e)
             anim, idx = creatures.creature_anim(c)
             col = creature_color(cshape, eid, e, c.cid, getattr(world.map, "biome", None))
             img = creatures.frame(cshape, col, anim, idx, c.cid)
-            if e.get("elite_event"):
+            if e.get("boss"):
+                img = _boss_scale(img, data.bosses[e["boss"]].get("scale", 1.8))
+            elif e.get("elite_event"):
                 img = _elite(img)
             if c.facing == "left" or (c.facing in ("up", "down") and c.aim[0] < 0):
                 img = pygame.transform.flip(img, True, False)
@@ -184,6 +190,29 @@ def combatant_entries(world, art, camx, camy, t, state=None):
                 a_ = t * 3 + k * 2.1
                 star = _star()
                 out.append((c.y + 0.03, star, int(c.x - 2 + math.cos(a_) * 7 - camx), int(c.y - 14 + math.sin(a_) * 2 - camy)))
+    return out
+
+
+_boss_cache = {}
+
+
+def _boss_scale(img, k):
+    key = (id(img), k)
+    hit = _boss_cache.get(key)
+    if hit is None or hit[0] is not img:
+        if len(_boss_cache) > 400:
+            _boss_cache.clear()
+        w, h = img.get_size()
+        hit = _boss_cache[key] = (img, pygame.transform.scale(img, (int(w * k), int(h * k))))
+    return hit[1]
+
+
+def _scale_entries(entries, k, fx, fy):
+    """Scale a humanoid's sprite entries about its feet (bosses tower over everyone)."""
+    out = []
+    for sort_y, surf, x, y in entries:
+        s = _boss_scale(surf, k)
+        out.append((sort_y, s, int(fx + (x - fx) * k), int(fy + (y - fy) * k)))
     return out
 
 
@@ -220,6 +249,8 @@ GOLEM_HUES = [(150, 220, 230), (190, 150, 240), (150, 230, 170)]
 def creature_color(shape, eid, e, cid, biome):
     """Natural creatures take on a little of their surroundings; golems come in several mineral hues."""
     col = tuple(e["color"])
+    if e.get("boss_color"):
+        return tuple(e["boss_color"])
     if shape == "crystal":
         return GOLEM_HUES[cid % len(GOLEM_HUES)]
     tint = BIOME_TINT.get(biome)

@@ -188,6 +188,8 @@ class CombatWorld:
         self.particles = []     # [x, y, vx, vy, t, color]
         self.intent = bool(state.settings.get("hostile_intent", False)) if state is not None else False
         self.vfx_events = []    # purely visual notifications (hits, dodges) consumed by the renderer
+        self.bosses = []        # BossFight controllers (gameplay/boss.py)
+        self.telegraphs = []    # warning rings on the ground that strike after a delay
         self.pickups = []       # {"item","qty","x","y"}
         self.shake = 0.0
         self.hitstop = 0.0
@@ -913,6 +915,13 @@ class CombatWorld:
         from ..set_system import loot as loot_rules
         danger = self.data.location(st.location).get("danger", 1) if st.location in self.data.locations else 1
         tgt.loot = loot_rules.enemy_gear(self.data, e, self.rng, danger)
+        if e.get("boss"):
+            from ..set_system import bosses as boss_rules
+            msgs, items = boss_rules.on_defeat(st, e["boss"])
+            self.events += msgs
+            tgt.loot = loot_rules.sort(self.data, loot_rules.stack(tgt.loot + items))
+            self.telegraphs = [t for t in self.telegraphs if t["src"] is not tgt]
+            self.shake = max(self.shake, 6.0)
         if src is not None and src.char:
             src.char.train("health", 1.0, src.race_data)
             src.char.xp_total += e["xp"] * 0.5
@@ -957,6 +966,11 @@ class CombatWorld:
             p[3] += 140 * dt
             p[4] -= dt
         self.particles = [p for p in self.particles if p[4] > 0]
+        if self.bosses or self.telegraphs:
+            from . import boss as boss_rt
+            for b in self.bosses:
+                b.update(dt)
+            boss_rt.update_telegraphs(self, dt)
         self._move_pickups(dt, lmap)
         self._collect_pickups()
         # downed companions get back up once the fighting is over

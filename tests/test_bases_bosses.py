@@ -71,3 +71,74 @@ class TestBases(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBosses(unittest.TestCase):
+    def setUp(self):
+        self.g = new_game()
+        st = self.g.state
+        st.location, st.local_pos, st.sub_location = "hollow_fort", None, None
+        st.discovered.add("hollow_fort")
+        st.player.hp = st.player.max_hp
+        self.g.enter_world()
+        self.loc = self.g.scenes.top
+        self.w = self.loc.combat
+
+    def boss(self):
+        return self.w.bosses[0]
+
+    def test_boss_spawns_with_controller(self):
+        self.assertEqual(len(self.w.bosses), 1)
+        b = self.boss()
+        self.assertEqual(b.c.enemy["boss"], "hollow_warlord")
+        self.assertEqual(b.c.max_hp, 900)
+
+    def test_phases_summon_enrage_and_telegraph(self):
+        b = self.boss()
+        p = self.w.player
+        p.x, p.y = b.c.x - 60, b.c.y
+        n0 = len(self.w.enemies())
+        for _ in range(10):
+            self.w.update(1 / 30, self.loc.map)
+        self.assertTrue(b.engaged)
+        b.c.hp = b.c.max_hp * 0.65
+        self.w.update(1 / 30, self.loc.map)
+        self.assertGreater(len(self.w.enemies()), n0)          # minions arrived
+        b.c.hp = b.c.max_hp * 0.35
+        self.w.update(1 / 30, self.loc.map)
+        self.assertTrue(b.enraged)
+        b.timer = 0
+        self.w.update(1 / 30, self.loc.map)
+        self.assertTrue(self.w.telegraphs)
+        hp0 = p.char.hp if p.char else None
+        tg = self.w.telegraphs[0]
+        p.x, p.y = tg["x"], tg["y"] + 4
+        for _ in range(60):
+            self.w.update(1 / 30, self.loc.map)
+        self.assertFalse(any(t["src"] is b.c for t in self.w.telegraphs if t["t"] > t["delay"]))
+        if hp0 is not None:
+            self.assertLess(p.char.hp, hp0)
+
+    def test_defeat_is_permanent_and_rewarding(self):
+        from game.set_system import bosses
+        b = self.boss()
+        st = self.g.state
+        rep0 = st.reputation["crown"]
+        b.c.hp = 0
+        self.w.kill(b.c, self.w.player)
+        self.assertTrue(bosses.defeated(st, "hollow_warlord"))
+        self.assertGreater(st.reputation["crown"], rep0)
+        self.assertTrue(any(e["item"] == "sunsilver_bar" for e in b.c.loot))
+        self.assertTrue(self.w.pickups)                       # marks burst out
+        self.g.enter_world()
+        self.assertEqual(self.g.scenes.top.combat.bosses, [])  # gone for good
+
+    def test_every_boss_lair_spawns(self):
+        for bid, bd in self.g.data.bosses.items():
+            st = self.g.state
+            st.location, st.local_pos, st.sub_location = bd["location"], None, None
+            self.g.enter_world()
+            w = self.g.scenes.top.combat
+            self.assertEqual([x.id for x in w.bosses], [bid])
+            for _ in range(30):
+                self.g.step(1 / 30, [])

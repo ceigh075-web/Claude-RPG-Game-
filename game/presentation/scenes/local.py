@@ -157,6 +157,24 @@ class LocalScene(Scene):
                 c.remembers = bool(g.get("remembers"))
             self.active_groups.add(gid)
         self.spawn_world_enemies(groups, now)
+        self.spawn_boss()
+
+    def spawn_boss(self):
+        """A lair's boss waits here until defeated (Set System: bosses.py; fight runtime: gameplay/boss.py)."""
+        from ...gameplay.boss import BossFight
+        from ...set_system import bosses
+        st, m = self.state, self.map
+        if m.kind != "wild" or st.sub_location:
+            return
+        bid = bosses.at(st, st.location)
+        if not bid:
+            return
+        bx, by = bosses.spawn_point(self.data, bid, m)
+        b = self.data.bosses[bid]
+        c = self.combat.spawn_enemy(b["base"], bx * T + 8, by * T + 12, group=f"boss:{bid}", hostile=True,
+                                    edef=bosses.enemy_def(self.data, bid))
+        c.poise, c.mass = 1.4, 6.0
+        self.combat.bosses.append(BossFight(self.combat, c, bid))
 
     def spawn_world_enemies(self, groups, now):
         """Enemies created by world events (raids, war patrols, named monsters) and Hollow-held territory."""
@@ -1673,6 +1691,7 @@ class LocalScene(Scene):
             if pr:
                 ui.prompt(screen, "E", pr, (W // 2, H - 48), 24, self.prompt_icon(tgt))
         combat_draw.draw_combat_hud(screen, self.combat, st, self.data, W, H, self.hotbar())
+        combat_draw.draw_boss_bar(screen, self.combat, W)
         if p.hp < p.max_hp * 0.3:
             pulse = 0.5 + 0.5 * math.sin(self.t * 5)
             v = pygame.Surface((W, H), pygame.SRCALPHA)

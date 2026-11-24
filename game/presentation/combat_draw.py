@@ -121,6 +121,41 @@ def draw_under(canvas, world, camx, camy, t):
     if visuals.enabled():
         vfx.update(world, t)
         vfx.draw_under(canvas, world, camx, camy, t)
+    draw_telegraphs(canvas, world, camx, camy, t)
+
+
+def draw_telegraphs(canvas, world, camx, camy, t):
+    """Boss warning rings: an outline that fills in as the strike approaches (the edge flashes at the end)."""
+    for tg in getattr(world, "telegraphs", []):
+        x, y, r = int(tg["x"] - camx), int(tg["y"] - camy), int(tg["r"])
+        f = min(1.0, tg["t"] / max(0.01, tg["delay"]))
+        ring = pygame.Surface((r * 2 + 4, r + 4), pygame.SRCALPHA)
+        rect = pygame.Rect(2, 2, r * 2, r)
+        pygame.draw.ellipse(ring, (*tg["color"], int(40 + 90 * f)), rect.inflate(-int(r * 2 * (1 - f)), -int(r * (1 - f))))
+        edge = (255, 240, 200) if f > 0.8 and int(t * 20) % 2 else tg["color"]
+        pygame.draw.ellipse(ring, (*edge, 220), rect, 2)
+        canvas.blit(ring, (x - r - 2, y - r // 2 - 2))
+
+
+def draw_boss_bar(screen, world, W):
+    """Top-of-screen health bar for an engaged boss, with phase notches."""
+    for b in getattr(world, "bosses", []):
+        c = b.c
+        if not b.engaged or b.done or not c.alive:
+            continue
+        bw = 560
+        x, y = W // 2 - bw // 2, 52
+        ui.text(screen, b.name, (W // 2, y - 26), 26, (240, 180, 120), bold=True, center=True)
+        pygame.draw.rect(screen, (20, 12, 10), (x - 3, y - 3, bw + 6, 22), border_radius=4)
+        frac = max(0.0, c.hp / max(1.0, c.max_hp))
+        pygame.draw.rect(screen, (90, 20, 20), (x, y, bw, 16), border_radius=3)
+        pygame.draw.rect(screen, (220, 60, 46) if not b.enraged else (255, 120, 40), (x, y, int(bw * frac), 16),
+                         border_radius=3)
+        pygame.draw.rect(screen, (240, 200, 140), (x - 3, y - 3, bw + 6, 22), 2, border_radius=4)
+        for ph in b.d["phases"]:
+            px = x + int(bw * ph["at"])
+            pygame.draw.line(screen, (250, 230, 190), (px, y - 2), (px, y + 17), 2)
+        break
 
 
 def vfx_lights(world):
@@ -231,7 +266,8 @@ def draw_fx(canvas, world, art, camx, camy, t):
         canvas.fill(p[5], (int(p[0] - camx), int(p[1] - camy), 2, 2))
     # enemy health bars
     for c in world.combatants:
-        if c.team in ("enemy", "npc") and c.alive and (c.hp < c.max_hp or (c.alerted and c.team == "enemy")):
+        if c.team in ("enemy", "npc") and c.alive and (c.hp < c.max_hp or (c.alerted and c.team == "enemy")) \
+                and not (c.enemy and c.enemy.get("boss")):
             w = 18 if c.max_hp < 120 else 26
             top = {"brute": 40, "worm": 30, "beast": 26, "bug": 20, "dummy": 30}.get(c.enemy["shape"], 30)
             if new and c.enemy["shape"] == "humanoid":
@@ -321,7 +357,7 @@ def draw_combat_hud(screen, world, state, data, W, H, hotbar=None):
             tag = f"need {props['mana'] - p.mana:.0f} more"
         ui.text(screen, tag, (r.right - 12, y), 20,
                 tuple(props["color"]) if ok else ((220, 120, 120) if short else ui.TEXT_DIM), right=True)
-    if world.in_combat:
+    if world.in_combat and not any(b.engaged and not b.done for b in getattr(world, "bosses", [])):
         ui.text(screen, "IN COMBAT", (W // 2, 14), 26, (240, 110, 90), bold=True, center=True)
 
 

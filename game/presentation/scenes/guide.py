@@ -102,6 +102,15 @@ def chapters(scene):
                          "Stockade holds 4 in decent conditions (they warm to you faster). Retainers need beds: 1 per "
                          "house, 2 at the outpost and 4 per Bunkhouse. Full? Release someone or build more."),
     ]))
+    out.append(("Bosses", [
+        ("Lairs", "Skulls on the world map mark boss lairs: Varek the Hollow Warlord at Hollow Fort, the Bog Mother "
+                  "in Mirelight Bog and the Ashen Colossus in Ashfall Crater. Each falls once, for good."),
+        ("The fight", "Bosses change as they weaken (the notches on their health bar): they call minions, then "
+                      "enrage. Their big attacks are marked by a red ring on the ground first: get out before it "
+                      "fills, or block. Bring food, bandages and friends."),
+        ("Rewards", "Marks, rare materials and a fine weapon on the body (E to search), standing with the "
+                    "factions they threatened, and a story people will remember."),
+    ]))
     out.append(("Looting", [
         ("Drops", "Beaten foes spill coins and materials on the ground: walk over them to pick them up. Gear stays "
                   "on the body (a bag floats over it): press E to search."),

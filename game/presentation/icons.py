@@ -57,7 +57,7 @@ ACTION_CELL = {"talk": (4, 0), "trade": (12, 12), "attack": (3, 1), "steal": (4,
                "quest": (13, 11), "map": (13, 12), "journal": (13, 10), "inventory": (10, 0), "party": (4, 1),
                "gift": (8, 5), "prisoner": (11, 2), "look": (11, 1), "guide": (13, 8), "save": (11, 11),
                "pause": (10, 15), "relationship": (0, 6), "join": (4, 1), "bye": (4, 1), "loot": (11, 11),
-               "money": (12, 6), "house": (11, 9), "farm": (12, 5), "research": (13, 8), "duel": (5, 9)}
+               "money": (12, 6), "boss": (0, 0), "house": (11, 9), "farm": (12, 5), "research": (13, 8), "duel": (5, 9)}
 
 T = {
     "coins": [

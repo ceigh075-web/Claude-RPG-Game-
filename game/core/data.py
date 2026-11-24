@@ -43,6 +43,7 @@ class GameData:
         self.items = {k: v for k, v in _load("items.json").items() if not k.startswith("_")}
         self.enemies = _load("enemies.json")
         self.encounters = _load("encounters.json")["templates"]
+        self.bosses = _load("bosses.json")["bosses"]
         self.npcs = {n["id"]: n for n in _load("npcs.json")}
         self.schedules = {k: v for k, v in _load("schedules.json").items() if not k.startswith("_")}
         self.shops = {k: v for k, v in _load("shops.json").items() if not k.startswith("_")}
@@ -215,6 +216,15 @@ class GameData:
             need(t["anchor"] in self.enemies, f"encounter {t['id']} anchor unknown")
             for eid, lo, hi in t["members"]:
                 need(eid in self.enemies and 0 <= lo <= hi, f"encounter {t['id']} member {eid}")
+        for bid, b in self.bosses.items():
+            need(b["base"] in self.enemies, f"boss {bid} base unknown")
+            need(b["location"] in self.wilderness, f"boss {bid} lair must be a wild location")
+            for eid, n in [s for ph in b["phases"] for s in ph.get("summon", [])]:
+                need(eid in self.enemies, f"boss {bid} summons unknown {eid}")
+            for it, n in b["reward"]["items"]:
+                need(it in self.items, f"boss {bid} reward unknown {it}")
+            for fac in b.get("reputation", {}):
+                need(fac in self.factions, f"boss {bid} faction unknown {fac}")
         # graph connectivity
         adj = {i: set() for i in ids}
         for a, b, _ in self.routes:

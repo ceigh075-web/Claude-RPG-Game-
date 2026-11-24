@@ -382,6 +382,8 @@ class WorldMapScene(Scene):
                 for k in ("to", "where", "town"):
                     if j.get(k):
                         jobs_at.add(j[k])
+        from ...set_system import bosses
+        lairs = {loc: dead for loc, bid, dead in bosses.lairs(st) if loc in st.discovered or not dead}
         homes = set(getattr(st, "property", {}))
         if st.base.get("founded") is not None and st.base.get("location"):
             homes.add(st.base["location"])
@@ -395,6 +397,12 @@ class WorldMapScene(Scene):
                 pygame.draw.circle(screen, (236, 222, 190), (x, y), 6)
                 pygame.draw.circle(screen, DANGER_COL[loc["danger"]] if known else (150, 140, 120), (x, y), 4)
                 pygame.draw.circle(screen, INK, (x, y), 6, 1)
+            if lid in lairs:
+                skull = ui.fit_icon(icons.named(icons.ACTION_CELL, "boss"), 22)
+                if lairs[lid]:
+                    skull = skull.copy()
+                    skull.set_alpha(90)
+                screen.blit(skull, (x + 6, y - 6))
             if lid in jobs_at:
                 screen.blit(ui.fit_icon(icons.named(icons.ACTION_CELL, "quest"), 24), (x + 8, y - 28))
             if lid in homes:
@@ -484,5 +492,5 @@ class WorldMapScene(Scene):
         ui.text(screen, "Danger", (lx, ly), 18, ui.TEXT_DIM)
         for i in range(1, 6):
             pygame.draw.circle(screen, DANGER_COL[i], (lx + 70 + i * 26, ly + 8), 6)
-        ui.text(screen, "Red: route to goal   Blue: next stop   Scroll: job   House: yours", (lx, ly + 22), 16,
+        ui.text(screen, "Red: route   Blue: next stop   Scroll: job   House: yours   Skull: boss", (lx, ly + 22), 16,
                 ui.TEXT_DIM)
