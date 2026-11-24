@@ -36,6 +36,13 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Chibi characters | ✅ Done |
 | Chibi bodies, map, travel, bases, bosses | ✅ Done |
 
+## Session 12c — Back to the original heads
+
+- Chibi mode is switched off (`charsprites.CHIBI = False`): characters use the rig's own heads and normal-size
+  bodies again, pixel-identical to v1.0.6 (checked by hashing 52 looks x 4 animations against that commit).
+  Portraits, the creator preview, overhead names, barks and health bars are back at their v1.0.6 positions.
+  The chibi head code stays in `chibi.py` and is still tested, in case it's wanted later.
+
 ## Session 12b — Head size
 
 - Heads read as bobble-heads. Now in between the original rig and the big chibi: the head is drawn at its

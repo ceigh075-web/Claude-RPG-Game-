@@ -648,7 +648,7 @@ class CombatWorld:
         tgt.guard = max(0.0, tgt.guard - res["guard_damage"])
         if res["guard_broken"]:
             tgt.blocking = False
-            self.floaters.append(["GUARD BREAK", tgt.x, tgt.y - 46, 0.0, (255, 160, 80)])
+            self.floaters.append(["GUARD BREAK", tgt.x, tgt.y - 34, 0.0, (255, 160, 80)])
         # knockback away from origin
         kx, ky = norm(tgt.x - origin[0], (tgt.y - 6) - origin[1])
         tgt.kvx += kx * res["knockback"]
@@ -768,7 +768,7 @@ class CombatWorld:
                 co.fled = True
             if msg:
                 self.events.append(msg)
-                self.floaters.append([msg.split(":")[0] if ":" in msg else "!", co.x, co.y - 46, 0.0, (240, 220, 160)])
+                self.floaters.append([msg.split(":")[0] if ":" in msg else "!", co.x, co.y - 34, 0.0, (240, 220, 160)])
 
     def settle_conflicts(self):
         """Leaving the map mid-quarrel: companions who fought the player decide whether they stay (Set System)."""
@@ -836,7 +836,7 @@ class CombatWorld:
         c.set_state("idle")
         self.tokens.discard(c.cid)
         c.ai = SurrenderedAI(c)
-        self.floaters.append(["I yield!", c.x, c.y - 46, 0.0, (255, 235, 160)])
+        self.floaters.append(["I yield!", c.x, c.y - 34, 0.0, (255, 235, 160)])
         self.events.append(f"{c.name} surrenders! Approach and press E to decide their fate.")
 
     def alert_group(self, c):

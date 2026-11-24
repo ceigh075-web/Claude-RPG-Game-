@@ -164,8 +164,8 @@ your standing is low, and attacking them costs reputation.
 
 ## Art direction
 
-Chibi anime fantasy: big round heads with large shining eyes and voluminous hair on small bodies, wood and
-parchment interface, one fantasy icon set, pixel art throughout.
+Anime-touched pixel fantasy on the Pixel Crawler rig: shining eyes, fringes and expressions on compact
+characters, wood and parchment interface, one fantasy icon set. (A chibi big-head mode exists in code, off.)
 
 ## Bases, travel and bosses
 

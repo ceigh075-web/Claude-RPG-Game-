@@ -338,9 +338,9 @@ def npc_entries(a, art, camx, camy, t, data=None):
 
 
 def portrait(art, look, direction="down", frame=0, walking=False):
-    """Character preview for menus (36x54, feet near the bottom, room for chibi heads and hats)."""
+    """Character preview for menus (22x32, feet at the bottom)."""
     if not enabled():
         return art.character(look, direction, frame)
     anim = "walk" if walking else "idle"
     surf, _, _ = charsprites.compose(look, anim, direction, frame % (6 if walking else 4))
-    return surf.subsurface((14, 4, 36, 54))
+    return surf.subsurface((21, 16, 22, 32))

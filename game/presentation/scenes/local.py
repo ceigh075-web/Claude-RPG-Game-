@@ -1490,7 +1490,7 @@ class LocalScene(Scene):
                     col = (240, 110, 90)
                 elif a.downed:
                     col, label = ui.TEXT_DIM, label + " (down)"
-                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 48 - camy) * 2)), 20, col, center=True)
+                ui.text(screen, label, (int((a.x - camx) * 2), int((a.y - 34 - camy) * 2)), 20, col, center=True)
         if self.combat.intent:
             ui.text(screen, "HOSTILE INTENT (G): your attacks hit anyone", (W // 2, 44), 22, (240, 110, 90), center=True)
         self.draw_hud(screen)

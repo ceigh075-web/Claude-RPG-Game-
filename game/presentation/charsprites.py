@@ -415,7 +415,7 @@ def _paint(look, info, d, anim="idle", idx=0):
     return out, smear
 
 
-CHIBI = True       # big-headed chibi characters (see chibi.py); False draws the rig's own small head
+CHIBI = False      # True: big-headed chibi characters (see chibi.py); False: the rig's own head (the game's look)
 
 
 def _erase_head(out, src, R):
