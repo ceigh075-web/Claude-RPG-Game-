@@ -84,9 +84,15 @@ class Game:
         from ..presentation.scenes.menu import MainMenu
         self.scenes.replace(MainMenu(self))
 
-    def new_game(self, name, race, look, pronouns):
+    def new_game(self, name, race, look, pronouns, starter_house=True):
         self.state = GameState.new_game(self.data, name, race, look, pronouns)
+        msg = None
+        if starter_house:
+            from ..set_system import bases
+            msg = bases.starter_house(self.state, self.world)
         self.enter_world()
+        if msg:
+            self.notify([msg])
 
     def enter_world(self):
         from ..presentation.scenes.local import LocalScene

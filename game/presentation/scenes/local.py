@@ -677,7 +677,7 @@ class LocalScene(Scene):
         opts = [("Inventory", "inv", True, "I"), ("Character & factions", "char", True, "C"),
                 ("Spell book", "book", True, "B"), ("Company (squad)", "party", True, "P"),
                 ("Relationships", "rel", True, "R"), ("Journal", "journal", True, "J"),
-                ("Adventurer's Guide", "guide", True, "H"), ("Prisoners & retainers", "prisoners", True, ""),
+                ("Adventurer's Guide", "guide", True, "H"), ("Prisoners & retainers", "prisoners", True, ""), ("Bases of operations", "bases", True, ""),
                 ("Appearance (hair, face, clothes)", "look", True, ""), ("World map", "map", True, "M"),
                 ("Quick save", "save", True, "F5"), ("Pause menu (options, load, quit)", "pause", True, "Esc")]
 
@@ -687,6 +687,7 @@ class LocalScene(Scene):
             from .inventory import InventoryScene
             from .journal import JournalScene
             from .party import PartyScene, RelationshipsScene
+            from .bases import BasesScene
             from .creator import CharacterCreatorScene
             from .prisoners import PrisonersScene
             from .spellbook import SpellbookScene
@@ -696,12 +697,13 @@ class LocalScene(Scene):
              "rel": lambda: push(RelationshipsScene(self.game)), "journal": lambda: push(JournalScene(self.game)),
              "guide": lambda: push(GuideScene(self.game)),
              "prisoners": lambda: push(PrisonersScene(self.game)),
+             "bases": lambda: push(BasesScene(self.game)),
              "look": lambda: push(CharacterCreatorScene(self.game, self.state.player.appearance, self.state.player.race,
                                                          on_done=self._look_changed)),
              "map": lambda: self.open_map(leaving=self.map.kind != "interior"),
              "save": lambda: self.game.save_game(1), "pause": lambda: push(PauseScene(self.game))}[v]()
         acts = {"inv": "inventory", "char": "level", "book": "spellbook", "party": "party", "rel": "relationship",
-                "journal": "journal", "guide": "guide", "prisoners": "prisoner", "look": "look", "map": "map",
+                "journal": "journal", "guide": "guide", "prisoners": "prisoner", "bases": "house", "look": "look", "map": "map",
                 "save": "save", "pause": "pause"}
         from .. import icons
         opts = [o + (icons.named(icons.ACTION_CELL, acts.get(o[1])) or icons.named(icons.STAT_CELL, acts.get(o[1])),)

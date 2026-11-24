@@ -173,7 +173,9 @@ def main():
     # Phase 8: buy a house via its door, use the chest; found the outpost, build, defend a raid
     while type(g.scenes.top).__name__ != "LocalScene" and len(g.scenes.stack) > 1:
         g.scenes.pop()
-    st.location, st.local_pos, st.sub_location = "brackenford", None, None
+    assert "brackenford" in st.property and st.property["brackenford"].get("starter"), "no starter house"
+    st.location, st.local_pos, st.sub_location = "duskreach", None, None
+    st.discovered.add("duskreach")
     st.gold = 20000
     st.player.heal(st.player.max_hp)
     st.player.food = st.player.water = 90
@@ -187,7 +189,7 @@ def main():
     key(g, pygame.K_e)
     assert type(g.scenes.top).__name__ == "ConfirmScene", g.scenes.top
     key(g, pygame.K_RETURN)
-    assert "brackenford" in st.property and st.sub_location == house["id"], "house purchase/entry failed"
+    assert "duskreach" in st.property and st.sub_location == house["id"], "house purchase/entry failed"
     loc = g.scenes.top
     chest = next(o for o in loc.map.objects if o["kind"] == "chest")
     loc.player.x, loc.player.y = chest["x"] * 16 + 8, (chest["y"] + 1) * 16 + 12
