@@ -235,7 +235,7 @@ def draw_fx(canvas, world, art, camx, camy, t):
             w = 18 if c.max_hp < 120 else 26
             top = {"brute": 40, "worm": 30, "beast": 26, "bug": 20, "dummy": 30}.get(c.enemy["shape"], 30)
             if new and c.enemy["shape"] == "humanoid":
-                top = 37                     # above a chibi head
+                top = 45                     # above a chibi head
             x, y = int(c.x - w / 2 - camx), int(c.y - top - camy)
             pygame.draw.rect(canvas, (20, 16, 20), (x - 1, y - 1, w + 2, 4))
             pygame.draw.rect(canvas, (200, 60, 50) if c.hostile else (200, 180, 80), (x, y, int(w * c.hp / c.max_hp), 2))

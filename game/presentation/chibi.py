@@ -631,7 +631,7 @@ def head(look, view, mood="normal"):
     headwear(front, look, view)
     front.outline()
     back.outline(_shade(hair, 0.3))
-    out = (back.surface() if back.px else None, front.surface())
+    out = (enlarge(back.surface()) if back.px else None, enlarge(front.surface()))
     if len(_cache) > 3000:
         _cache.clear()
     _cache[key] = out
@@ -644,4 +644,28 @@ def _key(look):
     return tuple((k, tuple(look[k]) if isinstance(look.get(k), list) else look.get(k)) for k in keys)
 
 
-ANCHOR = (OX + 8, OY + 13)      # canvas point that sits on the rig's chin (front/back views)
+ANCHOR = (OX + 8, OY + 13)      # canvas point that sits on the rig's chin (front/back views), unscaled
+HEAD_SCALE = 1.15               # heads are drawn on a 16px face grid, then enlarged to suit the bigger bodies
+ANCHOR_S = (ANCHOR[0] * HEAD_SCALE, ANCHOR[1] * HEAD_SCALE)
+
+
+def enlarge(surf, k=None):
+    """Scale pixel art by a non-integer factor without ragged edges: Scale2x first, then sample."""
+    k = HEAD_SCALE if k is None else k
+    if k == 1:
+        return surf
+    two = pygame.transform.scale2x(surf)
+    w, h = surf.get_size()
+    W, H = int(w * k) + 1, int(h * k) + 1
+    out = pygame.Surface((W, H), pygame.SRCALPHA)
+    for y in range(H):
+        sy = int((y + 0.5) / k * 2)
+        if sy >= h * 2:
+            continue
+        for x in range(W):
+            sx = int((x + 0.5) / k * 2)
+            if sx < w * 2:
+                c = two.get_at((sx, sy))
+                if c.a:
+                    out.set_at((x, y), c)
+    return out

@@ -26,7 +26,7 @@ class CharacterScene(Scene):
         ui.dim(screen, 150)
         r = ui.panel(screen, (40, 40, W - 80, H - 80), f"{p.name} - {race['name']} ({p.pronouns})")
         # portrait
-        spr = pygame.transform.scale(visuals.portrait(self.game.art, p.appearance, "down", 0), (103, 144))
+        spr = pygame.transform.scale(visuals.portrait(self.game.art, p.appearance, "down", 0), (96, 144))
         screen.blit(spr, (r.x + 30, r.y + 60))
         nxt = (p.level ** 2) * 40
         lines = [f"Level {p.level}", f"Experience {p.xp_total:.0f} / {nxt}", f"Max health {p.max_hp}",

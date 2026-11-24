@@ -183,7 +183,7 @@ class EnemyAI:
                 if verdict == "flee":
                     self.mode, self.mode_t = "flee", 0.0
                     world.tokens.discard(c.cid)
-                    world.floaters.append(["Run!", c.x, c.y - 40, 0.0, (255, 230, 150)])
+                    world.floaters.append(["Run!", c.x, c.y - 46, 0.0, (255, 230, 150)])
         # flee when badly hurt (if this archetype ever flees)
         if self.morale <= 0 and self.e.get("flee_below", 0) and hp_frac < self.e["flee_below"] and self.mode != "flee":
             self.mode, self.mode_t = "flee", 0.0

@@ -31,28 +31,101 @@ SKIN_BASE = (217, 160, 102)
 _base = {}      # (anim, dir) -> list of FrameInfo
 _body_pal = None
 _looks = {}     # (look_key, anim, dir, idx) -> (surface, smear)
-FOOT_Y = 41     # feet row inside a 64x64 frame (measured from the idle frames on first load)
+FOOT_Y = 41     # feet row inside a 64x64 frame (measured from the idle frames on first load; moved down for chibi)
+RAW_FOOT_Y = 41
+FOOT_SHIFT = 8  # chibi frames sit this much lower in the 64x64 frame, leaving room for big heads and hats
 
 
 class FrameInfo:
     __slots__ = ("body", "smear", "grip", "tip", "regions", "bbox")
 
 
-def _sheet(anim, d):
+def _raw_sheet(anim, d):
     folder, stem, n, up = ANIMS[anim]
     suffix = {"down": "Down", "up": up or "Up", "side": "Side"}[d]
     return assets.frames(f"{BODY}{folder}/{stem}_{suffix}-Sheet.png", FW, FW)[:n]
 
 
+BODY_SCALE = 1.3       # chibi bodies: the rig is enlarged about the feet so the body suits the big head
+_scaled = {}
+
+
+def _sheet(anim, d):
+    return _raw_sheet(anim, d)
+
+
+def to_frame(x, y):
+    """Map a point on the rig's original frame to the enlarged chibi frame."""
+    if not (CHIBI and BODY_SCALE != 1):
+        return x, y
+    return FW / 2 + (x + 0.5 - FW / 2) * BODY_SCALE - 0.5, (y + 0.5 - RAW_FOOT_Y - 0.5) * BODY_SCALE + FOOT_Y
+
+
+class _ScaledInfo:
+    """FrameInfo with grip / tip / torso moved onto the enlarged frame (for weapons and back-slung gear)."""
+    __slots__ = ("body", "smear", "grip", "tip", "regions", "bbox")
+
+    def __init__(self, info):
+        f = lambda p: tuple(int(round(v)) for v in to_frame(*p)) if p else None
+        self.body, self.smear = info.body, info.smear
+        self.grip, self.tip = f(info.grip), f(info.tip)
+        self.regions = dict(info.regions)
+        self.regions["torso"] = {f(p) for p in info.regions["torso"]}
+        b = info.bbox
+        x0, y0 = to_frame(b.x, b.y)
+        x1, y1 = to_frame(b.right, b.bottom)
+        self.bbox = pygame.Rect(int(x0), int(y0), int(x1 - x0), int(y1 - y0))
+
+
+_scaled_info = {}
+
+
+def frame_info(anim, d, idx, info):
+    if not (CHIBI and BODY_SCALE != 1):
+        return info
+    key = (anim, d, idx)
+    out = _scaled_info.get(key)
+    if out is None:
+        out = _scaled_info[key] = _ScaledInfo(info)
+    return out
+
+
+def _enlarge(frame):
+    """Enlarge a painted rig frame by BODY_SCALE about the feet (Scale2x first, so curves stay smooth)."""
+    _palette()                                   # makes sure FOOT_Y is measured on the raw frames
+    two = pygame.transform.scale2x(frame)
+    out = pygame.Surface((FW, FW), pygame.SRCALPHA)
+    ax, ay, k = FW / 2, RAW_FOOT_Y + 0.5, BODY_SCALE
+    dy = FOOT_Y - RAW_FOOT_Y
+    r = frame.get_bounding_rect()
+    if r.w == 0:
+        return out
+    x0 = max(0, int(ax + (r.x - ax) * k) - 2)
+    x1 = min(FW, int(ax + (r.right - ax) * k) + 3)
+    y0 = max(0, int(ay + (r.y - ay) * k) - 2 + dy)
+    y1 = min(FW, int(ay + (r.bottom - ay) * k) + 3 + dy)
+    for y in range(y0, y1):
+        sy = int(((y - dy + 0.5 - ay) / k + ay) * 2)
+        if not 0 <= sy < FW * 2:
+            continue
+        for x in range(x0, x1):
+            sx = int(((x + 0.5 - ax) / k + ax) * 2)
+            if 0 <= sx < FW * 2:
+                c = two.get_at((sx, sy))
+                if c.a:
+                    out.set_at((x, y), c)
+    return out
+
+
 def _palette():
     """Colours that belong to the bare body (collected from tool-free animations)."""
-    global _body_pal, FOOT_Y
+    global _body_pal, FOOT_Y, RAW_FOOT_Y
     if _body_pal is None:
         pal = set()
         bottoms = []
         for anim in ("idle", "walk", "run", "hit"):
             for d in ("down", "up", "side"):
-                for f in _sheet(anim, d):
+                for f in _raw_sheet(anim, d):
                     for y in range(FW):
                         for x in range(FW):
                             c = f.get_at((x, y))
@@ -66,7 +139,8 @@ def _palette():
         pal.discard(OUTLINE)
         _body_pal = pal
         if bottoms:
-            FOOT_Y = max(set(bottoms), key=bottoms.count)
+            RAW_FOOT_Y = max(set(bottoms), key=bottoms.count)
+        FOOT_Y = RAW_FOOT_Y + (FOOT_SHIFT if CHIBI and BODY_SCALE != 1 else 0)
     return _body_pal
 
 
@@ -230,7 +304,7 @@ def compose(look, anim, d, idx):
             _looks[fkey] = (pygame.transform.flip(surf, True, False),
                             pygame.transform.flip(smear, True, False) if smear else None)
         surf, smear = _looks[fkey]
-    return surf, smear, info
+    return surf, smear, frame_info(anim, bd, idx, info)
 
 
 def _paint(look, info, d, anim="idle", idx=0):
@@ -310,9 +384,23 @@ def _paint(look, info, d, anim="idle", idx=0):
     eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}
     if CHIBI and head:
         out = wardrobe.apply(out, src, look, R, d, eye_px, chibi=True)
-        anchor = _erase_head(out, src, R)
-        out = wardrobe.reshape(out, look, FOOT_Y)
-        out = _place_chibi_head(out, look, d, anim, idx, anchor)
+        cx, chin, cy, rot = _erase_head(out, src, R)
+        out = wardrobe.reshape(out, look, RAW_FOOT_Y)
+        dy = {"tall": -1, "short": 1}.get(look.get("height"), 0)
+        if BODY_SCALE != 1:
+            out = _enlarge(out)
+            cx, chin = to_frame(cx, chin + dy)
+            cy = to_frame(0, cy + dy)[1]
+        else:
+            chin, cy = chin + dy, cy + dy
+        out = _place_chibi_head(out, look, d, anim, idx, (cx, chin, cy, rot))
+        smear = _enlarge(info.smear) if info.smear is not None and BODY_SCALE != 1 else info.smear
+        if smear is not None:
+            smear = smear.copy()
+            tintc = look.get("smear")
+            if tintc:
+                smear.fill((*tintc, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        return out, smear
     else:
         if head and d in ("down", "side") and not look.get("helm"):
             _face(out, src, d, head, eye_px, skin, look)
@@ -366,14 +454,14 @@ def _place_chibi_head(out, look, d, anim, idx, anchor):
     cx, chin, cy, rot = anchor
     mood = "hurt" if anim == "hit" else ("ko" if anim == "death" and idx >= 3 else "normal")
     back, front = chibi.head(look, d, mood)
-    dy = {"tall": -1, "short": 1}.get(look.get("height"), 0)
+    dy = 0
     final = pygame.Surface((FW, FW), pygame.SRCALPHA)
     if rot:
         front = pygame.transform.rotate(front, rot)
         back = pygame.transform.rotate(back, rot) if back is not None else None
         pos = (int(round(cx - front.get_width() / 2)), int(round(cy + dy - front.get_height() / 2)))
     else:
-        ax, ay = chibi.ANCHOR
+        ax, ay = chibi.ANCHOR_S
         pos = (int(round(cx + 0.5 - ax)), int(chin + dy - ay))
     if back is not None:
         final.blit(back, pos)

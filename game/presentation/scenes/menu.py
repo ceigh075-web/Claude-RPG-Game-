@@ -33,7 +33,7 @@ def draw_backdrop(game, screen, t):
     # a little party walking the road
     for i, look in enumerate(getattr(game, "_menu_looks", [])):
         frame = int(t * 8 + i) % 4
-        canvas.blit(visuals.portrait(art, look, "right", frame, True), (240 + i * 30, 222))
+        canvas.blit(visuals.portrait(art, look, "right", frame, True), (236 + i * 34, 206))
     dark = pygame.Surface(canvas.get_size(), pygame.SRCALPHA)
     dark.fill((10, 8, 20, 120))
     canvas.blit(dark, (0, 0))
@@ -196,7 +196,7 @@ class NewGameScene(Scene):
         dirs = ("down", "left", "up", "right")
         d = dirs[int(self.t / 1.5) % 4]
         spr = visuals.portrait(self.game.art, self.look, d, int(self.t * 8), True)
-        big = pygame.transform.scale(spr, (spr.get_width() * 9, spr.get_height() * 9))
+        big = pygame.transform.scale(spr, (spr.get_width() * 7, spr.get_height() * 7))
         screen.blit(big, (box.centerx - big.get_width() // 2, box.bottom - big.get_height() - 20))
         ui.text(screen, race["appearance"], (box.centerx, box.bottom + 14), 20, ui.TEXT_DIM, center=True)
         ui.text(screen, "Up/Down: field   Left/Right: change   Enter: confirm   Esc: back",

@@ -272,12 +272,12 @@ class CharacterCreatorScene(Scene):
         try:
             n = {"idle": 4, "walk": 6, "slice": 8}[anim]
             surf, _, _ = charsprites.compose(self.look, anim, d, int(self.t * 8) % n)
-            spr = surf.subsurface((12, 2, 40, 48))
+            spr = surf.subsurface((10, 2, 44, 60))
         except Exception:
             spr = visuals.portrait(self.game.art, self.look, "down", int(self.t * 8), self.anim == 1)
         if flip:
             spr = pygame.transform.flip(spr, True, False)
-        big = pygame.transform.scale(spr, (spr.get_width() * 9, spr.get_height() * 9))
+        big = pygame.transform.scale(spr, (spr.get_width() * 7, spr.get_height() * 7))
         screen.blit(big, (box.centerx - big.get_width() // 2, box.bottom - big.get_height() - 70))
         # small turnaround strip
         for k, dd in enumerate(("down", "side", "up")):

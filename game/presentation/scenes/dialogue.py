@@ -283,7 +283,7 @@ class DialogueScene(Scene):
         ui.dim(screen, 90)
         ui.panel(screen, (40, 330, W - 80, 370))
         spr = visuals.portrait(self.game.art, npc_look(self.data, npc), "down", int(self.t * 5) if hasattr(self, "t") else 0)
-        screen.blit(pygame.transform.scale(spr, (171, 240)), (84, 380))
+        screen.blit(pygame.transform.scale(spr, (160, 240)), (90, 380))
         ui.text(screen, npc["name"], (360, 342), 32, ui.ACCENT, bold=True)
         race = self.data.races[npc["race"]]["name"]
         fac = self.data.factions[npc["faction"]]["name"] if npc.get("faction") else "Independent"
