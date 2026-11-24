@@ -3,7 +3,7 @@
     "enabled": true,
     "backend": "ollama",
     "endpoint": "http://localhost:11434",
-    "model": "llama3.2:3baaeaxpzssdr",
+    "model": "llama3.2:3baaeaxpzssdrmbm3hqkuqfvqbjz2",
     "timeout_seconds": 20,
     "temperature": 0.8,
     "max_tokens": 220

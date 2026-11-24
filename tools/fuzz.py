@@ -121,7 +121,7 @@ def main():
                                                       {"item": "dagger_rustite", "qty": 1}], None)),
     ]
     n = int(secs / DT)
-    for loc in ("brackenford", "greywood", "velmora"):
+    for loc in ("brackenford", "greywood", "velmora", "hollow_fort"):
         st.location, st.local_pos, st.sub_location = loc, None, None
         st.mode = "local"
         while len(g.scenes.stack) > 1:

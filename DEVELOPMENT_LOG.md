@@ -34,6 +34,34 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Major RPG overhaul (spells, creator, visuals, looting, prisons) | ✅ Done |
 | Bug fixes & visual consistency | ✅ Done |
 | Chibi characters | ✅ Done |
+| Chibi bodies, map, travel, bases, bosses | ✅ Done |
+
+## Session 12 — Chibi bodies, world map, travel, bases of operations, bosses
+
+- Bodies: the rig is painted at its own size, then enlarged 1.3x about the feet (Scale2x, then sampled) and the
+  chibi head 1.15x, so head and body match like the reference sprites (about two and a half tiles tall).
+  Region detection runs on the original frames (enlarging first broke the neck detection and floated the head);
+  weapon grips, smears and back-slung gear are mapped onto the enlarged frame (`charsprites.to_frame`,
+  `frame_info`). Frames sit 8px lower (`FOOT_Y`) to leave room for hats.
+- World map: a painted parchment map (watercolour regions, forests, mountains, marshes, dunes, ruins, sea,
+  compass, cartouche) with inked roads, label plates, town houses, danger dots, job scrolls, home icons and boss
+  skulls. Goals (jobs, homes, bases, any place) plot the whole multi-stop route in red with arrows, a flag at
+  the end, distance, hours and the next stop; the next stop is preselected. Click a place to pick it.
+- Travel: sky by time of day (sun and moon arcs, stars, clouds, dusk colours), three parallax layers per terrain
+  using pack trees and rocks, the party walking (companions behind), a campfire at night when stopped, fog, and a
+  route ribbon (from, you, to, goal). Status layout fixed (bars no longer under the menu).
+- Starter house: a new character owns the for-sale house in the starting town (deed, a few supplies), so they
+  have a bed, chest, workbench, scribing table and a prisoner cell from day one.
+- Bases of operations (`set_system/bases.py`, `scenes/bases.py`, Tab menu): every house and the outpost with
+  beds, cells, stored goods and facilities; a home base; route to any base on the map; a carter between bases
+  (road time, safe, 3 marks per 10 km).
+- Bosses (`data/bosses.json`, `set_system/bosses.py`, `gameplay/boss.py`): Varek the Hollow Warlord (Hollow Fort),
+  the Bog Mother (Mirelight Bog) and the Ashen Colossus (Ashfall Crater). Phases by health (minions, faster
+  attacks, enrage), telegraphed area attacks (a red ring fills before it strikes; the Bog Mother aims around
+  you), a boss health bar with phase notches, large sprites, a defeat that lasts, guaranteed rewards on the
+  body, reputation and Set AI history. Lairs show on the map; the guide explains them.
+- Bug caught by the tests: a boss defeated on day 0 stored flag value 0 and still counted as alive.
+- 228 tests (`tests/test_bases_bosses.py` added); the fuzzer now includes a boss lair.
 
 ## Session 11 — Chibi characters
 

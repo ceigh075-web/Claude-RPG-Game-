@@ -28,7 +28,7 @@ folder to keep your progress.
 | 1–4 | Cast spells |
 | I / C / J | Inventory / character / journal |
 | B / P / R | Spell book / your company / relationships |
-| M | World map (travel) |
+| M | World map: Left/Right (or click) sets a goal and plots the route |
 | Esc | Menu: save, load, options, controls |
 | F5 / F9 | Quick save / quick load |
 

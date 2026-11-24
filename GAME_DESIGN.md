@@ -167,6 +167,14 @@ your standing is low, and attacking them costs reputation.
 Chibi anime fantasy: big round heads with large shining eyes and voluminous hair on small bodies, wood and
 parchment interface, one fantasy icon set, pixel art throughout.
 
+## Bases, travel and bosses
+
+- **Start:** you own a small house in Brackenford from the first day.
+- **Bases of operations:** houses and the outpost; choose a home base; a carter rides safely between bases
+  for road time and a few marks.
+- **Map:** set a goal and the map plots the route and names the next stop; the travel screen keeps the goal in view.
+- **Bosses:** three lairs, each boss with phases, minions, enrage and telegraphed attacks; defeated once.
+
 ## RPG overhaul (spells, people, looting, prisons, appearance)
 
 - **Spell customization:** besides element, sub-element, movement, effect, focus, size and tier, every spell has
