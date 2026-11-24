@@ -156,3 +156,43 @@ class TestIcons(unittest.TestCase):
         from game.set_system.stats import ATTRIBUTES, SKILLS
         for k in list(ATTRIBUTES) + list(SKILLS):
             self.assertIsNotNone(icons.named(icons.STAT_CELL, k), k)
+
+
+class TestChibi(unittest.TestCase):
+    def test_heads_are_big_and_every_option_renders(self):
+        pygame.init()
+        try:
+            pygame.display.set_mode((1, 1))
+        except pygame.error:
+            pass
+        from game.presentation import charsprites, chibi
+        from game.presentation.scenes import creator
+        self.assertTrue(charsprites.CHIBI)
+        base = {"race": "human", "skin": [220, 180, 140], "hair": [60, 40, 30], "shirt": [90, 60, 120]}
+        looks = [dict(base, hair_style=i) for i in range(10)]
+        looks += [dict(base, hat=h, hat_col=[90, 60, 40]) for h in creator.HATS if h]
+        looks += [dict(base, race=r) for r in ("sylth", "murrok", "kethari")]
+        looks += [dict(base, beard=b) for b in range(5)] + [dict(base, helm=[150, 150, 160]), dict(base, hood=[80, 60, 40])]
+        looks += [dict(base, expression=e) for e in charsprites.EXPRESSIONS]
+        looks += [dict(base, acc=["glasses", "eyepatch", "earring"], face=f) for f in creator.FACE_MARKS]
+        for look in looks:
+            for view in ("down", "side", "up"):
+                for mood in ("normal", "hurt", "ko"):
+                    back, front = chibi.head(look, view, mood)
+                    self.assertGreater(front.get_bounding_rect().w, 14)
+            for anim, d, i in (("idle", "down", 0), ("walk", "left", 3), ("slice", "right", 4), ("hit", "up", 1),
+                               ("death", "side", 7), ("crush", "down", 2)):
+                surf = charsprites.compose(look, anim, d, i)[0]
+                self.assertGreater(surf.get_bounding_rect().h, 10)
+        # chibi proportions: the head is clearly wider than the body below it
+        s = charsprites.compose(base, "idle", "down", 0)[0]
+        r = s.get_bounding_rect()
+        top = [x for x in range(64) if s.get_at((x, r.y + 8)).a]
+        low = [x for x in range(64) if s.get_at((x, r.bottom - 4)).a]
+        self.assertGreater(max(top) - min(top), (max(low) - min(low)) * 1.3)
+        self.assertGreater(r.h, 26)
+
+    def test_head_is_cached_per_look(self):
+        from game.presentation import chibi
+        look = {"race": "human", "hair_style": 2}
+        self.assertIs(chibi.head(look, "down")[1], chibi.head(dict(look), "down")[1])

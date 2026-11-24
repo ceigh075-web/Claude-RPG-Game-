@@ -33,7 +33,7 @@ def draw_backdrop(game, screen, t):
     # a little party walking the road
     for i, look in enumerate(getattr(game, "_menu_looks", [])):
         frame = int(t * 8 + i) % 4
-        canvas.blit(visuals.portrait(art, look, "right", frame, True), (250 + i * 22, 230))
+        canvas.blit(visuals.portrait(art, look, "right", frame, True), (240 + i * 30, 222))
     dark = pygame.Surface(canvas.get_size(), pygame.SRCALPHA)
     dark.fill((10, 8, 20, 120))
     canvas.blit(dark, (0, 0))

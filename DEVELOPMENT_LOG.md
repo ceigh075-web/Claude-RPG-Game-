@@ -33,6 +33,27 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Major combat overhaul | ✅ Done |
 | Major RPG overhaul (spells, creator, visuals, looting, prisons) | ✅ Done |
 | Bug fixes & visual consistency | ✅ Done |
+| Chibi characters | ✅ Done |
+
+## Session 11 — Chibi characters
+
+- Every humanoid (player, companions, NPCs, townsfolk, humanoid enemies) now has a big chibi head drawn by
+  `presentation/chibi.py`: a 16x14 face with 4x5 anime eyes (thick lash with a flick, three-tone iris, two
+  catch-lights), nose, mouth by expression, soft skin shading, an outline, and voluminous hair for all 10 styles
+  (fringe, side locks, glossy highlight, spikes, bun, ponytail, braids, long hair split into a layer in front of
+  the shoulders and one behind the body). Beards, hats (all 10), helmets, hoods, glasses, eyepatches, earrings,
+  face marks, face paint and race features (sylth ears, murrok furred ears and tusks, kethari stone flecks)
+  are redrawn for the bigger head. Front, side and back views.
+- Moods: squeezed `> <` eyes and an open mouth on the hit animation, closed eyes when knocked out, `^ ^` for
+  grinning characters.
+- The body rig is unchanged, so every animation, outfit, cape, weapon and the creator still work:
+  `charsprites` removes the rig's small head each frame and places the chibi head at the same spot, so it bobs,
+  leans and turns with the body, and rotates when the body lies down. Head-only wardrobe pieces are skipped in
+  chibi mode (`wardrobe.apply(chibi=True)`). Heads are cached per look, view and mood.
+- Reworked around the taller sprites: menu portraits (30x42 crop) and their scaling in dialogue, party,
+  character and creator screens; overhead names, barks and enemy health bars moved up; main-menu party spacing.
+- Tests: chibi heads for every hairstyle, hat, race, beard, helmet, hood, expression, accessory and mood in
+  every view and animation, and a proportion check (head clearly wider than the body). 220 tests.
 
 ## Session 10 — Bug fixes and visual consistency
 

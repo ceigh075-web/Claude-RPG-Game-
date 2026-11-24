@@ -75,7 +75,7 @@ def _bbox(px):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def apply(out, src, look, R, d, eye_px):
+def apply(out, src, look, R, d, eye_px, chibi=False):
     """Draw all wardrobe pieces onto `out` (64x64, side views face right)."""
     cv = Canvas(out, src)
     head, torso, legs, feet, arms = R["head"], R["torso"], R["legs"], R["feet"], R["arms"]
@@ -275,6 +275,10 @@ def apply(out, src, look, R, d, eye_px):
         else:
             for i in range(ty1 - ty0 + 1):
                 cv.recolor(tx1 - i * (tx1 - tx0) // max(1, ty1 - ty0), ty0 + i, strap)
+
+    if chibi:                     # hair, beards, face accessories and hats belong to the chibi head
+        cv.outline()
+        return out
 
     # ---------------------------------------------------------------- hair volume & styles
     style = look.get("hair_style", 0)

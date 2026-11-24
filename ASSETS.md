@@ -32,7 +32,7 @@ publish it as a separate asset download.
 
 | Pack files | Used for | Changes made at runtime |
 |---|---|---|
-| `Entities/Characters/Body_A/Animations/*` (idle, walk, run, slice, pierce, crush, hit, death, collect × down/side/up) | Every humanoid: player, companions, NPCs, humanoid enemies | Baked tools removed; body regions (skin, hair, shirt, armour, legs, boots) recoloured per character; race features (ears, tusks, freckles, war paint) drawn on; equipped weapon posed at the hand; smear arcs kept as a tinted effect layer |
+| `Entities/Characters/Body_A/Animations/*` (idle, walk, run, slice, pierce, crush, hit, death, collect × down/side/up) | Every humanoid body: player, companions, NPCs, humanoid enemies | The pack's small head is replaced each frame by an original chibi head (`game/presentation/chibi.py`); baked tools removed; body regions (skin, hair, shirt, armour, legs, boots) recoloured per character; race features (ears, tusks, freckles, war paint) drawn on; equipped weapon posed at the hand; smear arcs kept as a tinted effect layer |
 | `Entities/Mobs/Skeleton Crew/Skeleton - {Base,Rogue,Warrior,Mage}/{Idle,Run,Death}` | Husk enemies (variant fixed per spawn) | Mirrored for left-facing; attacks are a wind-up lean and lunge, the mage variant charges an orb |
 | `Weapons/Wood/Wood.png` | Weapon silhouettes (sword, axe, spear, mallet, dagger, bow, pickaxe…) | Striking part recoloured to the ore (Rustite / Greyvein / Sunsilver / Voidglass); scaled per weapon type |
 | `Environment/Tilesets/Floors_Tiles.png` | Ground, path, plaza and floor textures | Tinted to each biome's existing palette; ragged overhang edges generated between tile types |

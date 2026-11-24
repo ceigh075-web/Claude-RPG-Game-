@@ -77,7 +77,7 @@ class PartyScene(Scene):
         c = comp["char"]
         npc = self.data.npcs[cid]
         x = 450
-        spr = pygame.transform.scale(visuals.portrait(self.game.art, npc_look(self.data, npc), "down", 0), (66, 96))
+        spr = pygame.transform.scale(visuals.portrait(self.game.art, npc_look(self.data, npc), "down", 0), (69, 96))
         screen.blit(spr, (x, 110))
         ui.text(screen, npc["name"], (x + 80, 112), 30, ui.ACCENT, bold=True)
         ui.text(screen, f"{self.data.races[npc['race']]['name']} {npc['occupation']}  -  Lv {c.level}  -  task: "

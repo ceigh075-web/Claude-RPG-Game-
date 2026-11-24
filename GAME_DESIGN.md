@@ -162,6 +162,11 @@ your standing is low, and attacking them costs reputation.
 **Road fights:** a travel event that becomes a fight lets you choose: *fight it out* in a real-time arena
 (walk off either side to flee) or *let it play out* (resolved by the Set System).
 
+## Art direction
+
+Chibi anime fantasy: big round heads with large shining eyes and voluminous hair on small bodies, wood and
+parchment interface, one fantasy icon set, pixel art throughout.
+
 ## RPG overhaul (spells, people, looting, prisons, appearance)
 
 - **Spell customization:** besides element, sub-element, movement, effect, focus, size and tier, every spell has

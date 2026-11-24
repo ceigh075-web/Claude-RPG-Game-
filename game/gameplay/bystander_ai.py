@@ -90,7 +90,7 @@ class BystanderAI:
                 self.brain = EnemyAI(self.c, self.c.enemy, self.rng)
 
     def _bark(self, world, text):
-        world.floaters.append([text, self.c.x, self.c.y - 34, 0.0, (255, 230, 150)])
+        world.floaters.append([text, self.c.x, self.c.y - 40, 0.0, (255, 230, 150)])
 
     def _cornered(self, world):
         return world.map.kind == "interior"
@@ -249,7 +249,7 @@ class SurrenderedAI:
 
     def provoked(self, world, src):
         self.mode, self.mode_t = "flee", 0.0
-        world.floaters.append(["Mercy!", self.c.x, self.c.y - 34, 0.0, (255, 235, 160)])
+        world.floaters.append(["Mercy!", self.c.x, self.c.y - 40, 0.0, (255, 235, 160)])
 
     def update(self, world, lmap, dt):
         c = self.c

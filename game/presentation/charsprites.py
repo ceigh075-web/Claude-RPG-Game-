@@ -221,7 +221,7 @@ def compose(look, anim, d, idx):
     idx = idx % len(frames)
     key = (look_key(look), anim, bd, idx)
     if key not in _looks:
-        _looks[key] = _paint(look, frames[idx], bd)
+        _looks[key] = _paint(look, frames[idx], bd, anim, idx)
     surf, smear = _looks[key]
     info = frames[idx]
     if d == "left":
@@ -233,7 +233,7 @@ def compose(look, anim, d, idx):
     return surf, smear, info
 
 
-def _paint(look, info, d):
+def _paint(look, info, d, anim="idle", idx=0):
     src = info.body
     out = src.copy()
     R = info.regions
@@ -308,10 +308,16 @@ def _paint(look, info, d):
         # race features
         _race_features(out, src, race, d, head, hx0, hx1, hy0, hy1, eye_row, skin, look)
     eye_px = {p for p in R["head"] if src.get_at(p)[:3] == EYE}
-    if head and d in ("down", "side") and not look.get("helm"):
-        _face(out, src, d, head, eye_px, skin, look)
-    out = wardrobe.apply(out, src, look, R, d, eye_px)
-    out = wardrobe.reshape(out, look, FOOT_Y)
+    if CHIBI and head:
+        out = wardrobe.apply(out, src, look, R, d, eye_px, chibi=True)
+        anchor = _erase_head(out, src, R)
+        out = wardrobe.reshape(out, look, FOOT_Y)
+        out = _place_chibi_head(out, look, d, anim, idx, anchor)
+    else:
+        if head and d in ("down", "side") and not look.get("helm"):
+            _face(out, src, d, head, eye_px, skin, look)
+        out = wardrobe.apply(out, src, look, R, d, eye_px)
+        out = wardrobe.reshape(out, look, FOOT_Y)
     smear = None
     if info.smear is not None:
         smear = info.smear.copy()
@@ -319,6 +325,61 @@ def _paint(look, info, d):
         if tintc:
             smear.fill((*tintc, 255), special_flags=pygame.BLEND_RGBA_MULT)
     return out, smear
+
+
+CHIBI = True       # big-headed chibi characters (see chibi.py); False draws the rig's own small head
+
+
+def _erase_head(out, src, R):
+    """Remove the rig's head (and its outline) from a painted frame. Returns where the new head goes:
+    (centre x, chin y, rotation in degrees) - rotated when the body lies down (death, knockdowns)."""
+    head = R["head"]
+    hx0 = min(p[0] for p in head)
+    hx1 = max(p[0] for p in head)
+    hy0 = min(p[1] for p in head)
+    hy1 = max(p[1] for p in head)
+    clear = set(head)
+    for (x, y) in head:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            q = (x + dx, y + dy)
+            if 0 <= q[0] < FW and 0 <= q[1] < FW and q not in clear and src.get_at(q)[:3] == OUTLINE \
+                    and q not in R["torso"] and q not in R["arms"]:
+                clear.add(q)
+    for q in clear:
+        out.set_at(q, (0, 0, 0, 0))
+    cx, cy = (hx0 + hx1) / 2, (hy0 + hy1) / 2
+    torso = R["torso"]
+    rot = 0
+    if torso:
+        tx = sum(p[0] for p in torso) / len(torso)
+        ty = sum(p[1] for p in torso) / len(torso)
+        dx, dy = cx - tx, cy - ty
+        if abs(dx) > abs(dy) * 1.3:
+            rot = 90 if dx < 0 else -90
+        elif dy > 2:
+            rot = 180
+    return cx, hy1 + 1, cy, rot
+
+
+def _place_chibi_head(out, look, d, anim, idx, anchor):
+    from . import chibi
+    cx, chin, cy, rot = anchor
+    mood = "hurt" if anim == "hit" else ("ko" if anim == "death" and idx >= 3 else "normal")
+    back, front = chibi.head(look, d, mood)
+    dy = {"tall": -1, "short": 1}.get(look.get("height"), 0)
+    final = pygame.Surface((FW, FW), pygame.SRCALPHA)
+    if rot:
+        front = pygame.transform.rotate(front, rot)
+        back = pygame.transform.rotate(back, rot) if back is not None else None
+        pos = (int(round(cx - front.get_width() / 2)), int(round(cy + dy - front.get_height() / 2)))
+    else:
+        ax, ay = chibi.ANCHOR
+        pos = (int(round(cx + 0.5 - ax)), int(chin + dy - ay))
+    if back is not None:
+        final.blit(back, pos)
+    final.blit(out, (0, 0))
+    final.blit(front, pos)
+    return final
 
 
 LONG_STYLES = (1, 4, 5, 7, 8)     # long, ponytail, bun, curly, braids: side locks reach the jaw
