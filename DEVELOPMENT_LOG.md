@@ -36,6 +36,12 @@ python tools/ui_smoke.py out/ui       # opens and drives every screen
 | Chibi characters | ✅ Done |
 | Chibi bodies, map, travel, bases, bosses | ✅ Done |
 
+## Session 12b — Head size
+
+- Heads read as bobble-heads. Now in between the original rig and the big chibi: the head is drawn at its
+  native pixel grid (1.0x, keeping faces crisp; shrinking it smudged the eyes) on a fuller body (1.4x), so the
+  head is about shoulder width. A test bounds the head-to-body ratio both ways.
+
 ## Session 12 — Chibi bodies, world map, travel, bases of operations, bosses
 
 - Bodies: the rig is painted at its own size, then enlarged 1.3x about the feet (Scale2x, then sampled) and the

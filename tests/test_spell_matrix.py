@@ -189,7 +189,9 @@ class TestChibi(unittest.TestCase):
         r = s.get_bounding_rect()
         top = [x for x in range(64) if s.get_at((x, r.y + 8)).a]
         low = [x for x in range(64) if s.get_at((x, r.bottom - 4)).a]
-        self.assertGreater(max(top) - min(top), (max(low) - min(low)) * 1.3)
+        head_w, body_w = max(top) - min(top), max(low) - min(low)
+        self.assertGreater(head_w, body_w * 1.1)          # still chibi...
+        self.assertLess(head_w, body_w * 1.9)             # ...but not a bobble-head
         self.assertGreater(r.h, 26)
 
     def test_head_is_cached_per_look(self):

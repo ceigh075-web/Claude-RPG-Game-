@@ -46,7 +46,7 @@ def _raw_sheet(anim, d):
     return assets.frames(f"{BODY}{folder}/{stem}_{suffix}-Sheet.png", FW, FW)[:n]
 
 
-BODY_SCALE = 1.3       # chibi bodies: the rig is enlarged about the feet so the body suits the big head
+BODY_SCALE = 1.4       # chibi bodies: the rig is enlarged about the feet so the body suits the big head
 _scaled = {}
 
 

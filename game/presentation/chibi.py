@@ -645,7 +645,7 @@ def _key(look):
 
 
 ANCHOR = (OX + 8, OY + 13)      # canvas point that sits on the rig's chin (front/back views), unscaled
-HEAD_SCALE = 1.15               # heads are drawn on a 16px face grid, then enlarged to suit the bigger bodies
+HEAD_SCALE = 1.0                # heads are drawn on a 16px face grid, then enlarged to suit the bigger bodies
 ANCHOR_S = (ANCHOR[0] * HEAD_SCALE, ANCHOR[1] * HEAD_SCALE)
 
 
